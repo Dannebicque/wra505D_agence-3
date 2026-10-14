@@ -38,5 +38,9 @@ Thumbs.db
 desktop.ini
 
 # Outils IA locaux
+.worktrees/
 .claude/worktrees/
 .claude/settings.local.json
+CLAUDE.local.md
+# Remplacerait AGENTS.md en silence pour Codex
+AGENTS.override.md
