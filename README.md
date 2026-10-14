@@ -16,3 +16,14 @@ Les règles de travail des assistants IA sont dans [`AGENTS.md`](AGENTS.md), sou
 - **Claude Code** lit `CLAUDE.md`, qui importe `AGENTS.md`.
 
 Pour changer une règle, modifier uniquement `AGENTS.md` (par une PR).
+
+## Démarrage
+
+Prérequis : Node 24 (voir `.nvmrc`).
+
+```bash
+npm ci
+npm run dev          # http://localhost:3000
+```
+
+Toutes les commandes (lint, typage, tests, E2E) sont listées dans [`AGENTS.md`](AGENTS.md#2-commandes).
