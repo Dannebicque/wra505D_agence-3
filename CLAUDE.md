@@ -8,7 +8,8 @@ Refonte de **UniFolio**, l'outil de portfolio de compétences d'un IUT (approche
 - **API en deux temps** : d'abord des routes **Nitro** (`server/`) avec des données factices, puis une **vraie API ApiPlatform**. Les composants et stores ne parlent jamais directement à la source : tout passe par une couche d'accès (`app/services/`) pour que la bascule ne touche qu'elle. Les réponses Nitro imitent le format ApiPlatform (JSON-LD, IRIs, collections Hydra).
 - **Dépôt** : `origin` = `https://github.com/Dannebicque/wra505D_agence-3` (privé, géré par le QA). Compte utilisé ici : `enzo-richand`. Équipe : Enzo, Mathéo, Solène.
 - **Référence métier en lecture seule** : `../unifolio_old` (= `https://github.com/CyndelHerolt/UniFolio`, Symfony 8 / Twig / Doctrine). **Ne jamais la modifier, y committer ni y pousser.** On la lit pour comprendre le métier et repérer les bugs à corriger.
-- **Acteurs** : le client ne parle qu'au **PO** ; le **QA** (même personne) valide **toutes les PR** et peut aider si on lui explique précisément le problème. Le client est très exigeant sur l'**accessibilité, l'UX, la qualité du code et la performance**.
+- **Périmètre et planning** : [`docs/FONCTIONNALITES.md`](docs/FONCTIONNALITES.md) (liste de référence, identifiants `E-`/`P-`/`C-` et statuts) et [`docs/ROADMAP.md`](docs/ROADMAP.md) (sprints). **Lire la fonctionnalité concernée avant toute tâche** ; ne jamais implémenter une fonctionnalité « Retirée », ni une « À discuter » / « À questionner » sans décision du client reportée dans le fichier.
+- **Acteurs** : le client ne parle qu'au **PO, Mathéo** ; le **QA** (le client lui-même) valide **toutes les PR** et peut aider si on lui explique précisément le problème. Le client est très exigeant sur l'**accessibilité, l'UX, la qualité du code et la performance**.
 - **Évaluation continue** : qualité du code et tests, documentation et journal IA (`AI_PROMPT_BOOK.md`), collaboration Git (issues, PR), gestion de projet, pitches et présentation finale.
 
 ### Domaine métier (repris de `../unifolio_old/src/Entity`)
@@ -34,7 +35,7 @@ app/
 shared/types/   types du domaine, partagés entre app/ et server/
 server/api/     routes Nitro (phase 1) ; server/data/ pour les données factices
 tests/          unit/, nuxt/ (intégration), e2e/ (Playwright)
-docs/           DECISIONS.md
+docs/           FONCTIONNALITES.md, ROADMAP.md, DECISIONS.md
 ```
 
 ## 2. Commandes
@@ -55,7 +56,7 @@ Le projet Nuxt **n'est pas encore initialisé** : aucune commande n'existe pour 
 
 - `main` : production uniquement. **Jamais de commit direct.**
 - `develop` : intégration. **Jamais de commit direct** (exception : le commit initial de mise en place).
-- Toute tâche part d'une **issue GitHub** → branche `feature/<n°-issue>-<nom-court>` depuis `develop` → **PR vers `develop`**, liée à l'issue (`Closes #n`), validée par le QA.
+- Toute tâche part d'une **issue GitHub** (qui cite l'identifiant de la fonctionnalité, ex. `E-TR-01`) → branche `feature/<n°-issue>-<nom-court>` depuis `develop` → **PR vers `develop`**, liée à l'issue (`Closes #n`), validée par le QA.
 - `release/<version>` depuis `develop` → fusion vers `main` **et** `develop`, tag `v<version>`.
 - `hotfix/<nom>` depuis `main` → fusion vers `main` **et** `develop`.
 - Commits en **Conventional Commits** (`feat:`, `fix:`, `refactor:`, `docs:`, `test:`, `chore:`, `style:`), en français, petits et atomiques.
@@ -122,6 +123,7 @@ Ne jamais déclarer une tâche terminée sans avoir exécuté ces vérifications
 
 - Tenir `docs/DECISIONS.md` : chaque choix technique important (date, décision, alternatives écartées, raison).
 - Tenir `AI_PROMPT_BOOK.md` (journal noté) : après chaque tâche significative faite avec l'IA, **proposer** une entrée (date, auteur, objectif, prompts, ce qui a été retenu ou corrigé à la main).
+- Reporter chaque décision client dans `docs/FONCTIONNALITES.md` (statut) et `docs/ROADMAP.md` (sprint).
 - Mettre à jour `README.md` et `CHANGELOG.md` lors de chaque release.
 - Mettre à jour ce `CLAUDE.md` quand une règle ou une commande change, et **me signaler la modification**.
 
