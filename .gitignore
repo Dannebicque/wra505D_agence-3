@@ -1,0 +1,42 @@
+# Dépendances
+node_modules/
+
+# Builds et caches Nuxt / Nitro
+.nuxt/
+.output/
+.nitro/
+.cache/
+.data/
+dist/
+
+# Tests
+coverage/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Variables d'environnement (seul .env.example est versionné)
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Fichiers OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Outils IA locaux
+.claude/worktrees/
+.claude/settings.local.json
