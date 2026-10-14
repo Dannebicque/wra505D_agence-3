@@ -42,17 +42,23 @@ docs/           FONCTIONNALITES.md, ROADMAP.md, DECISIONS.md
 
 ## 2. Commandes
 
-Le projet Nuxt **n'est pas encore initialisé** : aucune commande n'existe pour l'instant. À l'initialisation, créer dans `package.json` les scripts ci-dessous, puis remplacer ce tableau par les commandes réelles vérifiées.
+Node 24 (`.nvmrc`). Après un `git pull` qui modifie `package-lock.json` : `npm ci`.
 
-| Action | Script prévu |
+| Action | Commande |
 |---|---|
-| Installer | `npm install` |
-| Lancer (dev) | `npm run dev` |
-| Builder / prévisualiser | `npm run build` / `npm run preview` |
-| Linter / formater | `npm run lint` / `npm run format` |
-| Tests unitaires + intégration | `npm run test` (un seul fichier : `npx vitest run <chemin>`, un seul test : `-t "<nom>"`) |
-| Tests E2E | `npm run test:e2e` (un seul : `npx playwright test <chemin>`) |
+| Installer | `npm ci` (puis `npx playwright install chromium` une fois, pour l'E2E) |
+| Lancer (dev, `localhost:3000`) | `npm run dev` |
+| Builder / prévisualiser le build | `npm run build` / `npm run preview` |
+| Linter / corriger | `npm run lint` / `npm run lint:fix` |
+| Formater / vérifier le format | `npm run format` / `npm run format:check` |
 | Typage | `npm run typecheck` |
+| Tests unitaires + intégration (Vitest) | `npm run test` ; en continu : `npm run test:watch` |
+| Un fichier / un test Vitest | `npx vitest run tests/nuxt/index.test.ts` / `npx vitest run -t "affiche le titre"` |
+| Un seul projet Vitest | `npx vitest run --project unit` (ou `nuxt`) |
+| Tests E2E (Playwright, build de production) | `npm run test:e2e` ; un fichier : `npx playwright test tests/e2e/accueil.spec.ts` |
+
+- **Tests** : `tests/unit/` pour la logique pure (environnement Node, rapide), `tests/nuxt/` pour ce qui a besoin du runtime Nuxt (composants, stores, composables : `mountSuspended`), `tests/e2e/` pour les parcours, chacun avec un contrôle axe.
+- **CI** (`.github/workflows/ci.yml`) : sur chaque PR, `npm ci`, lint, format, typage, tests, build et E2E. Une PR dont la CI échoue n'est pas prête pour la relecture.
 
 ## 3. Gitflow (obligatoire, évalué)
 
