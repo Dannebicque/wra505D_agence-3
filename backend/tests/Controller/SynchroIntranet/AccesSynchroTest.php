@@ -2,42 +2,14 @@
 
 namespace App\Tests\Controller\SynchroIntranet;
 
-use Doctrine\DBAL\Connection;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Tests\ApiTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Symfony\Bundle\FrameworkBundle\KernelBrowser;
-use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
-use Symfony\Component\HttpClient\MockHttpClient;
 
 /**
  * Les routes de synchro écrivent en base : elles ne doivent jamais être accessibles anonymement.
  */
-class AccesSynchroTest extends WebTestCase
+class AccesSynchroTest extends ApiTestCase
 {
-    private KernelBrowser $client;
-    private Connection $connection;
-
-    // Si une régression ouvrait une route, l'appel ne doit ni vider la base de test ni joindre la vraie API
-    protected function setUp(): void
-    {
-        $this->client = static::createClient();
-        $this->client->disableReboot();
-        static::getContainer()->set('http_client', new MockHttpClient());
-        $this->connection = static::getContainer()->get(EntityManagerInterface::class)->getConnection();
-        $this->connection->beginTransaction();
-    }
-
-    protected function tearDown(): void
-    {
-        try {
-            while ($this->connection->isTransactionActive()) {
-                $this->connection->rollBack();
-            }
-        } finally {
-            parent::tearDown();
-        }
-    }
-
     public static function routes(): iterable
     {
         yield ['/api/intranet/referentiel'];
