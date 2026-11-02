@@ -19,6 +19,8 @@ Les secrets et valeurs locales vont dans `.env.local` (jamais versionné).
 
     docker compose exec php bin/console doctrine:migrations:migrate
 
+Si la base a été créée avant les migrations (avec `doctrine:schema:update`), `migrate` échoue car les tables existent : marquer la migration comme jouée avec `docker compose exec php bin/console doctrine:migrations:version --add --all`, ou repartir d'une base vide avec `docker compose down -v` (efface les données).
+
 Après une modification des entités : `docker compose exec php bin/console doctrine:migrations:diff`, relire la migration générée, puis `migrate`.
 
 ### Commandes courantes

@@ -24,6 +24,7 @@ use App\Repository\DiplomeRepository;
 use App\Repository\GroupeRepository;
 use App\Repository\SemestreRepository;
 use App\Repository\TypeGroupeRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -56,25 +57,36 @@ class ReferentielSynchro extends AbstractController
         SemestreRepository $semestreRepository,
         AnneeRepository $anneeRepository,
         DiplomeRepository $diplomeRepository,
+        EntityManagerInterface $entityManager,
     ): Response {
         $erreurs = [];
 
 
         if ($departementRepository->findOneBy(['libelle' => 'Fixtures'])) {
-            // Vide les tables
-            // Ordre enfants -> parents imposé par les clés étrangères (PostgreSQL les vérifie toujours).
-            // S'il reste des données liées (validations, étudiants…), la suppression échoue au lieu de les effacer.
-            $apprentissageCritiqueRepository->truncate();
-            $niveauRepository->truncate();
-            $competenceRepository->truncate();
-            $groupeRepository->truncate();
-            $typeGroupeRepository->truncate();
-            $semestreRepository->truncate();
-            $anneeRepository->truncate();
-            $diplomeRepository->truncate();
-            $apcParcoursRepository->truncate();
-            $apcReferentielRepository->truncate();
-            $departementRepository->truncate();
+            // Tout ou rien : un échec en cours de vidage ne laisse pas des tables à moitié vidées
+            $connection = $entityManager->getConnection();
+            $connection->beginTransaction();
+            try {
+                // Vide les tables
+                // Ordre enfants -> parents imposé par les clés étrangères (PostgreSQL les vérifie toujours).
+                // S'il reste des données liées (validations, étudiants…), la suppression échoue et tout est annulé.
+                // Les tables de jointure (etudiant_groupe…) sont en ON DELETE CASCADE : leurs lignes partent avec.
+                $apprentissageCritiqueRepository->truncate();
+                $niveauRepository->truncate();
+                $competenceRepository->truncate();
+                $groupeRepository->truncate();
+                $typeGroupeRepository->truncate();
+                $semestreRepository->truncate();
+                $anneeRepository->truncate();
+                $diplomeRepository->truncate();
+                $apcParcoursRepository->truncate();
+                $apcReferentielRepository->truncate();
+                $departementRepository->truncate();
+                $connection->commit();
+            } catch (\Throwable $e) {
+                $connection->rollBack();
+                throw $e;
+            }
         }
 
 

@@ -29,6 +29,7 @@ use App\Repository\GroupeRepository;
 use App\Repository\SemestreRepository;
 use App\Repository\TypeGroupeRepository;
 use App\Repository\UsersRepository;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 use Symfony\Component\HttpFoundation\Response;
@@ -53,32 +54,43 @@ class StructureSynchro extends AbstractController
         EtudiantRepository $etudiantRepository,
         ApcApprentissageCritiqueRepository $apprentissageCritiqueRepository,
         EnseignantRepository $enseignantRepository,
-        UsersRepository $usersRepository
+        UsersRepository $usersRepository,
+        EntityManagerInterface $entityManager,
     ): Response {
         //http://symfony.com/doc/current/http_client.html
 
 
 
         if ($departementRepository->findOneBy(['libelle' => 'Fixtures'])) {
-            $etudiant = $etudiantRepository->findOneBy(['username' => 'etudiant']);
-            $etudiantRepository->remove($etudiant, true);
-            $enseignant = $enseignantRepository->findOneBy(['username' => 'enseignant']);
-            $enseignantRepository->remove($enseignant, true);
+            // Tout ou rien : un échec en cours de vidage ne laisse pas des tables à moitié vidées
+            $connection = $entityManager->getConnection();
+            $connection->beginTransaction();
+            try {
+                $etudiant = $etudiantRepository->findOneBy(['username' => 'etudiant']);
+                $etudiantRepository->remove($etudiant, true);
+                $enseignant = $enseignantRepository->findOneBy(['username' => 'enseignant']);
+                $enseignantRepository->remove($enseignant, true);
 
-            // Vide les tables
-            // Ordre enfants -> parents imposé par les clés étrangères (PostgreSQL les vérifie toujours).
-            // S'il reste des données liées (validations, étudiants…), la suppression échoue au lieu de les effacer.
-            $apprentissageCritiqueRepository->truncate();
-            $niveauRepository->truncate();
-            $competenceRepository->truncate();
-            $groupeRepository->truncate();
-            $typeGroupeRepository->truncate();
-            $semestreRepository->truncate();
-            $anneeRepository->truncate();
-            $diplomeRepository->truncate();
-            $apcParcoursRepository->truncate();
-            $apcReferentielRepository->truncate();
-            $departementRepository->truncate();
+                // Vide les tables
+                // Ordre enfants -> parents imposé par les clés étrangères (PostgreSQL les vérifie toujours).
+                // S'il reste des données liées (validations, étudiants…), la suppression échoue et tout est annulé.
+                // Les tables de jointure (etudiant_groupe…) sont en ON DELETE CASCADE : leurs lignes partent avec.
+                $apprentissageCritiqueRepository->truncate();
+                $niveauRepository->truncate();
+                $competenceRepository->truncate();
+                $groupeRepository->truncate();
+                $typeGroupeRepository->truncate();
+                $semestreRepository->truncate();
+                $anneeRepository->truncate();
+                $diplomeRepository->truncate();
+                $apcParcoursRepository->truncate();
+                $apcReferentielRepository->truncate();
+                $departementRepository->truncate();
+                $connection->commit();
+            } catch (\Throwable $e) {
+                $connection->rollBack();
+                throw $e;
+            }
         }
 
         //-------------------------------------------------------------------------------------------------------
