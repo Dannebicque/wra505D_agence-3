@@ -1,0 +1,12 @@
+nelmio_cors:
+    defaults:
+        origin_regex: true
+        allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
+        # Le front (localhost:3000) envoie le cookie de session à l'API (localhost:8000)
+        allow_credentials: true
+        allow_methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE']
+        allow_headers: ['Content-Type', 'Accept']
+        expose_headers: ['Link']
+        max_age: 3600
+    paths:
+        '^/api/': null
