@@ -71,7 +71,7 @@ Le front autorisé à appeler l'API est fixé par `CORS_ALLOW_ORIGIN` (`.env`, p
 ### En production
 
 - `CORS_ALLOW_ORIGIN` : l'adresse du front de production (expression régulière, par ex. `'^https://portfolio\.exemple\.fr$'`).
-- `TRUSTED_PROXIES` : l'adresse du reverse proxy (sinon la limite de connexion compte tous les utilisateurs comme une seule IP).
+- `TRUSTED_PROXIES` : l'IP ou le sous-réseau exact du reverse proxy (sinon la limite de connexion compte tous les utilisateurs comme une seule IP). Jamais `REMOTE_ADDR` si l'API est joignable sans passer par le proxy.
 - `APP_SECRET` : une vraie valeur secrète, dans `.env.local` ou les variables d'environnement du serveur.
 - Le cookie de session est toujours `Secure` en prod ; la documentation `/api/docs` y est désactivée.
 
