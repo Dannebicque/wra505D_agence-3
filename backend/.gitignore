@@ -11,6 +11,7 @@ public/files-directory/
 ###> phpunit/phpunit ###
 /phpunit.xml
 .phpunit.result.cache
+/.phpunit.cache/
 ###< phpunit/phpunit ###
 
 ###> symfony/phpunit-bridge ###

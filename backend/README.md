@@ -29,6 +29,7 @@ Après une modification des entités : `docker compose exec php bin/console doct
 |---|---|
 | Console Symfony | `docker compose exec php bin/console <commande>` |
 | Composer | `docker compose exec php composer <commande>` |
+| Tests PHPUnit | `docker compose exec php vendor/bin/phpunit` |
 | Logs | `docker compose logs -f php` |
 | Arrêter | `docker compose down` (ajouter `-v` pour effacer la base) |
 | Reconstruire après une modification du Dockerfile | `docker compose up -d --build` |
@@ -36,6 +37,12 @@ Après une modification des entités : `docker compose exec php bin/console doct
 Versions : PHP 8.4 (image `dunglas/frankenphp`), Composer 2, PostgreSQL 17. Pour changer de version ou ajouter une extension PHP, modifier `Dockerfile` (`install-php-extensions …`) puis reconstruire.
 
 Le container tourne en root : `var/`, et les fichiers générés dans le container (migrations, `vendor/` après un `composer require`), appartiennent à root sur la machine hôte. Lancer la console dans le container, et rendre un fichier généré avec `docker compose exec php chown $(id -u):$(id -g) <fichier>`.
+
+## Tests
+
+    docker compose exec php vendor/bin/phpunit
+
+Chaque lancement recrée la base `unifolio_test` (migrations puis fixtures) ; chaque test travaille dans une transaction annulée à la fin (`tests/DatabaseTestCase.php`). Les tests échouent sur toute dépréciation PHP. Un seul fichier : `vendor/bin/phpunit tests/Repository/EnseignantDepartementRepositoryTest.php`.
 
 ## Licence
 
