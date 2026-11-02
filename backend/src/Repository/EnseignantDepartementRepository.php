@@ -93,47 +93,6 @@ class EnseignantDepartementRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function search(string $needle, Departement $departement): array
-    {
-        $query = $this->createQueryBuilder('d')
-            ->innerJoin(Enseignant::class, 'p', 'WITH', 'd.enseignant = p.id')
-            ->where('LOWER(p.nom) LIKE LOWER(:needle)')
-            ->orWhere('LOWER(p.prenom) LIKE LOWER(:needle)')
-            ->orWhere('LOWER(p.username) LIKE LOWER(:needle)')
-            ->orWhere('LOWER(p.mailUniv) LIKE LOWER(:needle)')
-            ->andWhere('d.departement = :departement')
-            ->setParameter('needle', '%' . $needle . '%')
-            ->setParameter('departement', $departement->getId())
-            ->orderBy('p.nom', Criteria::ASC)
-            ->addOrderBy('p.prenom', Criteria::ASC)
-            ->getQuery()
-            ->getResult();
-
-        $t = [];
-
-        /** @var EnseignantDepartement $pers */
-        foreach ($query as $pers) {
-            $enseignant = $pers->getEnseignant();
-            if (null !== $enseignant) {
-                $tt = [];
-                $tt['displayPr'] = $enseignant->getDisplayPr();
-                $tt['slug'] = $enseignant->getSlug();
-                $tt['photo'] = $enseignant->getPhotoName();
-                $tt['nom'] = $enseignant->getNom();
-                $tt['numeroHarpege'] = $enseignant->getNumeroHarpege();
-                $tt['prenom'] = $enseignant->getPrenom();
-                $tt['username'] = $enseignant->getUserIdentifier();
-                $tt['mailUniv'] = $enseignant->getMailUniv();
-                $tt['mailPerso'] = $enseignant->getMailPerso();
-                $tt['avatarInitiales'] = $enseignant->getAvatarInitiales();
-
-                $t[] = $tt;
-            }
-        }
-
-        return $t;
-    }
-
     public function save(EnseignantDepartement $enseignantDepartement, bool $flush = false): void
     {
         $this->_em->persist($enseignantDepartement);
