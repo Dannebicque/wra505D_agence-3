@@ -148,3 +148,36 @@ Ne jamais déclarer une tâche terminée sans avoir exécuté ces vérifications
 
 - Réponses en français.
 - En fin de tâche, résumé court : ce qui a été fait, fichiers modifiés, résultat des vérifications (§7), points ouverts, entrée `AI_PROMPT_BOOK` proposée.
+
+## 12. Skills et outils IA
+
+Avant de choisir un skill ou un outil, se référer à cette liste (source : page Notion « [AI skills & plugins](https://app.notion.com/p/AI-skills-plugins-409f659ee96e81eaa3e7f9f89265867c) »). Les règles de ce fichier priment toujours : workflow (§4), relecture croisée (§6), dépendances (§10). Si un outil n'est pas installé, le signaler et proposer l'équivalent disponible, sans inventer de commande. Les assistants sans ces skills (Codex, Gemini…) appliquent la même démarche à la main.
+
+| Besoin | Outil | Invocation (Claude Code) |
+|---|---|---|
+| Clarifier une fonctionnalité floue avant de coder | Grill Me | `/grill-me` |
+| Direction visuelle, palette, typographie, design system | UI/UX Pro Max | `/ui-ux-pro-max` |
+| Écran soigné, qui ne fait pas « template IA » | Taste Skill | `/taste-skill:taste-skill` |
+| Micro-interactions, transitions | Emil Kowalski Skills | `/animate`, `/review-animations`, `/improve-animations` |
+| Animations au scroll, timelines | GSAP Skills | `/gsap-scrolltrigger`, `/gsap-timeline` (ajouter GSAP au projet = dépendance à justifier, §10) |
+| Audit d'accessibilité | Design (Anthropic) | `/design:accessibility-review` |
+| Relecture de code | Code review | `/code-review` (complète la relecture croisée §6, ne la remplace pas) |
+
+**Enchaînements recommandés**
+
+- Fonctionnalité : `/grill-me` → plan (§4) → implémentation et tests → `/code-review` → relecture croisée (§6).
+- Écran ou refonte visuelle : `/ui-ux-pro-max` → `/taste-skill:taste-skill` → `/design:accessibility-review`.
+
+**Installation (Claude Code, portée utilisateur, rien dans le dépôt)**
+
+```bash
+claude plugin marketplace add mattpocock/skills && claude plugin install mattpocock-skills@mattpocock   # Grill Me
+claude plugin marketplace add leonxlnx/taste-skill && claude plugin install taste-skill@taste-skill    # Taste Skill
+```
+
+UI/UX Pro Max, Emil Kowalski Skills et GSAP Skills : suivre le README de [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill), [emilkowalski/skills](https://github.com/emilkowalski/skills) et [greensock/gsap-skills](https://github.com/greensock/gsap-skills).
+
+**Non utilisés sur ce projet**
+
+- Motion Primitives, Watermelon UI : composants React, incompatibles avec Nuxt/Vue.
+- ECC (Everything Claude Code) : 27 hooks globaux et plus de 300 skills qui doublonnent ce workflow. Pas d'adoption sans décision de l'équipe.
