@@ -57,6 +57,7 @@ class ReferentielSynchro extends AbstractController
         AnneeRepository $anneeRepository,
         DiplomeRepository $diplomeRepository,
     ): Response {
+        $erreurs = [];
 
 
         if ($departementRepository->findOneBy(['libelle' => 'Fixtures'])) {
@@ -171,7 +172,7 @@ class ReferentielSynchro extends AbstractController
                     $parcoursRepository->save($newParcours, true);
                 }
             } else {
-                $this->addFlash('error', 'Le référentiel ' . $apcParcours['referentiel'] . ' n\'existe pas en base de données.');
+                $erreurs[] = 'Le référentiel ' . $apcParcours['referentiel'] . ' n\'existe pas en base de données.';
             }
         }
 
@@ -313,8 +314,6 @@ class ReferentielSynchro extends AbstractController
         }
 
 
-        $this->addFlash('success', 'Les données ont bien été importées.');
-
-        return $this->redirectToRoute('app_dashboard');
+        return $this->json(['message' => 'Les données ont bien été importées.', 'erreurs' => $erreurs]);
     }
 }

@@ -20,7 +20,7 @@ use App\Repository\EtudiantRepository;
 use App\Repository\GroupeRepository;
 use App\Repository\SemestreRepository;
 use App\Repository\UsersRepository;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
+use Symfony\Component\Mime\Email;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
@@ -74,21 +74,14 @@ class UserSynchro extends AbstractController
                     $data['mail_univ'],
                     ['id' => $data['username']]
                 );
-                $email = (new TemplatedEmail())
+                $email = (new Email())
                     ->from(new Address('portfolio.iut-troyes@univ-reims.fr', 'UniFolio Mail Bot'))
                     ->to($mailEtudiant)
                     ->subject('UniFolio - Vérification de compte - Action Requise')
-                    ->htmlTemplate('email.html.twig')
-                    ->context([
-                        'confirm_link' => $signatureComponents->getSignedUrl(),
-                        'user' => null,
-                        'email_subject' => 'Vérification de votre compte',
-                        'email_message' => '<p>Pour accéder à votre compte, il est impératif de vérifier votre adresse mail. Cela garantit la sécurité de vos données personnelles.</p>
+                    ->html($this->htmlVerification('Vérification de votre compte', '<p>Pour accéder à votre compte, il est impératif de vérifier votre adresse mail. Cela garantit la sécurité de vos données personnelles.</p>
                                     <p>Pour ce faire, cliquez sur le bouton ci-dessous.</p>
                                     <p>Si vous n\'êtes pas à l\'origine de cette demande, que vous rencontrez des difficultés ou que vous avez des questions, merci de ne pas cliquer sur le bouton et de nous contacter à portfolio.iut-troyes@univ-reims.fr.</p>
-                                    <p>Cordialement,</p>',
-                        'email_button' => 'confirm_email'
-                    ]);
+                                    <p>Cordialement,</p>', $signatureComponents->getSignedUrl()));
                 $mailer->send($email);
             }
             return true;
@@ -248,19 +241,12 @@ class UserSynchro extends AbstractController
                     $data['mail_univ'],
                     ['id' => $data['username']]
                 );
-                $email = (new TemplatedEmail())
+                $email = (new Email())
                     ->from(new Address('portfolio.iut-troyes@univ-reims.fr', 'UniFolio Mail Bot'))
                     ->to($mailEnseignant)
                     ->subject('UniFolio - Confirmation de votre compte')
-                    ->htmlTemplate('email.html.twig')
-                    ->context([
-                        'confirm_link' => $signatureComponents->getSignedUrl(),
-                        'user' => null,
-                        'email_subject' => 'Confirmation de votre compte',
-                        'email_message' => '<p>Afin de vérifier votre compte, , cliquez sur le bouton ci-dessous.</p>
-                                    <p>Si vous n\'êtes pas à l\'origine de cette demande, merci de ne pas cliquer sur le bouton et de contacter l\'administrateur du site.</p>',
-                        'email_button' => 'confirm_email'
-                    ]);
+                    ->html($this->htmlVerification('Confirmation de votre compte', '<p>Afin de vérifier votre compte, , cliquez sur le bouton ci-dessous.</p>
+                                    <p>Si vous n\'êtes pas à l\'origine de cette demande, merci de ne pas cliquer sur le bouton et de contacter l\'administrateur du site.</p>', $signatureComponents->getSignedUrl()));
                 $mailer->send($email);
             }
             return true;
@@ -379,6 +365,7 @@ class UserSynchro extends AbstractController
         GroupeRepository $groupeRepository,
         SemestreRepository $semestreRepository,
     ) {
+        $erreurs = [];
         $etudiants = $etudiantRepository->findAll();
 
         foreach ($etudiants as $etudiant) {
@@ -407,14 +394,14 @@ class UserSynchro extends AbstractController
                     if ($status >= 200 && $status < 300) {
                         $response = $response->toArray();
                     } else {
-                        $this->addFlash('danger', sprintf('Erreur API (%d) pour %s : %s', $status, $login, substr($content, 0, 200)));
+                        $erreurs[] = sprintf('Erreur API (%d) pour %s : %s', $status, $login, substr($content, 0, 200));
                         continue;
                     }
                 } catch (\Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface $e) {
-                    $this->addFlash('danger', 'Erreur de connexion à l\'API pour ' . $login . ' : ' . $e->getMessage());
+                    $erreurs[] = 'Erreur de connexion à l\'API pour ' . $login . ' : ' . $e->getMessage();
                     continue;
                 } catch (\Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface $e) {
-                    $this->addFlash('danger', 'Erreur HTTP lors de la requête API pour ' . $login . ' : ' . $e->getMessage());
+                    $erreurs[] = 'Erreur HTTP lors de la requête API pour ' . $login . ' : ' . $e->getMessage();
                     continue;
                 }
 
@@ -450,8 +437,7 @@ class UserSynchro extends AbstractController
                 }
             }
         }
-        $this->addFlash('success', 'Les données ont bien été mises à jour.');
-        return $this->redirectToRoute('app_dashboard');
+        return $this->json(['message' => 'Les données ont bien été mises à jour.', 'erreurs' => $erreurs]);
     }
 
     #[Route('/api/intranet/enseignant/update', name: 'app_update_intranet_enseignant')]
@@ -512,7 +498,18 @@ class UserSynchro extends AbstractController
                 }
             }
         }
-        $this->addFlash('success', 'Les données ont bien été mises à jour.');
-        return $this->redirectToRoute('app_dashboard');
+        return $this->json(['message' => 'Les données ont bien été mises à jour.']);
+    }
+
+    // Reprend templates/email.html.twig de l'ancienne version, sans Twig.
+    private function htmlVerification(string $titre, string $message, string $lien): string
+    {
+        return '<div style="background-color: #6F18AD26; padding: 20px; text-align: center; color: black;">'
+            . '<img style="width: 150px; height: 150px" src="https://portfolio.iut-troyes.univ-reims.fr/logo.png" alt="UniFolio Logo">'
+            . '<h1>UniFolio</h1><h2>' . htmlspecialchars($titre) . '</h2></div>'
+            . '<div style="padding: 20px; text-align: left; color: black;">' . $message
+            . '<a href="' . htmlspecialchars($lien) . '"><button>Activation du compte UniFolio</button></a></div>'
+            . '<div style="background-color: #6F18AD26; padding: 20px; text-align: center; color: black;">'
+            . '<p>En cas de problème, envoyez un mail à portfolio.iut-troyes@univ-reims.fr</p></div>';
     }
 }

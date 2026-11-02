@@ -404,10 +404,6 @@ class StructureSynchro extends AbstractController
         }
 
 
-        $this->addFlash('success', 'Les données ont bien été importées.');
-
-        return $this->redirectToRoute('app_dashboard', [
-            'departements' => $departements
-        ]);
+        return $this->json(['message' => 'Les données ont bien été importées.']);
     }
 }
