@@ -10,6 +10,12 @@ export default defineNuxtConfig({
     },
   },
   css: ['~/assets/css/main.css'],
+  runtimeConfig: {
+    public: {
+      // Origine de l'API : vide = routes Nitro locales ; URL d'ApiPlatform via NUXT_PUBLIC_API_BASE
+      apiBase: '',
+    },
+  },
   compatibilityDate: '2026-10-14',
   typescript: {
     // Les fichiers de test hors runtime Nuxt sont aussi couverts par `npm run typecheck`

@@ -23,6 +23,9 @@ export default defineConfig({
           // Le cache disque de Vitest 5 mémorise un chemin erroné pour l'entrée virtuelle
           // de @nuxt/test-utils : le second lancement échoue (voir docs/DECISIONS.md)
           fsModuleCache: false,
+          // Le démarrage de l'environnement Nuxt (hook beforeAll de @nuxt/test-utils) dépasse
+          // parfois les 10 s par défaut sous Windows (voir docs/DECISIONS.md)
+          hookTimeout: 60_000,
         },
       }),
     ],

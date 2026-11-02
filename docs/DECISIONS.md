@@ -70,3 +70,15 @@ Format : date, décision, alternatives écartées, raison.
   - statut de trace `brouillon` / `finalisee` (E-TR-05).
 - **Alternatives écartées** : reprendre tel quel le modèle Doctrine de l'ancienne version (tables `OrdrePage` / `OrdreTrace` en 1-1 contredites par des liens N-N, enums entiers dont la valeur « non renseigné » n'a pas de libellé et fait planter l'affichage, cascades de suppression qui effacent la trace ou l'étudiant).
 - **Raison** : une seule source de vérité par information, des erreurs détectées par TypeScript, et le même contrat de données pour les routes Nitro et la future API ApiPlatform. Le type de notification s'appelle `NotificationUtilisateur` pour ne pas masquer l'API `Notification` du navigateur (les types de `shared/types/` sont importés automatiquement partout).
+
+## 2026-11-02 — Couche services et bascule vers ApiPlatform
+
+- **Décision** : tout appel passe par `apiFetch()` (`app/services/api.ts`). `runtimeConfig.public.apiBase` est une **origine** (vide = routes Nitro locales, `NUXT_PUBLIC_API_BASE` pour ApiPlatform) et les chemins sont toujours complets (`/api/...`). Toute erreur devient une `ApiError` (`status`, message en français) : le message du serveur est repris pour les erreurs 4xx (`detail` d'ApiPlatform, puis `message` de Nitro), jamais pour les 5xx (détails techniques), et un message dédié couvre la panne réseau.
+- **Alternatives écartées** : `baseURL: '/api'` (un IRI comme `/api/traces/12` deviendrait `/api/api/traces/12`) ; laisser remonter la `FetchError` d'ofetch (chaque composant devrait traduire les erreurs lui-même).
+- **Raison** : la bascule du Sprint 4 se limite à une variable d'environnement ; les composants affichent `error.message` sans traitement, et le format d'erreur d'ApiPlatform est déjà pris en charge.
+
+## 2026-11-02 — Délai du hook de démarrage Nuxt dans Vitest
+
+- **Décision** : `hookTimeout: 60_000` dans le projet Vitest `nuxt`.
+- **Alternatives écartées** : délai passé à chaque fichier de test (à répéter partout) ; garder 10 s (un test sans import lourd échoue systématiquement).
+- **Raison** : sous Windows, le démarrage de l'environnement Nuxt (`beforeAll` de `@nuxt/test-utils`) prend 12 à 15 s. Même un test vide échouait ; `index.test.ts` ne passait que parce que l'import de la page laissait à Nuxt le temps de démarrer. Le délai ne concerne que ce démarrage : un test bloqué échoue toujours.
