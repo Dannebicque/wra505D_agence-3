@@ -37,7 +37,7 @@ class Departement
     private ?string $description = null;
 
     #[ORM\OneToMany(mappedBy: 'departement', targetEntity: Diplome::class)]
-    #[ORM\OrderBy(value: ['libelle' => 'ASC'])]
+    #[ORM\OrderBy(value: ['libelle' => \SortDirection::Ascending])]
     private Collection $diplomes;
 
     /**

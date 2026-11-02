@@ -30,7 +30,7 @@ class Diplome
     private ?Departement $departement;
 
     #[ORM\OneToMany(mappedBy: 'diplome', targetEntity: Annee::class)]
-    #[ORM\OrderBy(value: ['ordre' => 'ASC', 'libelle' => 'ASC'])]
+    #[ORM\OrderBy(value: ['ordre' => \SortDirection::Ascending, 'libelle' => \SortDirection::Ascending])]
     private Collection $annees;
 
     #[ORM\ManyToOne(inversedBy: 'diplomes')]
