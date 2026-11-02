@@ -2,7 +2,7 @@ services:
   php:
     build: .
     ports:
-      - "8000:80"
+      - "127.0.0.1:8000:80"
     volumes:
       - ./:/app
     depends_on:
@@ -16,7 +16,7 @@ services:
       POSTGRES_USER: app
       POSTGRES_PASSWORD: app
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - database_data:/var/lib/postgresql/data
     healthcheck:

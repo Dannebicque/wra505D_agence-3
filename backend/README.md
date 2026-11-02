@@ -11,13 +11,15 @@ Prérequis : Docker et Docker Compose. PHP, Composer et PostgreSQL tournent dans
     cd backend
     docker compose up -d --build
 
-Au démarrage, le container `php` lance `composer install` puis FrankenPHP. L'API répond sur http://localhost:8000. PostgreSQL 17 est exposé sur `localhost:5432` (base `unifolio`, utilisateur et mot de passe `app`).
+Au démarrage, le container `php` lance `composer install` puis FrankenPHP : attendre « FrankenPHP started » dans `docker compose logs -f php`. L'API répond sur http://localhost:8000 (`/` renvoie 404 : seules les routes `POST /api/intranet/*` existent pour l'instant, réservées aux admins). PostgreSQL 17 est exposé sur `localhost:5432` (base `unifolio`, utilisateur et mot de passe `app`).
 
 Les secrets et valeurs locales vont dans `.env.local` (jamais versionné).
 
 ### Créer le schéma
 
-    docker compose exec php bin/console doctrine:schema:update --force
+    docker compose exec php bin/console doctrine:migrations:migrate
+
+Après une modification des entités : `docker compose exec php bin/console doctrine:migrations:diff`, relire la migration générée, puis `migrate`.
 
 ### Commandes courantes
 
@@ -31,7 +33,7 @@ Les secrets et valeurs locales vont dans `.env.local` (jamais versionné).
 
 Versions : PHP 8.4 (image `dunglas/frankenphp`), Composer 2, PostgreSQL 17. Pour changer de version ou ajouter une extension PHP, modifier `Dockerfile` (`install-php-extensions …`) puis reconstruire.
 
-Le container tourne en root : `var/` appartient à root sur la machine hôte. Lancer la console dans le container.
+Le container tourne en root : `var/`, et les fichiers générés dans le container (migrations, `vendor/` après un `composer require`), appartiennent à root sur la machine hôte. Lancer la console dans le container, et rendre un fichier généré avec `docker compose exec php chown $(id -u):$(id -g) <fichier>`.
 
 ## Licence
 
