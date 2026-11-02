@@ -28,6 +28,7 @@ npm-debug.log*
 
 # IDE
 .idea/
+.fleet/
 .vscode/*
 !.vscode/extensions.json
 *.swp

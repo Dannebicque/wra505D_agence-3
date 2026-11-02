@@ -42,17 +42,23 @@ docs/           FONCTIONNALITES.md, ROADMAP.md, DECISIONS.md
 
 ## 2. Commandes
 
-Le projet Nuxt **n'est pas encore initialisé** : aucune commande n'existe pour l'instant. À l'initialisation, créer dans `package.json` les scripts ci-dessous, puis remplacer ce tableau par les commandes réelles vérifiées.
+Node 24 (`.nvmrc`). Après un `git pull` qui modifie `package-lock.json` : `npm ci`.
 
-| Action | Script prévu |
+| Action | Commande |
 |---|---|
-| Installer | `npm install` |
-| Lancer (dev) | `npm run dev` |
-| Builder / prévisualiser | `npm run build` / `npm run preview` |
-| Linter / formater | `npm run lint` / `npm run format` |
-| Tests unitaires + intégration | `npm run test` (un seul fichier : `npx vitest run <chemin>`, un seul test : `-t "<nom>"`) |
-| Tests E2E | `npm run test:e2e` (un seul : `npx playwright test <chemin>`) |
+| Installer | `npm ci` (puis `npx playwright install chromium` une fois, pour l'E2E) |
+| Lancer (dev, `localhost:3000`) | `npm run dev` |
+| Builder / prévisualiser le build | `npm run build` / `npm run preview` |
+| Linter / corriger | `npm run lint` / `npm run lint:fix` |
+| Formater / vérifier le format | `npm run format` / `npm run format:check` |
 | Typage | `npm run typecheck` |
+| Tests unitaires + intégration (Vitest) | `npm run test` ; en continu : `npm run test:watch` |
+| Un fichier / un test Vitest | `npx vitest run tests/nuxt/index.test.ts` / `npx vitest run -t "affiche le titre"` |
+| Un seul projet Vitest | `npx vitest run --project unit` (ou `nuxt`) |
+| Tests E2E (Playwright, build de production) | `npm run test:e2e` ; un fichier : `npx playwright test tests/e2e/accueil.spec.ts` |
+
+- **Tests** : `tests/unit/` pour la logique pure (environnement Node, rapide), `tests/nuxt/` pour ce qui a besoin du runtime Nuxt (composants, stores, composables : `mountSuspended`), `tests/e2e/` pour les parcours, chacun avec un contrôle axe.
+- **CI** (`.github/workflows/ci.yml`) : sur chaque PR, `npm ci`, lint, format, typage, tests, build et E2E. Une PR dont la CI échoue n'est pas prête pour la relecture.
 
 ## 3. Gitflow (obligatoire, évalué)
 
@@ -142,3 +148,36 @@ Ne jamais déclarer une tâche terminée sans avoir exécuté ces vérifications
 
 - Réponses en français.
 - En fin de tâche, résumé court : ce qui a été fait, fichiers modifiés, résultat des vérifications (§7), points ouverts, entrée `AI_PROMPT_BOOK` proposée.
+
+## 12. Skills et outils IA
+
+Avant de choisir un skill ou un outil, se référer à cette liste (source : page Notion « [AI skills & plugins](https://app.notion.com/p/AI-skills-plugins-409f659ee96e81eaa3e7f9f89265867c) »). Les règles de ce fichier priment toujours : workflow (§4), relecture croisée (§6), dépendances (§10). Si un outil n'est pas installé, le signaler et proposer l'équivalent disponible, sans inventer de commande. Les assistants sans ces skills (Codex, Gemini…) appliquent la même démarche à la main.
+
+| Besoin | Outil | Invocation (Claude Code) |
+|---|---|---|
+| Clarifier une fonctionnalité floue avant de coder | Grill Me | `/grill-me` |
+| Direction visuelle, palette, typographie, design system | UI/UX Pro Max | `/ui-ux-pro-max` |
+| Écran soigné, qui ne fait pas « template IA » | Taste Skill | `/taste-skill:taste-skill` |
+| Micro-interactions, transitions | Emil Kowalski Skills | `/animate`, `/review-animations`, `/improve-animations` |
+| Animations au scroll, timelines | GSAP Skills | `/gsap-scrolltrigger`, `/gsap-timeline` (ajouter GSAP au projet = dépendance à justifier, §10) |
+| Audit d'accessibilité | Design (Anthropic) | `/design:accessibility-review` |
+| Relecture de code | Code review | `/code-review` (complète la relecture croisée §6, ne la remplace pas) |
+
+**Enchaînements recommandés**
+
+- Fonctionnalité : `/grill-me` → plan (§4) → implémentation et tests → `/code-review` → relecture croisée (§6).
+- Écran ou refonte visuelle : `/ui-ux-pro-max` → `/taste-skill:taste-skill` → `/design:accessibility-review`.
+
+**Installation (Claude Code, portée utilisateur, rien dans le dépôt)**
+
+```bash
+claude plugin marketplace add mattpocock/skills && claude plugin install mattpocock-skills@mattpocock   # Grill Me
+claude plugin marketplace add leonxlnx/taste-skill && claude plugin install taste-skill@taste-skill    # Taste Skill
+```
+
+UI/UX Pro Max, Emil Kowalski Skills et GSAP Skills : suivre le README de [nextlevelbuilder/ui-ux-pro-max-skill](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill), [emilkowalski/skills](https://github.com/emilkowalski/skills) et [greensock/gsap-skills](https://github.com/greensock/gsap-skills).
+
+**Non utilisés sur ce projet**
+
+- Motion Primitives, Watermelon UI : composants React, incompatibles avec Nuxt/Vue.
+- ECC (Everything Claude Code) : 27 hooks globaux et plus de 300 skills qui doublonnent ce workflow. Pas d'adoption sans décision de l'équipe.
