@@ -53,9 +53,10 @@ const items = computed(() =>
       </template>
 
       <template #body>
+        <!-- tabindex="0" : la zone qui défile doit être atteignable au clavier (axe, scrollable-region-focusable) -->
         <main
           id="contenu"
-          tabindex="-1"
+          tabindex="0"
           class="mx-auto w-full max-w-5xl pt-4 focus:outline-none lg:pt-10"
         >
           <slot />
