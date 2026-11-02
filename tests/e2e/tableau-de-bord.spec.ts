@@ -16,8 +16,8 @@ test.describe('tableau de bord étudiant', () => {
 
   test('affiche les compteurs', async ({ page }) => {
     const counters = page.getByRole('region', { name: 'En chiffres' })
-    await expect(counters.getByText('Traces déposées')).toBeVisible()
-    await expect(counters).toContainText(/Niveaux acquis\s*3\s*sur 8/)
+    await expect(counters).toContainText(/Traces déposées\s*8/)
+    await expect(counters).toContainText(/Évaluations acquises\s*3\s*sur 8/)
     await expect(counters).toContainText(/En cours d’acquisition\s*2/)
     await expect(counters).toContainText(/En attente d’évaluation\s*2/)
   })
@@ -29,7 +29,7 @@ test.describe('tableau de bord étudiant', () => {
       .getByRole('listitem')
     await expect(rows).toHaveCount(5)
     await expect(rows.filter({ hasText: 'Développer' })).toContainText('1 acquis · 1 non acquis')
-    await expect(rows.filter({ hasText: 'Entreprendre' })).toContainText('aucune trace évaluée')
+    await expect(rows.filter({ hasText: 'Entreprendre' })).toContainText('aucune trace associée')
   })
 
   test('liste les brouillons à terminer', async ({ page }) => {

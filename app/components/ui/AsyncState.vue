@@ -10,6 +10,7 @@ const props = defineProps<{
 
 defineEmits<{ retry: [] }>()
 
+const isLoading = computed(() => props.status === 'pending' || props.status === 'idle')
 const errorMessage = computed(() => {
   const message = (props.error as { message?: unknown } | undefined)?.message
   return typeof message === 'string' && message.trim() !== ''
@@ -19,26 +20,31 @@ const errorMessage = computed(() => {
 </script>
 
 <template>
-  <div v-if="status === 'pending' || status === 'idle'" role="status" class="space-y-3">
-    <span class="sr-only">Chargement…</span>
-    <USkeleton class="h-6 w-2/3" />
-    <USkeleton class="h-24 w-full" />
+  <!-- Racine unique : les classes passées au composant s'appliquent dans tous les états -->
+  <div>
+    <!-- Zone vivante permanente : seul son texte change, ce que les lecteurs d'écran annoncent -->
+    <p role="status" class="sr-only">{{ isLoading ? 'Chargement…' : '' }}</p>
+
+    <div v-if="isLoading" class="space-y-3" aria-hidden="true">
+      <USkeleton class="h-6 w-2/3" />
+      <USkeleton class="h-24 w-full" />
+    </div>
+
+    <UAlert
+      v-else-if="status === 'error'"
+      color="error"
+      variant="subtle"
+      title="Impossible d’afficher ces informations"
+      :description="errorMessage"
+      :actions="[
+        { label: 'Réessayer', color: 'error', variant: 'outline', onClick: () => $emit('retry') },
+      ]"
+    />
+
+    <p v-else-if="empty" class="text-muted">
+      {{ emptyMessage ?? 'Rien à afficher pour l’instant.' }}
+    </p>
+
+    <slot v-else />
   </div>
-
-  <UAlert
-    v-else-if="status === 'error'"
-    color="error"
-    variant="subtle"
-    title="Impossible d’afficher ces informations"
-    :description="errorMessage"
-    :actions="[
-      { label: 'Réessayer', color: 'error', variant: 'outline', onClick: () => $emit('retry') },
-    ]"
-  />
-
-  <p v-else-if="empty" class="text-muted">
-    {{ emptyMessage ?? 'Rien à afficher pour l’instant.' }}
-  </p>
-
-  <slot v-else />
 </template>

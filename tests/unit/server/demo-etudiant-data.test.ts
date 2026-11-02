@@ -16,6 +16,7 @@ describe('données factices de l’étudiante de démo', () => {
     expect(computeCounters(TRACES, VALIDATIONS)).toEqual({
       traces: 8,
       drafts: 2,
+      submitted: 6,
       validations: 8,
       acquired: 3,
       inProgress: 2,

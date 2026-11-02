@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import type { CompetenceProgression } from '~/utils/tableau-de-bord'
-
 useSeoMeta({ title: ESPACE_LABELS.etudiant })
 
 const { data, status, error, refresh, counters, progression, drafts } = useTableauDeBordEtudiant()
@@ -11,10 +9,12 @@ const greeting = computed(() =>
     : ESPACE_LABELS.etudiant,
 )
 
+// Fuseau explicite : le serveur (souvent en UTC) et le navigateur affichent le même jour
 const today = new Intl.DateTimeFormat('fr-FR', {
   weekday: 'long',
   day: 'numeric',
   month: 'long',
+  timeZone: 'Europe/Paris',
 }).format(new Date())
 const todayLabel = today.charAt(0).toUpperCase() + today.slice(1)
 
@@ -23,7 +23,8 @@ const tiles = computed(() =>
     ? [
         { label: 'Traces déposées', value: counters.value.traces, suffix: '' },
         {
-          label: 'Niveaux acquis',
+          // « Niveaux » ou « évaluations » : question ouverte n° 11 (docs/FONCTIONNALITES.md)
+          label: 'Évaluations acquises',
           value: counters.value.acquired,
           suffix: `sur ${counters.value.validations}`,
         },
@@ -35,19 +36,12 @@ const tiles = computed(() =>
 
 const maxTotal = computed(() => Math.max(1, ...progression.value.map((p) => p.total)))
 
-function summary(p: CompetenceProgression): string {
-  const parts = [
-    [p.acquired, 'acquis'],
-    [p.inProgress, 'en cours'],
-    [p.notAcquired, 'non acquis'],
-    [p.pending, 'en attente'],
-  ]
-    .filter(([count]) => (count as number) > 0)
-    .map(([count, label]) => `${count} ${label}`)
-  return parts.length ? parts.join(' · ') : 'aucune trace évaluée'
-}
-
-const dayMonth = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long' })
+// Dates sans heure (AAAA-MM-JJ) : lues en UTC pour ne pas reculer d'un jour selon le fuseau
+const dayMonth = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'UTC',
+})
 </script>
 
 <template>
@@ -82,7 +76,10 @@ const dayMonth = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long
               </h2>
               <TableauDeBordProgressionLegend />
             </div>
-            <ul class="mt-4 space-y-2" aria-label="Progression par compétence">
+            <p v-if="progression.length === 0" class="mt-4 text-muted">
+              Aucun référentiel de compétences n’est associé à votre formation.
+            </p>
+            <ul v-else class="mt-4 space-y-2" aria-label="Progression par compétence">
               <li
                 v-for="p in progression"
                 :key="p.competence['@id']"
@@ -97,7 +94,7 @@ const dayMonth = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long
                   :max="maxTotal"
                 />
                 <span class="col-span-2 text-xs text-muted sm:col-span-1 sm:text-right">
-                  {{ summary(p) }}
+                  {{ progressionSummary(p) }}
                 </span>
               </li>
             </ul>

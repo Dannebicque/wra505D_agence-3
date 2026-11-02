@@ -14,7 +14,7 @@ const SEGMENTS = [
   { key: 'acquired', class: 'bg-primary' },
   { key: 'inProgress', class: 'bg-primary/40' },
   { key: 'notAcquired', class: 'bg-error/60' },
-  { key: 'pending', class: 'bg-accented' },
+  { key: 'pending', class: 'bg-(--ui-text-dimmed)' },
 ] as const
 
 const rest = computed(

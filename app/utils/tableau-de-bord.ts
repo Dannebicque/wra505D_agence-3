@@ -7,6 +7,8 @@ export interface Counters {
   /** Traces hors corbeille, brouillons compris. */
   traces: number
   drafts: number
+  /** Traces finalisées hors corbeille : les seules soumises à l'évaluation. */
+  submitted: number
   /** Validations des traces finalisées (les brouillons ne sont pas encore soumis). */
   validations: number
   acquired: number
@@ -52,6 +54,7 @@ export function computeCounters(
   return {
     traces: active.length,
     drafts: active.filter((t) => t.statut === 'brouillon').length,
+    submitted: active.filter((t) => t.statut === 'finalisee').length,
     validations: counted.length,
     acquired: countByEtat(counted, 3),
     inProgress: countByEtat(counted, 2),
@@ -89,10 +92,32 @@ export function draftTraces(traces: readonly Trace[]): Trace[] {
 const NOMBRES = ['', 'Une', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf', 'Dix']
 
 /** Le fait du jour, affiché après « Bonjour <prénom>. » */
-export function greetingFact(counters: Pick<Counters, 'traces' | 'pendingTraces'>): string {
+export function greetingFact(
+  counters: Pick<Counters, 'traces' | 'submitted' | 'validations' | 'pendingTraces'>,
+): string {
   if (counters.traces === 0) return 'Déposez votre première trace pour commencer.'
+  if (counters.submitted === 0) return 'Terminez un brouillon pour le soumettre à l’évaluation.'
+  if (counters.validations === 0) {
+    return 'Associez des compétences à vos traces pour les faire évaluer.'
+  }
   if (counters.pendingTraces === 0) return 'Toutes vos traces ont été évaluées.'
   if (counters.pendingTraces === 1) return 'Une trace attend son évaluation.'
   const nombre = NOMBRES[counters.pendingTraces] ?? String(counters.pendingTraces)
   return `${nombre} traces attendent leur évaluation.`
+}
+
+/** Résumé en texte d'une compétence (équivalent de sa barre de progression). */
+export function progressionSummary(
+  p: Pick<CompetenceProgression, 'acquired' | 'inProgress' | 'notAcquired' | 'pending'>,
+): string {
+  const parts: [number, string][] = [
+    [p.acquired, 'acquis'],
+    [p.inProgress, 'en cours'],
+    [p.notAcquired, 'non acquis'],
+    [p.pending, 'en attente'],
+  ]
+  const present = parts.filter(([count]) => count > 0)
+  return present.length
+    ? present.map(([count, label]) => `${count} ${label}`).join(' · ')
+    : 'aucune trace associée'
 }

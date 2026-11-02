@@ -8,6 +8,7 @@ import {
   computeProgression,
   draftTraces,
   greetingFact,
+  progressionSummary,
 } from '../../app/utils/tableau-de-bord'
 
 function trace(id: number, statut: TraceStatut, dateSuppression: string | null = null): Trace {
@@ -115,6 +116,7 @@ describe('computeCounters', () => {
     expect(computeCounters(TRACES, VALIDATIONS)).toEqual({
       traces: 4,
       drafts: 1,
+      submitted: 3,
       validations: 4,
       acquired: 1,
       inProgress: 1,
@@ -128,6 +130,7 @@ describe('computeCounters', () => {
     expect(computeCounters([], [])).toEqual({
       traces: 0,
       drafts: 0,
+      submitted: 0,
       validations: 0,
       acquired: 0,
       inProgress: 0,
@@ -175,12 +178,50 @@ describe('draftTraces', () => {
 
 describe('greetingFact', () => {
   it.each([
-    [{ traces: 0, pendingTraces: 0 }, 'Déposez votre première trace pour commencer.'],
-    [{ traces: 3, pendingTraces: 0 }, 'Toutes vos traces ont été évaluées.'],
-    [{ traces: 3, pendingTraces: 1 }, 'Une trace attend son évaluation.'],
-    [{ traces: 8, pendingTraces: 2 }, 'Deux traces attendent leur évaluation.'],
-    [{ traces: 30, pendingTraces: 12 }, '12 traces attendent leur évaluation.'],
+    [
+      { traces: 0, submitted: 0, validations: 0, pendingTraces: 0 },
+      'Déposez votre première trace pour commencer.',
+    ],
+    // Les brouillons ne sont pas soumis : rien n'est « évalué »
+    [
+      { traces: 1, submitted: 0, validations: 0, pendingTraces: 0 },
+      'Terminez un brouillon pour le soumettre à l’évaluation.',
+    ],
+    [
+      { traces: 2, submitted: 2, validations: 0, pendingTraces: 0 },
+      'Associez des compétences à vos traces pour les faire évaluer.',
+    ],
+    [
+      { traces: 3, submitted: 3, validations: 4, pendingTraces: 0 },
+      'Toutes vos traces ont été évaluées.',
+    ],
+    [
+      { traces: 3, submitted: 3, validations: 4, pendingTraces: 1 },
+      'Une trace attend son évaluation.',
+    ],
+    [
+      { traces: 8, submitted: 6, validations: 8, pendingTraces: 2 },
+      'Deux traces attendent leur évaluation.',
+    ],
+    [
+      { traces: 30, submitted: 30, validations: 40, pendingTraces: 12 },
+      '12 traces attendent leur évaluation.',
+    ],
   ])('résume la situation %o', (counters, phrase) => {
     expect(greetingFact(counters)).toBe(phrase)
+  })
+})
+
+describe('progressionSummary', () => {
+  it('énumère les états présents, dans l’ordre', () => {
+    expect(progressionSummary({ acquired: 1, inProgress: 1, notAcquired: 0, pending: 1 })).toBe(
+      '1 acquis · 1 en cours · 1 en attente',
+    )
+  })
+
+  it('signale une compétence sans trace associée', () => {
+    expect(progressionSummary({ acquired: 0, inProgress: 0, notAcquired: 0, pending: 0 })).toBe(
+      'aucune trace associée',
+    )
   })
 })
