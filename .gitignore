@@ -45,3 +45,7 @@ desktop.ini
 CLAUDE.local.md
 # Remplacerait AGENTS.md en silence pour Codex
 AGENTS.override.md
+
+# Dossiers de travail des skills IA (maquettes, fiches, registres)
+.superpowers/
+.taste-skill/
