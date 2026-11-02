@@ -1,32 +1,37 @@
 <script setup lang="ts">
 const route = useRoute()
 const espace = computed(() => espaceFromPath(route.path))
-const accueil = computed(() => (espace.value ? `/${espace.value}` : '/'))
+const homePath = computed(() => (espace.value ? `/${espace.value}` : '/'))
+
 // Menu mobile : fermé à chaque choix, y compris le lien de la page déjà affichée
 // (la fermeture automatique de Nuxt UI ne réagit qu'à un changement d'URL)
-const menuOuvert = ref(false)
+const isMenuOpen = ref(false)
+
+// La barre latérale est en rem (unit="rem") : elle garde ses 224 px (14 rem) quelle que soit la fenêtre
 const items = computed(() =>
   (espace.value ? NAVIGATION[espace.value] : []).map((item) => ({
     ...item,
     exact: true,
     onSelect: () => {
-      menuOuvert.value = false
+      isMenuOpen.value = false
     },
   })),
 )
 </script>
 
 <template>
-  <UDashboardGroup class="bg-cadre">
+  <UDashboardGroup unit="rem" class="bg-cadre">
     <UDashboardSidebar
-      v-model:open="menuOuvert"
+      v-model:open="isMenuOpen"
       mode="modal"
-      :toggle="false"
+      :default-size="14"
+      :min-size="14"
+      :max-size="14"
       class="bg-cadre"
       :ui="{ root: 'border-none', footer: 'border-none' }"
     >
       <template #header>
-        <LayoutAppLogo :to="accueil" />
+        <LayoutAppLogo :to="homePath" />
       </template>
 
       <UNavigationMenu :items="items" orientation="vertical" aria-label="Navigation de l’espace" />
@@ -37,12 +42,12 @@ const items = computed(() =>
     </UDashboardSidebar>
 
     <UDashboardPanel
-      class="bg-default lg:my-2 lg:mr-2 lg:rounded-feuille lg:border lg:border-default"
+      class="bg-default lg:my-2 lg:mr-2 lg:min-h-0 lg:rounded-feuille lg:border lg:border-default"
     >
       <template #header>
         <UDashboardNavbar class="bg-cadre lg:hidden" :ui="{ root: 'border-none' }">
           <template #left>
-            <LayoutAppLogo :to="accueil" />
+            <LayoutAppLogo :to="homePath" />
           </template>
         </UDashboardNavbar>
       </template>

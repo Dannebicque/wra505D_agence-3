@@ -5,7 +5,7 @@ useSeoMeta({
 })
 
 // En attendant la connexion : accès direct aux trois espaces
-const ESPACES_ACCUEIL = [
+const SPACE_LINKS = [
   { label: 'Espace étudiant', to: '/etudiant' },
   { label: 'Espace enseignant', to: '/enseignant' },
   { label: 'Administration', to: '/admin' },
@@ -19,7 +19,7 @@ const ESPACES_ACCUEIL = [
       Déposez vos traces, composez votre portfolio de compétences et suivez vos évaluations.
     </p>
     <div class="flex flex-wrap gap-3">
-      <UButton v-for="espace in ESPACES_ACCUEIL" :key="espace.to" :to="espace.to" size="lg">
+      <UButton v-for="espace in SPACE_LINKS" :key="espace.to" :to="espace.to" size="lg">
         {{ espace.label }}
       </UButton>
     </div>

@@ -5,5 +5,18 @@ export default defineAppConfig({
       primary: 'sarcelle',
       neutral: 'slate',
     },
+    button: {
+      // Style éditorial : boutons en pilule
+      slots: { base: 'rounded-full' },
+      compoundVariants: [
+        {
+          // Au survol, le fond fonce (clair) ou s'éclaircit (sombre) : le texte reste lisible (AA)
+          color: 'primary',
+          variant: 'solid',
+          class:
+            'hover:bg-(--ui-color-primary-800) active:bg-(--ui-color-primary-800) dark:hover:bg-(--ui-color-primary-300) dark:active:bg-(--ui-color-primary-300)',
+        },
+      ],
+    },
   },
 })

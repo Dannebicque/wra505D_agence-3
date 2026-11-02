@@ -11,7 +11,7 @@ export interface NavItem {
 
 export const ESPACES: readonly Espace[] = ['etudiant', 'enseignant', 'admin']
 
-export const ESPACE_LIBELLES: Record<Espace, string> = {
+export const ESPACE_LABELS: Record<Espace, string> = {
   etudiant: 'Espace étudiant',
   enseignant: 'Espace enseignant',
   admin: 'Administration',

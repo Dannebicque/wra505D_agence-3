@@ -17,6 +17,15 @@ export default defineNuxtConfig({
       { name: 'Instrument Serif', weights: [400], global: true },
     ],
   },
+  // Mise en page des espaces (une page peut toujours déclarer la sienne avec definePageMeta)
+  routeRules: {
+    '/etudiant': { appLayout: 'espace' },
+    '/etudiant/**': { appLayout: 'espace' },
+    '/enseignant': { appLayout: 'espace' },
+    '/enseignant/**': { appLayout: 'espace' },
+    '/admin': { appLayout: 'espace' },
+    '/admin/**': { appLayout: 'espace' },
+  },
   runtimeConfig: {
     public: {
       // Origine de l'API : vide = routes Nitro locales ; URL d'ApiPlatform via NUXT_PUBLIC_API_BASE

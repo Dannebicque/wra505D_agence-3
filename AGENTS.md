@@ -29,12 +29,12 @@ Refonte de **UniFolio**, l'outil de portfolio de compétences d'un IUT (approche
 ```
 app/
   pages/        routes (kebab-case) — espaces /etudiant, /enseignant, /admin, portfolio public
-  layouts/      mises en page : `espace` (barre latérale) et `default` (publique), choisies par `middleware/layout.global.ts`
+  layouts/      mises en page : `espace` (barre latérale) et `default` (publique), choisies par les `routeRules` (`appLayout`) de `nuxt.config.ts`
   components/   composants Vue (PascalCase), regroupés par domaine (trace/, portfolio/…)
   composables/  logique réutilisable (useXxx)
   stores/       stores Pinia (un par domaine : trace, portfolio, auth…)
   services/     couche d'accès aux données (seul endroit qui appelle l'API)
-  middleware/   garde des routes par rôle, choix de la mise en page
+  middleware/   garde des routes par rôle
 shared/types/   types du domaine, partagés entre app/ et server/
 server/api/     routes Nitro (phase 1) ; server/data/ pour les données factices
 tests/          unit/, nuxt/ (intégration), e2e/ (Playwright)

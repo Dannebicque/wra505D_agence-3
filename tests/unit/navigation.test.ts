@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { ESPACE_LIBELLES, ESPACES, espaceFromPath, NAVIGATION } from '../../app/utils/navigation'
+import { ESPACE_LABELS, ESPACES, espaceFromPath, NAVIGATION } from '../../app/utils/navigation'
 
 const PAGES = fileURLToPath(new URL('../../app/pages', import.meta.url))
 
@@ -27,7 +27,7 @@ describe('NAVIGATION', () => {
   it('donne un libellé et au moins un lien à chaque espace', () => {
     expect(ESPACES).toEqual(['etudiant', 'enseignant', 'admin'])
     for (const espace of ESPACES) {
-      expect(ESPACE_LIBELLES[espace].trim()).not.toBe('')
+      expect(ESPACE_LABELS[espace].trim()).not.toBe('')
       expect(NAVIGATION[espace].length).toBeGreaterThan(0)
     }
   })
