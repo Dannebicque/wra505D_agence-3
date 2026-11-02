@@ -11,7 +11,7 @@ Prérequis : Docker et Docker Compose. PHP, Composer et PostgreSQL tournent dans
     cd backend
     docker compose up -d --build
 
-Au démarrage, le container `php` lance `composer install` puis FrankenPHP : attendre « FrankenPHP started » dans `docker compose logs -f php`. L'API répond sur http://localhost:8000 (`/` renvoie 404 : seules les routes `POST /api/intranet/*` existent pour l'instant, réservées aux admins). PostgreSQL 17 est exposé sur `localhost:5432` (base `unifolio`, utilisateur et mot de passe `app`).
+Au démarrage, le container `php` lance `composer install` puis FrankenPHP : attendre « FrankenPHP started » dans `docker compose logs -f php`. L'API répond sur http://localhost:8000/api (voir « API » ci-dessous). PostgreSQL 17 est exposé sur `localhost:5432` (base `unifolio`, utilisateur et mot de passe `app`).
 
 Les secrets et valeurs locales vont dans `.env.local` (jamais versionné).
 
@@ -37,6 +37,36 @@ Après une modification des entités : `docker compose exec php bin/console doct
 Versions : PHP 8.4 (image `dunglas/frankenphp`), Composer 2, PostgreSQL 17. Pour changer de version ou ajouter une extension PHP, modifier `Dockerfile` (`install-php-extensions …`) puis reconstruire.
 
 Le container tourne en root : `var/`, et les fichiers générés dans le container (migrations, `vendor/` après un `composer require`), appartiennent à root sur la machine hôte. Lancer la console dans le container, et rendre un fichier généré avec `docker compose exec php chown $(id -u):$(id -g) <fichier>`.
+
+## API
+
+API ApiPlatform au format JSON-LD/Hydra, conforme aux types du front (`shared/types/`). Documentation interactive en dev : http://localhost:8000/api/docs.
+
+### Connexion
+
+Par cookie de session (HttpOnly, SameSite=Lax) : le front envoie ses requêtes avec `credentials: 'include'`.
+
+| Requête | Réponse |
+|---|---|
+| `POST /api/login` avec `{"username": "…", "password": "…"}` (JSON) | 204 et cookie de session ; 401 si identifiants incorrects, 403 si compte non activé, 429 après 5 essais en une minute |
+| `GET /api/me` | l'utilisateur connecté (`User`) |
+| `POST /api/logout` | 204 |
+
+Comptes de démo (fixtures, dev et test uniquement), mot de passe `test` : `admin`, `enseignant`, `etudiant`, `etudiant2`. Charger les fixtures : `docker compose exec php bin/console doctrine:fixtures:load`.
+
+### Ressources (lecture seule au Sprint 0)
+
+Toutes exigent d'être connecté (401 sinon). Collections paginées par 30 (`?page=`).
+
+| Ressource | Accès |
+|---|---|
+| `/api/departements`, `/api/diplomes`, `/api/annees`, `/api/annee_universitaires`, `/api/semestres`, `/api/groupes`, `/api/parcours`, `/api/enseignants` | toute personne connectée |
+| `/api/etudiants` | enseignant ou admin |
+| `/api/etudiants/{id}` | l'étudiant lui-même, un enseignant ou un admin |
+| `/api/users/{id}` | l'utilisateur lui-même ou un admin |
+| `/api/intranet/*` (synchro, POST) | admin |
+
+Le front autorisé à appeler l'API est fixé par `CORS_ALLOW_ORIGIN` (`.env`, par défaut `http://localhost:3000`).
 
 ## Tests
 
