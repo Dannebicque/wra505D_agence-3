@@ -6,7 +6,10 @@ import { idFromIri, iri } from '../../shared/utils/iri'
 
 const BIBLIOTHEQUE = iri('bibliotheques', 1)
 
-export function createTraceRepository(seed: readonly Trace[], { maxSessions = 500 } = {}) {
+export function createTraceRepository(
+  seed: readonly Trace[],
+  { maxSessions = 500, maxTraces = 200 } = {},
+) {
   const sessions = new Map<string, Trace[]>()
 
   function tracesOf(session: string): Trace[] {
@@ -36,8 +39,10 @@ export function createTraceRepository(seed: readonly Trace[], { maxSessions = 50
       return find(tracesOf(session), id)
     },
 
-    create(session: string, input: TraceInput, now: string): Trace {
+    /** Renvoie `undefined` si le visiteur a atteint le nombre maximal de traces (mémoire bornée). */
+    create(session: string, input: TraceInput, now: string): Trace | undefined {
       const traces = tracesOf(session)
+      if (traces.length >= maxTraces) return undefined
       const nextId = Math.max(0, ...traces.map((t) => Number(idFromIri(t['@id'])) || 0)) + 1
       const trace: Trace = {
         ...input,

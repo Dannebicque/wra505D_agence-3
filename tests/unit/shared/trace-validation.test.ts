@@ -95,4 +95,15 @@ describe('validateTrace', () => {
     expect(validateTrace('n’importe quoi', { today: TODAY }).ok).toBe(false)
     expect(validateTrace(null, { today: TODAY }).ok).toBe(false)
   })
+
+  it('n’accepte qu’une adresse, bornée en longueur, et la nettoie des espaces', () => {
+    expect(messages({ ...VALID, contenu: ['https://a.example', 'https://b.example'] })).toEqual({
+      contenu: 'Une seule adresse par trace.',
+    })
+    expect(messages({ ...VALID, contenu: [`https://a.example/${'a'.repeat(2048)}`] })).toEqual({
+      contenu: 'L’adresse ne doit pas dépasser 2 048 caractères.',
+    })
+    const result = validateTrace({ ...VALID, contenu: ['  https://a.example  '] }, { today: TODAY })
+    expect(result.ok && result.value.contenu).toEqual(['https://a.example'])
+  })
 })

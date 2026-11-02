@@ -1,4 +1,5 @@
-import type { Trace, TraceInput } from '#shared/types/trace'
+import type { Trace, TraceInput } from '../../shared/types/trace'
+import { iri } from '../../shared/utils/iri'
 import { apiFetch, apiFetchAll, type ApiFetchOptions } from './api'
 
 /** Traces de l'utilisateur, toutes pages confondues. */

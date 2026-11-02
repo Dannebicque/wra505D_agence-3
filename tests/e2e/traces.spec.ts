@@ -47,6 +47,29 @@ test.describe('déposer une trace', () => {
     await expect(page).toHaveURL(/\/etudiant\/traces\/nouvelle$/)
   })
 
+  // WCAG 3.3.1 : après un envoi refusé, le focus va au premier champ en erreur
+  test('place le focus sur le premier champ en erreur', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant/traces/nouvelle')
+
+    await page.getByRole('button', { name: 'Finaliser la trace' }).click()
+
+    await expect(page.getByText('Le titre est obligatoire.')).toBeVisible()
+    await expect(page.getByRole('textbox', { name: /Titre/ })).toBeFocused()
+  })
+
+  // Pas de bulle native du navigateur (souvent en anglais) : le message s'affiche sous le champ
+  test('explique une adresse invalide sous le champ, en français', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant/traces/nouvelle')
+
+    await page.getByRole('textbox', { name: /Titre/ }).fill('Adresse invalide')
+    await page.getByRole('textbox', { name: /Adresse du lien/ }).fill('pas-une-adresse')
+    await page.getByRole('button', { name: 'Finaliser la trace' }).click()
+
+    await expect(
+      page.getByText('Saisissez une adresse web valide, commençant par https:// ou http://.'),
+    ).toBeVisible()
+  })
+
   test('modifie une trace existante et la repasse en brouillon', async ({ page }) => {
     await gotoHydrated(page, '/etudiant/traces')
     await page.getByRole('link', { name: 'Refonte du site du BDE' }).click()
@@ -64,7 +87,13 @@ test.describe('déposer une trace', () => {
   })
 })
 
-for (const path of ['/etudiant/traces', '/etudiant/traces/nouvelle']) {
+// /etudiant/traces/1 : trace lien ; /etudiant/traces/2 : trace image (fichier conservé)
+for (const path of [
+  '/etudiant/traces',
+  '/etudiant/traces/nouvelle',
+  '/etudiant/traces/1',
+  '/etudiant/traces/2',
+]) {
   for (const colorScheme of ['light', 'dark'] as const) {
     test(`${path} ne présente aucune violation WCAG A/AA (mode ${colorScheme})`, async ({
       page,

@@ -93,4 +93,11 @@ describe('dépôt de traces de démonstration', () => {
 
     expect(repo.list('a')).toHaveLength(1)
   })
+
+  it('refuse de créer une trace au-delà du nombre maximal par visiteur', () => {
+    const repo = createTraceRepository(SEED, { maxTraces: 2 })
+
+    expect(repo.create('a', INPUT, '2026-11-02T10:00:00Z')).toBeDefined()
+    expect(repo.create('a', INPUT, '2026-11-02T10:00:00Z')).toBeUndefined()
+  })
 })

@@ -4,11 +4,10 @@ import TraceForm from '~/components/trace/TraceForm.vue'
 
 type Form = Awaited<ReturnType<typeof mountSuspended<typeof TraceForm>>>
 
-// happy-dom ne soumet pas le formulaire au clic d'un bouton « submit » (les navigateurs, si :
-// voir l'E2E) : le clic fixe le statut, puis on soumet le formulaire
+// Les boutons envoient le formulaire eux-mêmes (type="button" : Entrée dans un champ ne change
+// jamais le statut de la trace)
 async function submitWith(form: Form, action: 'brouillon' | 'finaliser') {
   await form.get(`button[data-action="${action}"]`).trigger('click')
-  await form.get('form').trigger('submit')
 }
 
 describe('formulaire de trace', () => {
@@ -94,5 +93,17 @@ describe('formulaire de trace', () => {
       type: 'pdf',
       contenu: ['/fichiers/etude-ux.pdf'],
     })
+  })
+
+  it('affiche les erreurs du serveur sous les champs et renvoie celles sans champ', async () => {
+    const form = await mountSuspended(TraceForm)
+
+    const unmatched = form.vm.setServerErrors([
+      { propertyPath: 'titre', message: 'Titre déjà utilisé.' },
+      { propertyPath: 'statut', message: 'Statut refusé.' },
+    ])
+
+    await vi.waitFor(() => expect(form.text()).toContain('Titre déjà utilisé.'))
+    expect(unmatched).toEqual([{ propertyPath: 'statut', message: 'Statut refusé.' }])
   })
 })

@@ -9,7 +9,7 @@ import type {
 } from '../types/trace'
 import { TRACE_TYPES } from './domaine'
 
-export const TRACE_LIMITS = { titre: 100, contexte: 255, description: 5000 } as const
+export const TRACE_LIMITS = { titre: 100, contexte: 255, description: 5000, adresse: 2048 } as const
 
 const STATUTS: readonly TraceStatut[] = ['brouillon', 'finalisee']
 const CONCEPTION_IA: readonly ConceptionIa[] = ['non_renseigne', 'aucun', 'moyen', 'avance']
@@ -79,10 +79,18 @@ export function validateTrace(input: unknown, { today }: { today: string }): Tra
   if (!STATUTS.includes(statut)) fail('statut', 'Statut de trace inconnu.')
 
   const contenu = Array.isArray(raw.contenu)
-    ? raw.contenu.filter((item): item is string => typeof item === 'string' && item.trim() !== '')
+    ? raw.contenu
+        .filter((item): item is string => typeof item === 'string')
+        .map((item) => item.trim())
+        .filter((item) => item !== '')
     : []
   if (contenu.length === 0 && statut === 'finalisee') {
     fail('contenu', 'Ajoutez le contenu de la trace avant de la finaliser.')
+  } else if (contenu.length > 1) {
+    // Plusieurs fichiers ou liens par trace : fonctionnalité E-TR-03 retirée
+    fail('contenu', 'Une seule adresse par trace.')
+  } else if (contenu.some((item) => item.length > TRACE_LIMITS.adresse)) {
+    fail('contenu', 'L’adresse ne doit pas dépasser 2 048 caractères.')
   } else if (URL_TYPES.includes(type) && contenu.some((item) => !isWebUrl(item))) {
     fail('contenu', 'Saisissez une adresse web valide, commençant par https:// ou http://.')
   }

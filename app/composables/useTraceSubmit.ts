@@ -3,7 +3,8 @@ import type { TraceInput } from '#shared/types/trace'
 import { toApiError } from '~/services/errors'
 
 interface FormWithServerErrors {
-  setServerErrors: (violations: Violation[]) => void
+  /** Affiche les erreurs sous les champs et renvoie celles qui n'ont pas de champ. */
+  setServerErrors: (violations: Violation[]) => Violation[]
 }
 
 /**
@@ -26,12 +27,16 @@ export function useTraceSubmit(id: () => string | null, form: Ref<FormWithServer
       await navigateTo('/etudiant/traces')
     } catch (error) {
       const apiError = toApiError(error)
-      if (apiError.violations.length) {
-        form.value?.setServerErrors(apiError.violations)
-      } else {
+      // Jamais d'erreur silencieuse : ce qui ne peut pas s'afficher sous un champ part en notification
+      const unmatched = apiError.violations.length
+        ? (form.value?.setServerErrors(apiError.violations) ?? apiError.violations)
+        : []
+      if (!apiError.violations.length || unmatched.length) {
         toast.add({
           title: 'Enregistrement impossible',
-          description: apiError.message,
+          description: unmatched.length
+            ? unmatched.map((v) => v.message).join(' ')
+            : apiError.message,
           color: 'error',
         })
       }

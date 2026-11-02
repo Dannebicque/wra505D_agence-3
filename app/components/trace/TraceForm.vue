@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FormError } from '@nuxt/ui'
+import type { FormError, FormErrorEvent } from '@nuxt/ui'
 import type { Violation } from '#shared/types/api'
 import type {
   ConceptionIa,
@@ -60,11 +60,24 @@ function toInput(): TraceInput {
 }
 
 /** Les erreurs du contenu s'affichent sous le champ « adresse ». */
+const fieldOf = (propertyPath: string) => (propertyPath === 'contenu' ? 'adresse' : propertyPath)
+
+/** Champs affichés, donc capables de montrer une erreur. */
+const visibleFields = computed(
+  () =>
+    new Set([
+      'titre',
+      'description',
+      'contexte',
+      'dateRealisation',
+      'conceptionIa',
+      'realisationIa',
+      ...(fileName.value === null ? ['type', 'adresse'] : []),
+    ]),
+)
+
 const toFormErrors = (violations: Violation[]): FormError[] =>
-  violations.map((v) => ({
-    name: v.propertyPath === 'contenu' ? 'adresse' : v.propertyPath,
-    message: v.message,
-  }))
+  violations.map((v) => ({ name: fieldOf(v.propertyPath), message: v.message }))
 
 function validate(): FormError[] {
   const result = validateTrace(toInput(), { today })
@@ -77,10 +90,41 @@ function onSubmit() {
 }
 
 const form = useTemplateRef('form')
+// NB : `submit()` de UForm appelle `reportValidity()` du navigateur, qui ignore `novalidate`.
+// Aucun champ ne porte donc de contrainte native (type="url", max…) : les règles en français
+// de `validateTrace` s'appliquent seules, sans bulle native ni envoi bloqué.
 
-/** Erreurs renvoyées par le serveur (422), affichées sous chaque champ. */
-function setServerErrors(violations: Violation[]) {
-  form.value?.setErrors(toFormErrors(violations))
+/** Après un envoi refusé, le focus va au premier champ en erreur (lecteur d'écran, clavier). */
+function focusField(id: string | undefined, name: string | undefined) {
+  const field =
+    (id ? document.getElementById(id) : null) ??
+    (name ? document.querySelector<HTMLElement>(`[name="${name}"]`) : null)
+  field?.focus()
+}
+
+function onError(event: FormErrorEvent) {
+  const first = event.errors[0]
+  // Pendant l'envoi, UForm désactive les champs (un champ désactivé refuse le focus) et ne les
+  // réactive qu'après avoir émis l'erreur : on attend la fin de ce rendu
+  setTimeout(() => focusField(first?.id, first?.name))
+}
+
+/** Les deux actions envoient le formulaire elles-mêmes : Entrée dans un champ ne change jamais le statut. */
+function submitAs(value: TraceStatut) {
+  statut.value = value
+  form.value?.submit()
+}
+
+/**
+ * Erreurs renvoyées par le serveur (422), affichées sous chaque champ.
+ * Renvoie celles qui ne correspondent à aucun champ affiché, pour les montrer autrement.
+ */
+function setServerErrors(violations: Violation[]): Violation[] {
+  const shown = violations.filter((v) => visibleFields.value.has(fieldOf(v.propertyPath)))
+  form.value?.setErrors(toFormErrors(shown))
+  const first = shown[0]
+  if (first) nextTick(() => focusField(undefined, fieldOf(first.propertyPath)))
+  return violations.filter((v) => !shown.includes(v))
 }
 defineExpose({ setServerErrors })
 
@@ -104,19 +148,30 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
     :state="state"
     :validate="validate"
     :validate-on="['blur']"
+    novalidate
     class="space-y-6"
     @submit="onSubmit"
+    @error="onError"
   >
-    <UFormField label="Titre" name="titre" required :hint="`${state.titre.length} / 100`">
-      <UInput v-model="state.titre" :maxlength="100" class="w-full" />
+    <UFormField
+      label="Titre"
+      name="titre"
+      required
+      :hint="`${state.titre.length} / ${TRACE_LIMITS.titre}`"
+    >
+      <UInput
+        v-model="state.titre"
+        :maxlength="TRACE_LIMITS.titre"
+        aria-required="true"
+        class="w-full"
+      />
     </UFormField>
 
-    <UFormField v-if="fileName !== null" label="Fichier joint" name="adresse">
-      <p class="text-sm">
-        {{ TRACE_TYPE_LIBELLES[state.type] }} · {{ fileName }}
-        <span class="block text-muted">Le remplacement du fichier arrive prochainement.</span>
-      </p>
-    </UFormField>
+    <div v-if="fileName !== null" class="text-sm">
+      <p class="font-medium text-highlighted">Fichier joint</p>
+      <p>{{ TRACE_TYPE_LIBELLES[state.type] }} · {{ fileName }}</p>
+      <p class="text-muted">Le remplacement du fichier arrive prochainement.</p>
+    </div>
 
     <UFormField v-if="fileName === null" label="Type de trace" name="type">
       <URadioGroup v-model="state.type" :items="TYPE_ITEMS" orientation="horizontal" />
@@ -130,7 +185,7 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
     >
       <UInput
         v-model="state.adresse"
-        type="url"
+        type="text"
         inputmode="url"
         placeholder="https://"
         class="w-full"
@@ -141,7 +196,7 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
       <UTextarea
         v-model="state.description"
         :rows="4"
-        :maxlength="5000"
+        :maxlength="TRACE_LIMITS.description"
         autoresize
         class="w-full"
       />
@@ -153,11 +208,11 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
         name="contexte"
         description="Cours, projet ou stage où la trace a été produite."
       >
-        <UInput v-model="state.contexte" :maxlength="255" class="w-full" />
+        <UInput v-model="state.contexte" :maxlength="TRACE_LIMITS.contexte" class="w-full" />
       </UFormField>
 
       <UFormField label="Date de réalisation" name="dateRealisation">
-        <UInput v-model="state.dateRealisation" type="date" :max="today" class="w-full" />
+        <UInput v-model="state.dateRealisation" type="date" class="w-full" />
       </UFormField>
     </div>
 
@@ -175,22 +230,22 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
 
     <div class="flex flex-wrap justify-end gap-3">
       <UButton
-        type="submit"
+        type="button"
         data-action="brouillon"
         color="neutral"
         variant="outline"
         :loading="submitting && statut === 'brouillon'"
         :disabled="submitting"
-        @click="statut = 'brouillon'"
+        @click="submitAs('brouillon')"
       >
         Enregistrer le brouillon
       </UButton>
       <UButton
-        type="submit"
+        type="button"
         data-action="finaliser"
         :loading="submitting && statut === 'finalisee'"
         :disabled="submitting"
-        @click="statut = 'finalisee'"
+        @click="submitAs('finalisee')"
       >
         Finaliser la trace
       </UButton>
