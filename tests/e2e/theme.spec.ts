@@ -57,4 +57,14 @@ test.describe('thème du style éditorial', () => {
       )
     })
   })
+
+  test('compose les titres en Instrument Sans, en gras', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant')
+
+    const titre = page.getByRole('heading', { level: 1 })
+    await expect(titre).toHaveCSS('font-weight', '600')
+    expect(await titre.evaluate((el) => getComputedStyle(el).fontFamily)).toMatch(
+      /^"Instrument Sans"/,
+    )
+  })
 })

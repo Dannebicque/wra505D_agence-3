@@ -12,10 +12,7 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   fonts: {
     // Polices téléchargées au build et servies par l'application : aucune requête vers Google en production
-    families: [
-      { name: 'Instrument Sans', weights: [400, 500, 600], global: true },
-      { name: 'Instrument Serif', weights: [400], global: true },
-    ],
+    families: [{ name: 'Instrument Sans', weights: [400, 500, 600], global: true }],
   },
   // Mise en page des espaces (une page peut toujours déclarer la sienne avec definePageMeta)
   routeRules: {

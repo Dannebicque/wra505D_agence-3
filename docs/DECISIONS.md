@@ -107,3 +107,9 @@ Format : date, décision, alternatives écartées, raison.
   - Couleurs d'état (succès, alerte, erreur) en nuance 800 / 700 en mode clair et 400 en sombre : le défaut de Nuxt UI (500) ne donne pas un texte AA sur les pastilles teintées.
 - **Alternatives écartées** : validation dupliquée côté client et côté serveur (divergence assurée) ; un seul jeu de données partagé par tous les visiteurs (les tests E2E en parallèle et les démonstrations du QA se marcheraient dessus) ; route de réinitialisation réservée aux tests (accès à protéger, tests dépendants de l'ordre d'exécution).
 - **Raison** : un seul endroit pour les règles métier de saisie, des tests indépendants, et une couche services déjà prête à transmettre l'identité de l'utilisateur. Le dépôt en mémoire disparaît à la bascule vers ApiPlatform.
+
+## 2026-11-02 — Titres en Instrument Sans (au lieu d'Instrument Serif)
+
+- **Décision** : les titres passent en Instrument Sans graisse 600, interlettrage -0,02 em, via l'utilitaire `font-titre` de `app/assets/css/main.css` (seul endroit à modifier pour changer les titres). Instrument Serif n'est plus chargée.
+- **Alternatives écartées** : garder Instrument Serif (choix initial de la maquette A, trop fine à l'écran selon l'équipe) ; Fraunces, Space Grotesk, Playfair Display (présentées sur maquette).
+- **Raison** : choix de l'équipe (Enzo) sur comparaison visuelle ; une seule famille de polices, donc une requête de moins et un rendu plus net d'« application ».

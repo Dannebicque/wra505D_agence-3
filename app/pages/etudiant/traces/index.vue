@@ -22,7 +22,7 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
 <template>
   <div>
     <div class="flex flex-wrap items-end justify-between gap-4">
-      <h1 class="font-serif text-4xl text-highlighted">Mes traces</h1>
+      <h1 class="font-titre text-3xl text-highlighted">Mes traces</h1>
       <UButton to="/etudiant/traces/nouvelle" icon="i-lucide-plus">Nouvelle trace</UButton>
     </div>
 

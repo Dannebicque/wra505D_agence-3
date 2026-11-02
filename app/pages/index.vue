@@ -14,7 +14,7 @@ const SPACE_LINKS = [
 
 <template>
   <div class="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-16 sm:py-24">
-    <h1 class="font-serif text-5xl text-highlighted">UniFolio</h1>
+    <h1 class="font-titre text-5xl text-highlighted">UniFolio</h1>
     <p class="text-lg text-muted">
       Déposez vos traces, composez votre portfolio de compétences et suivez vos évaluations.
     </p>

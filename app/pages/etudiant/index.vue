@@ -46,7 +46,7 @@ const dayMonth = new Intl.DateTimeFormat('fr-FR', {
 
 <template>
   <div>
-    <h1 class="font-serif text-4xl leading-tight text-highlighted sm:text-5xl">{{ greeting }}</h1>
+    <h1 class="font-titre text-3xl leading-tight text-highlighted sm:text-4xl">{{ greeting }}</h1>
     <p class="mt-3 text-muted">{{ todayLabel }}</p>
 
     <UiAsyncState :status="status" :error="error" class="mt-8" @retry="refresh()">

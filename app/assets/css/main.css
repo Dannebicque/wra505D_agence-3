@@ -7,8 +7,6 @@
  */
 @theme static {
   --font-sans: 'Instrument Sans', system-ui, sans-serif;
-  /* Réservée au grand titre d'accueil */
-  --font-serif: 'Instrument Serif', Georgia, serif;
 
   /* Couleur d'action : sarcelle (ancre : 700 = #1b6e66) */
   --color-sarcelle-50: #effaf8;
@@ -70,6 +68,13 @@
 
 body {
   font-variant-numeric: tabular-nums;
+}
+
+/* Titres (h1 des pages, accueil) : Instrument Sans en gras, un seul endroit pour les ajuster */
+@utility font-titre {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 /*

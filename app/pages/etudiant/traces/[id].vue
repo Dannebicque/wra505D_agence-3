@@ -15,7 +15,7 @@ const { submit, submitting } = useTraceSubmit(() => id, form)
 
 <template>
   <div class="max-w-2xl">
-    <h1 class="font-serif text-4xl text-highlighted">Modifier la trace</h1>
+    <h1 class="font-titre text-3xl text-highlighted">Modifier la trace</h1>
     <UiAsyncState :status="status" :error="error" class="mt-8" @retry="refresh()">
       <TraceForm
         v-if="trace"
