@@ -66,10 +66,13 @@ class StructureSynchro extends AbstractController
             $connection = $entityManager->getConnection();
             $connection->beginTransaction();
             try {
-                $etudiant = $etudiantRepository->findOneBy(['username' => 'etudiant']);
-                $etudiantRepository->remove($etudiant, true);
-                $enseignant = $enseignantRepository->findOneBy(['username' => 'enseignant']);
-                $enseignantRepository->remove($enseignant, true);
+                // Comptes de démo créés par les fixtures (UsersFixture)
+                foreach ($etudiantRepository->findBy(['username' => ['etudiant', 'etudiant2']]) as $etudiant) {
+                    $etudiantRepository->remove($etudiant, true);
+                }
+                foreach ($enseignantRepository->findBy(['username' => ['enseignant']]) as $enseignant) {
+                    $enseignantRepository->remove($enseignant, true);
+                }
 
                 // Vide les tables
                 // Ordre enfants -> parents imposé par les clés étrangères (PostgreSQL les vérifie toujours).

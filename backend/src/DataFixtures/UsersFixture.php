@@ -11,6 +11,10 @@ use App\Entity\Bibliotheque;
 use App\Entity\Enseignant;
 use App\Entity\EnseignantDepartement;
 use App\Entity\Etudiant;
+use App\Entity\Groupe;
+use App\Entity\AnneeUniversitaire;
+use App\Entity\Semestre;
+use App\Repository\AnneeUniversitaireRepository;
 use App\Repository\BibliothequeRepository;
 use App\Repository\DepartementRepository;
 use App\Repository\EnseignantRepository;
@@ -39,6 +43,7 @@ class UsersFixture extends Fixture implements OrderedFixtureInterface
         protected DepartementRepository $departementRepository,
         protected GroupeRepository $groupeRepository,
         protected SemestreRepository $semestreRepository,
+        protected AnneeUniversitaireRepository $anneeUniversitaireRepository,
     ) {
     }
 
@@ -60,44 +65,12 @@ class UsersFixture extends Fixture implements OrderedFixtureInterface
         //---------------------------------------------------------
         //---------------------------------------------------------
 
-        // récupérer les groupes dont le l'id du parcours est 5
+        // Deux étudiants de démo (le second sert à tester qu'un étudiant ne voit pas la fiche d'un autre)
         $groupes = $this->groupeRepository->findBy(['apcParcours' => 5]);
         $semestre = $this->semestreRepository->findOneBy(['id' => 7]);
-
-        $user2 = new Users();
-
-        $password = $this->encoder->hashPassword($user2, 'test');
-
-        $user2->setUsername('etudiant')
-            ->setPassword($password)
-            ->setRoles(['ROLE_ETUDIANT', 'ROLE_ADMIN', 'ROLE_TEST'])
-            ->setEmail('etudiant@etudiant.univ-reims.fr')
-            ->setIsVerified(true);
-        $etudiant = new Etudiant();
-        $biblio = new Bibliotheque();
-
-        $etudiant->setUsers($user2);
-
-        $etudiant->setNom('Herolt');
-        $etudiant->setPrenom('Cyndel');
-        $etudiant->setMailPerso('persoEtudiant@mail.com');
-        $etudiant->setMailUniv('etudiant@etudiant.univ-reims.fr');
-        $etudiant->setTelephone('0103456781');
-        $etudiant->setBio('Vestibulum elementum odio lectus, vitae tempor ante viverra non. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae; Ut scelerisque bibendum ipsum, non tincidunt risus ultrices vel.');
-        $etudiant->setUsername('etudiant');
-        $etudiant->setSemestre($semestre);
-
-        foreach ($groupes as $groupe) {
-            $etudiant->addGroupe($groupe);
-        }
-
-        $biblio->setEtudiant($etudiant);
-
-        $manager->persist($etudiant);
-        $manager->persist($biblio);
-
-        $manager->persist($user2);
-
+        $anneeUniversitaire = $this->anneeUniversitaireRepository->findOneBy(['active' => true]);
+        $this->etudiant($manager, 'etudiant', 'Camille', 'Martin', $semestre, $groupes, $anneeUniversitaire);
+        $this->etudiant($manager, 'etudiant2', 'Lucas', 'Bernard', $semestre, $groupes, $anneeUniversitaire);
 
         $user11 = new Users();
 
@@ -105,15 +78,15 @@ class UsersFixture extends Fixture implements OrderedFixtureInterface
 
         $user11->setUsername('enseignant')
             ->setPassword($password)
-            ->setRoles(['ROLE_ENSEIGNANT', 'ROLE_ADMIN', 'ROLE_TEST'])
+            ->setRoles(['ROLE_ENSEIGNANT'])
             ->setEmail('prof@univ-reims.fr')
             ->setIsVerified(true);
         $enseignant = new Enseignant();
 
         $enseignant->setUsers($user11);
 
-        $enseignant->setNom('Jane');
-        $enseignant->setPrenom('Doe');
+        $enseignant->setNom('Durand');
+        $enseignant->setPrenom('Sophie');
         $enseignant->setMailPerso('persoTest@mail.com');
         $enseignant->setMailUniv('prof@univ-reims.fr');
         $enseignant->setTelephone('0123456782');
@@ -125,5 +98,39 @@ class UsersFixture extends Fixture implements OrderedFixtureInterface
         $manager->persist($enseignant);
         $manager->persist($user11);
         $manager->flush();
+    }
+
+    /**
+     * @param Groupe[] $groupes
+     */
+    private function etudiant(ObjectManager $manager, string $username, string $prenom, string $nom, ?Semestre $semestre, array $groupes, ?AnneeUniversitaire $anneeUniversitaire): void
+    {
+        $user = new Users();
+        $user->setUsername($username)
+            ->setPassword($this->encoder->hashPassword($user, 'test'))
+            ->setRoles(['ROLE_ETUDIANT'])
+            ->setEmail($username . '@etudiant.univ-reims.fr')
+            ->setIsVerified(true);
+
+        $etudiant = new Etudiant();
+        $etudiant->setUsers($user);
+        $etudiant->setNom($nom);
+        $etudiant->setPrenom($prenom);
+        $etudiant->setMailPerso($username . '@exemple.fr');
+        $etudiant->setMailUniv($username . '@etudiant.univ-reims.fr');
+        $etudiant->setTelephone('0100000000');
+        $etudiant->setUsername($username);
+        $etudiant->setSemestre($semestre);
+        $etudiant->setAnneeUniversitaire($anneeUniversitaire);
+        foreach ($groupes as $groupe) {
+            $etudiant->addGroupe($groupe);
+        }
+
+        $bibliotheque = new Bibliotheque();
+        $bibliotheque->setEtudiant($etudiant);
+
+        $manager->persist($etudiant);
+        $manager->persist($bibliotheque);
+        $manager->persist($user);
     }
 }
