@@ -64,9 +64,16 @@ Toutes exigent d'être connecté (401 sinon). Collections paginées par 30 (`?pa
 | `/api/etudiants` | enseignant ou admin |
 | `/api/etudiants/{id}` | l'étudiant lui-même, un enseignant ou un admin |
 | `/api/users/{id}` | l'utilisateur lui-même ou un admin |
-| `/api/intranet/*` (synchro, POST) | admin |
+| `/api/intranet/*` (synchro, POST en `Content-Type: application/json` uniquement, contre le CSRF) | admin |
 
 Le front autorisé à appeler l'API est fixé par `CORS_ALLOW_ORIGIN` (`.env`, par défaut `http://localhost:3000`).
+
+### En production
+
+- `CORS_ALLOW_ORIGIN` : l'adresse du front de production (expression régulière, par ex. `'^https://portfolio\.exemple\.fr$'`).
+- `TRUSTED_PROXIES` : l'adresse du reverse proxy (sinon la limite de connexion compte tous les utilisateurs comme une seule IP).
+- `APP_SECRET` : une vraie valeur secrète, dans `.env.local` ou les variables d'environnement du serveur.
+- Le cookie de session est toujours `Secure` en prod ; la documentation `/api/docs` y est désactivée.
 
 ## Tests
 
