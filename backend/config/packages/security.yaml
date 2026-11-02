@@ -19,27 +19,10 @@ security:
       pattern: ^/(_(profiler|wdt)|css|images|js)/
       security: false
     main:
-      access_denied_handler: App\Security\AccessDeniedHandler
       lazy: true
       provider: app_user_provider
-      logout:
-        path: app_logout
-        target: app_login
-      # https://symfony.com/doc/current/security/impersonating_user.html
+      # shortcut: aucune authentification tant que l'API n'a pas la sienne (JWT ou autre, Sprint 4)
       switch_user: true
-
-      form_login:
-        # "app_login" is the name of the route created previously
-        login_path: app_login
-        check_path: app_login
-        enable_csrf: true
-      custom_authenticator: App\Security\LoginAuthenticator
-#        default_target_path: app_accueil
-#        always_use_default_target_path: false
-#        use_referer: true
-
-        # activate different ways to authenticate
-        # https://symfony.com/doc/current/security.html#the-firewall
 
   # Easy way to control access for large sections of your site
   # Note: Only the *first* access control that matches will be used
@@ -61,9 +44,3 @@ when@test:
         time_cost: 3 # Lowest possible value for argon
         memory_cost: 10 # Lowest possible value for argon
 
-services:
-  App\Twig\AppExtension:
-    arguments:
-      - '@App\Classes\DataUserSession'
-    tags:
-      - { name: twig.extension }

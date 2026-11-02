@@ -8,12 +8,6 @@ parameters:
     files_directory: '%kernel.project_dir%/public/upload/files'
 
 services:
-    App\Twig\Extension\InstanceOfExtension:
-        tags:
-            - { name: 'twig.extension' }
-    App\Controller\Admin\EnseignantCrudController:
-        tags:
-            - { name: kernel.event_subscriber }
 #    request_stack:
 #        class: Symfony\Component\HttpFoundation\RequestStack
 #    Symfony\Component\DependencyInjection\ContainerInterface:
@@ -31,7 +25,6 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
-            - '../src/Components/*/DependencyInjection/'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

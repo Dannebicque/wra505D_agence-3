@@ -1,16 +1,15 @@
 # UniFolio
 
-[![wakatime](https://wakatime.com/badge/user/593f8558-cce2-4776-b789-4f687a124d15/project/adb9500d-e615-45e9-977c-ac49faab9167.svg)](https://wakatime.com/badge/user/593f8558-cce2-4776-b789-4f687a124d15/project/adb9500d-e615-45e9-977c-ac49faab9167)
-
 Un outil de création de portfolio à destination de l'IUT de Troyes.
+
+Backend de la refonte : le Symfony de [l'ancienne version](https://github.com/CyndelHerolt/UniFolio) (commit `bab3d3a`), sans les vues (Twig, EasyAdmin, Live Components, formulaires, assets). Le front est géré à part.
 
 ## Installation
 
 ### Clonage du projet
 
-    git clone https://github.com/CyndelHerolt/UniFolio.git
-    cd UniFolio
-    composer install ou composer update
+    cd backend
+    composer install
 
 ### Mise à jours des infos
 
@@ -30,23 +29,6 @@ Mettre à jour la database
 
     // version courte
     bin/console d:s:u -f
-
-### Installation des dépendances front
-
-    npm install --force
-
-ou
-
-    yarn install --force
-
-### Compilation des ressources front
-
-    npm run encore dev --watch
-
-ou
-
-    yarn encore dev --watch
-
 
 ## Licence
 
