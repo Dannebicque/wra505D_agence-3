@@ -4,6 +4,8 @@ export default defineAppConfig({
       // Palette définie dans app/assets/css/main.css
       primary: 'sarcelle',
       neutral: 'slate',
+      // Ambre plutôt que jaune : plus lisible en texte (brouillons, alertes)
+      warning: 'amber',
     },
     button: {
       // Style éditorial : boutons en pilule

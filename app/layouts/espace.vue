@@ -11,7 +11,12 @@ const isMenuOpen = ref(false)
 const items = computed(() =>
   (espace.value ? NAVIGATION[espace.value] : []).map((item) => ({
     ...item,
-    exact: true,
+    // Accueil de l'espace : actif sur sa seule page ; autres entrées : aussi sur leurs sous-pages
+    // (les routes sont plates, le routeur ne le ferait pas seul)
+    active:
+      item.to === homePath.value
+        ? route.path === item.to
+        : route.path === item.to || route.path.startsWith(`${item.to}/`),
     onSelect: () => {
       isMenuOpen.value = false
     },

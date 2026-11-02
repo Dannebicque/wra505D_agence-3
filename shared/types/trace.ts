@@ -38,3 +38,17 @@ export interface Trace extends JsonLdResource {
   /** Renseignée quand la trace est dans la corbeille. */
   dateSuppression: DateIso | null
 }
+
+/** Champs d'une trace modifiables par l'étudiant (création et modification). */
+export type TraceInput = Pick<
+  Trace,
+  | 'titre'
+  | 'description'
+  | 'contexte'
+  | 'type'
+  | 'contenu'
+  | 'statut'
+  | 'conceptionIa'
+  | 'realisationIa'
+  | 'dateRealisation'
+>

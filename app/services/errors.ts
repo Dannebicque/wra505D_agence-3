@@ -1,14 +1,18 @@
 // Module pur (sans dépendance Nuxt) : testable dans le projet Vitest `unit`.
+import type { Violation } from '../../shared/types/api'
 
 /** Erreur d'appel à l'API, avec un message affichable tel quel à l'utilisateur. */
 export class ApiError extends Error {
   /** Code HTTP, ou 0 si aucune réponse n'a été reçue (panne réseau). */
   readonly status: number
+  /** Erreurs de validation champ par champ (422), à afficher sous chaque champ. */
+  readonly violations: Violation[]
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, violations: Violation[] = []) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.violations = violations
   }
 }
 
@@ -39,6 +43,19 @@ function readServerMessage(error: Record<string, unknown>): string | undefined {
   )
 }
 
+function isViolation(value: unknown): value is Violation {
+  return (
+    isRecord(value) && typeof value.propertyPath === 'string' && typeof value.message === 'string'
+  )
+}
+
+/** `violations` d'ApiPlatform, ou de nos routes Nitro (sous `data.data`). */
+function readViolations(error: Record<string, unknown>): Violation[] {
+  const data = isRecord(error.data) ? error.data : {}
+  const list = data.violations ?? (isRecord(data.data) ? data.data.violations : undefined)
+  return Array.isArray(list) ? list.filter(isViolation) : []
+}
+
 function defaultMessage(status: number): string {
   if (status === 0) return MESSAGE_RESEAU
   if (status >= 500) return MESSAGE_SERVEUR
@@ -63,5 +80,6 @@ export function toApiError(error: unknown): ApiError {
   return new ApiError(
     status,
     (STATUTS_MESSAGE_SERVEUR.has(status) && serverMessage) || defaultMessage(status),
+    isRecord(error) ? readViolations(error) : [],
   )
 }

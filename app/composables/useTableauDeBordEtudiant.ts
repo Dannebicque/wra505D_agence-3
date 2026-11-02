@@ -11,11 +11,12 @@ const DEMO_ETUDIANT_ID = 1
 
 /** Données et calculs du tableau de bord de l'espace étudiant. */
 export function useTableauDeBordEtudiant() {
+  const requestOptions = useApiRequestOptions()
   const { data, status, error, refresh } = useAsyncData('tableau-de-bord-etudiant', async () => {
     const [etudiant, traces, validations, referentiels] = await Promise.all([
-      getEtudiant(DEMO_ETUDIANT_ID),
-      listTraces(),
-      listValidations(),
+      getEtudiant(DEMO_ETUDIANT_ID, requestOptions),
+      listTraces(requestOptions),
+      listValidations(requestOptions),
       listReferentiels(),
     ])
     return { etudiant, traces, validations, referentiel: referentiels[0] ?? null }

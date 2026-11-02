@@ -1,7 +1,7 @@
 import type { HydraCollection } from '../../shared/types/api'
 import { toApiError } from './errors'
 
-type ApiFetchOptions = NonNullable<Parameters<typeof $fetch>[1]>
+export type ApiFetchOptions = NonNullable<Parameters<typeof $fetch>[1]>
 
 /**
  * Origine de l'API (vide = routes Nitro locales), fixée au démarrage par `plugins/api.ts`.
@@ -38,11 +38,11 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
  * Tous les éléments d'une collection, en suivant la pagination (`view.next`) :
  * ApiPlatform pagine par 30, un calcul sur la seule première page serait faux.
  */
-export async function apiFetchAll<T>(path: string): Promise<T[]> {
+export async function apiFetchAll<T>(path: string, options?: ApiFetchOptions): Promise<T[]> {
   const items: T[] = []
   let next: string | undefined = path
   while (next) {
-    const page: HydraCollection<T> = await apiFetch<HydraCollection<T>>(next)
+    const page: HydraCollection<T> = await apiFetch<HydraCollection<T>>(next, options)
     items.push(...page.member)
     next = page.view?.next
   }
