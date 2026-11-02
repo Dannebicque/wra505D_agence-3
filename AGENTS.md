@@ -29,6 +29,7 @@ Refonte de **UniFolio**, l'outil de portfolio de compétences d'un IUT (approche
 ```
 app/
   pages/        routes (kebab-case) — espaces /etudiant, /enseignant, /admin, portfolio public
+  layouts/      mises en page : `espace` (barre latérale) et `default` (publique), choisies par les `routeRules` (`appLayout`) de `nuxt.config.ts`
   components/   composants Vue (PascalCase), regroupés par domaine (trace/, portfolio/…)
   composables/  logique réutilisable (useXxx)
   stores/       stores Pinia (un par domaine : trace, portfolio, auth…)
@@ -125,7 +126,8 @@ Ne jamais déclarer une tâche terminée sans avoir exécuté ces vérifications
 - **Langue** : identifiants de code en anglais, **sauf le vocabulaire métier** gardé en français pour coller au client (`trace`, `portfolio`, `bibliotheque`, `validation`…). Interface et commentaires en français.
 - **Données** : composant → store/composable → `services/` → API. Pas de `$fetch` dans les composants. Types du domaine uniquement dans `shared/types/`.
 - **Erreurs** : chaque appel API gère chargement, erreur et vide ; message clair pour l'utilisateur, jamais d'erreur silencieuse. Côté Nitro, `createError` avec le bon code HTTP.
-- **Styles** : classes Tailwind et thème Nuxt UI (`app.config.ts`) ; pas de couleurs ou d'espacements magiques en dur.
+- **Styles** : classes Tailwind et thème Nuxt UI (`app.config.ts`, jetons de `app/assets/css/main.css`) ; pas de couleurs ou d'espacements magiques en dur. Référence visuelle : `docs/design/maquette-a-editorial.png`.
+- **Navigation** : une page d'espace ajoute sa ligne dans `app/utils/navigation.ts` en même temps qu'elle est créée (un test refuse les liens vers une page absente).
 - **Tests** : toute logique de store, composable, service ou route Nitro est couverte par Vitest ; les parcours clés (déposer une trace, composer et publier un portfolio, évaluer une trace) ont un test Playwright avec contrôle d'accessibilité.
 
 ## 9. Documentation et décisions
