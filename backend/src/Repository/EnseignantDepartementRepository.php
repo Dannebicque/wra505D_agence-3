@@ -95,10 +95,10 @@ class EnseignantDepartementRepository extends ServiceEntityRepository
 
     public function save(EnseignantDepartement $enseignantDepartement, bool $flush = false): void
     {
-        $this->_em->persist($enseignantDepartement);
+        $this->getEntityManager()->persist($enseignantDepartement);
 
         if ($flush) {
-            $this->_em->flush();
+            $this->getEntityManager()->flush();
         }
     }
 }
