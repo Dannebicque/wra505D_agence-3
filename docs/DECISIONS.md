@@ -58,3 +58,30 @@ Format : date, décision, alternatives écartées, raison.
 - **Décision** : vulnérabilités signalées par `npm audit` acceptées en l'état, sans `overrides` : `node-forge` (via `listhen`, serveur de dev), `braces` (via `nitropack`, outillage de build), `esbuild` (via `@nuxt/fonts`, serveur de dev sous Windows).
 - **Alternatives écartées** : `npm audit fix --force` (rétrograderait Nuxt en 4.1) ; `overrides` (aucune version corrigée publiée pour `node-forge` et `braces`).
 - **Raison** : outils de développement et de build uniquement, rien n'est livré au navigateur. À réévaluer à chaque mise à jour de Nuxt.
+
+## 2026-11-02 — Modèle de données du front (`shared/types/`)
+
+- **Décision** : types du domaine communs à `app/` et `server/`, calqués sur le format ApiPlatform (JSON-LD : `@id`, `@type`, relations en IRI). Champs du domaine en français (vocabulaire métier), comme dans l'ancienne version. Corrections par rapport à l'ancienne version :
+  - ordre des pages et des traces porté par un seul tableau d'IRI ordonné (`Portfolio.pages`, `Page.traces`) ;
+  - lien trace ↔ niveau de compétence par `Validation` avec l'**IRI** du niveau (et non son libellé, qui n'est pas unique) ;
+  - usage de l'IA en codes texte (`non_renseigne`, `aucun`…) avec des libellés en `Record` exhaustif ;
+  - type de trace `'image' | 'pdf' | 'video' | 'lien'` (et non un nom de classe PHP) ;
+  - suppression douce par `dateSuppression` sur `Trace`, `Page` et `Portfolio` (corbeille, C-09) ;
+  - statut de trace `brouillon` / `finalisee` (E-TR-05).
+- **Alternatives écartées** : reprendre tel quel le modèle Doctrine de l'ancienne version (tables `OrdrePage` / `OrdreTrace` en 1-1 contredites par des liens N-N, enums entiers dont la valeur « non renseigné » n'a pas de libellé et fait planter l'affichage, cascades de suppression qui effacent la trace ou l'étudiant).
+- **Raison** : une seule source de vérité par information, des erreurs détectées par TypeScript, et le même contrat de données pour les routes Nitro et la future API ApiPlatform. Le type de notification s'appelle `NotificationUtilisateur` pour ne pas masquer l'API `Notification` du navigateur (les types de `shared/types/` sont importés automatiquement partout).
+
+## 2026-11-02 — Couche services et bascule vers ApiPlatform
+
+- **Décision** : tout appel passe par `apiFetch()` (`app/services/api.ts`).
+  - `runtimeConfig.public.apiBase` est une **origine** (vide = routes Nitro locales, `NUXT_PUBLIC_API_BASE` pour ApiPlatform) et les chemins sont toujours complets (`/api/...`). Le plugin `app/plugins/api.ts` la transmet une fois au démarrage : `apiFetch` n'appelle aucun composable Nuxt, car pendant le rendu serveur le contexte Nuxt est perdu après un `await` (une action de store qui enchaîne deux appels planterait).
+  - `Accept: application/ld+json` est ajouté sans écraser les en-têtes de l'appelant (sinon ApiPlatform répond en JSON simple, sans `@id` ni `member`).
+  - Toute erreur devient une `ApiError` (`status`, message en français). Le message du serveur (`detail` d'ApiPlatform, puis `message` de Nitro) n'est repris que pour 400, 409 et 422, rédigés pour l'utilisateur ; pour 401, 403, 404, 405 et 5xx, un message français par défaut (le serveur renvoie souvent de l'anglais ou des détails techniques, comme « Page not found: /api/… ») ; un message dédié couvre la panne réseau.
+- **Alternatives écartées** : `baseURL: '/api'` (un IRI comme `/api/traces/12` deviendrait `/api/api/traces/12`) ; `useRuntimeConfig()` dans `apiFetch` (erreur `NUXT_E1001` en SSR après un `await`) ; `experimental.asyncContext` (option expérimentale de Nuxt) ; laisser remonter la `FetchError` d'ofetch (chaque composant devrait traduire les erreurs lui-même).
+- **Raison** : la bascule du Sprint 4 se limite à une variable d'environnement ; les composants affichent `error.message` sans traitement, et le format d'erreur d'ApiPlatform est déjà pris en charge.
+
+## 2026-11-02 — Délai du hook de démarrage Nuxt dans Vitest
+
+- **Décision** : `hookTimeout: 60_000` dans le projet Vitest `nuxt`.
+- **Alternatives écartées** : délai passé à chaque fichier de test (à répéter partout) ; garder 10 s (un test sans import lourd échoue systématiquement).
+- **Raison** : sous Windows, le démarrage de l'environnement Nuxt (`beforeAll` de `@nuxt/test-utils`) prend 12 à 15 s. Même un test vide échouait ; `index.test.ts` ne passait que parce que l'import de la page laissait à Nuxt le temps de démarrer. Le délai ne concerne que ce démarrage : un test bloqué échoue toujours.
