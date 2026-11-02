@@ -35,7 +35,6 @@ class UserSynchro extends AbstractController
     ) {
     }
 
-    #[Route('/api/intranet/etudiant', name: 'app_email_intranet_etudiant')]
     public function CheckEmailEtudiant(
         $login,
         HttpClientInterface $client,
@@ -89,7 +88,6 @@ class UserSynchro extends AbstractController
         return false;
     }
 
-    #[Route('/api/intranet/etudiant', name: 'app_get_email_intranet_etudiant')]
     public function getEmailEtudiant(
         $login,
         HttpClientInterface $client,
@@ -127,7 +125,6 @@ class UserSynchro extends AbstractController
         return false;
     }
 
-    #[Route('/api/intranet/etudiant', name: 'app_synchro_intranet_etudiant')]
     public function synchroEtudiant(
         $login,
         $user,
@@ -202,7 +199,6 @@ class UserSynchro extends AbstractController
         }
     }
 
-    #[Route('/api/intranet/enseignant', name: 'app_email_intranet_enseignant')]
     public function checkEmailEnseignant(
         $login,
         HttpClientInterface $client,
@@ -254,7 +250,6 @@ class UserSynchro extends AbstractController
         return false;
     }
 
-    #[Route('/api/intranet/enseignant', name: 'app_get_email_intranet_enseignant')]
     public function getEmailEnseignant(
         $login,
         HttpClientInterface $client,
@@ -292,7 +287,6 @@ class UserSynchro extends AbstractController
     }
 
 
-    #[Route('/api/intranet/enseignant', name: 'app_synchro_intranet_enseignant')]
     public function synchroEnseignant(
         $login,
         $user,
@@ -358,7 +352,7 @@ class UserSynchro extends AbstractController
         }
     }
 
-    #[Route('/api/intranet/etudiant/update', name: 'app_update_intranet_etudiant')]
+    #[Route('/api/intranet/etudiant/update', name: 'app_update_intranet_etudiant', methods: ['POST'])]
     public function updateEtudiant(
         HttpClientInterface $client,
         EtudiantRepository $etudiantRepository,
@@ -440,7 +434,7 @@ class UserSynchro extends AbstractController
         return $this->json(['message' => 'Les données ont bien été mises à jour.', 'erreurs' => $erreurs]);
     }
 
-    #[Route('/api/intranet/enseignant/update', name: 'app_update_intranet_enseignant')]
+    #[Route('/api/intranet/enseignant/update', name: 'app_update_intranet_enseignant', methods: ['POST'])]
     public function updateEnseignant(
         HttpClientInterface $client,
         EnseignantRepository $enseignantRepository,

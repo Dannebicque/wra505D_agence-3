@@ -37,7 +37,7 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class StructureSynchro extends AbstractController
 {
-    #[Route('/api/intranet/structure', name: 'app_synchro_intranet_structure')]
+    #[Route('/api/intranet/structure', name: 'app_synchro_intranet_structure', methods: ['POST'])]
     public function index(
         HttpClientInterface $client,
         DepartementRepository $departementRepository,

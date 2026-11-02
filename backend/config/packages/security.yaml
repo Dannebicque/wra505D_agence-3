@@ -22,11 +22,12 @@ security:
       lazy: true
       provider: app_user_provider
       # shortcut: aucune authentification tant que l'API n'a pas la sienne (JWT ou autre, Sprint 4)
-      switch_user: true
 
   # Easy way to control access for large sections of your site
   # Note: Only the *first* access control that matches will be used
   access_control:
+    # Synchro intranet : écrit en base, réservée aux admins (401 tant que l'authentification API n'existe pas)
+    - { path: ^/api/intranet, roles: ROLE_ADMIN }
     - { path: ^/admin, roles: ROLE_ADMIN }
     - { path: ^/etudiant, roles: [ROLE_ETUDIANT, ROLE_ADMIN] }
     - { path: ^/enseignant, roles: [ROLE_ENSEIGNANT, ROLE_ADMIN] }
