@@ -29,8 +29,14 @@ abstract class DatabaseTestCase extends KernelTestCase
 
     protected function tearDown(): void
     {
-        $this->connection->rollBack();
-        parent::tearDown();
+        try {
+            // Annule aussi une transaction qu'un test aurait laissée ouverte
+            while ($this->connection->isTransactionActive()) {
+                $this->connection->rollBack();
+            }
+        } finally {
+            parent::tearDown();
+        }
     }
 
     protected function compte(string $table): int
@@ -40,6 +46,7 @@ abstract class DatabaseTestCase extends KernelTestCase
 
     /**
      * Appelle une action de contrôleur avec ses services, l'API intranet étant simulée par $reponseApi.
+     * Sans routage ni sécurité (couverts par AccesSynchroTest) ; suppose des paramètres typés par une seule classe.
      */
     protected function appelerAction(string $controleur, string $action, MockResponse $reponseApi): Response
     {

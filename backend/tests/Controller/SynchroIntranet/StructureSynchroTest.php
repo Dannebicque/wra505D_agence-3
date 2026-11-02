@@ -25,6 +25,7 @@ class StructureSynchroTest extends DatabaseTestCase
 
         $reponse = $this->appelerAction(StructureSynchro::class, 'index', new MockResponse('[]'));
 
+        self::assertSame(1, $this->connection->getTransactionNestingLevel(), 'La transaction du contrôleur doit être validée');
         self::assertSame(200, $reponse->getStatusCode());
         self::assertSame(['message' => 'Les données ont bien été importées.'], json_decode($reponse->getContent(), true));
         foreach (self::TABLES as $table) {
@@ -40,7 +41,9 @@ class StructureSynchroTest extends DatabaseTestCase
         $etudiant->setSemestre($this->em->getRepository(Semestre::class)->findOneBy([]));
         $this->em->persist($etudiant);
         $this->em->flush();
-        $avant = array_map($this->compte(...), self::TABLES);
+        // Inclut l'étudiant et l'enseignant de démo, supprimés avant le vidage
+        $tables = [...self::TABLES, 'etudiant', 'enseignant', 'users'];
+        $avant = array_map($this->compte(...), $tables);
 
         try {
             $this->appelerAction(StructureSynchro::class, 'index', new MockResponse('[]'));
@@ -48,6 +51,7 @@ class StructureSynchroTest extends DatabaseTestCase
         } catch (ForeignKeyConstraintViolationException) {
         }
 
-        self::assertSame($avant, array_map($this->compte(...), self::TABLES), 'Des tables ont été vidées malgré l\'échec');
+        // Sans transaction dans le contrôleur, ce test échoue en erreur (« transaction is aborted ») plutôt que sur cette assertion
+        self::assertSame($avant, array_map($this->compte(...), $tables), 'Des tables ont été vidées malgré l\'échec');
     }
 }

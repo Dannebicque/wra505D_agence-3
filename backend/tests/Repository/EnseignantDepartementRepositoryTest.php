@@ -20,5 +20,9 @@ class EnseignantDepartementRepositoryTest extends DatabaseTestCase
             ->save(new EnseignantDepartement($enseignant, $departement), true);
 
         self::assertSame($avant + 1, $this->compte('enseignant_departement'));
+        self::assertSame(1, (int) $this->connection->fetchOne(
+            'SELECT COUNT(*) FROM enseignant_departement WHERE enseignant_id = ? AND departement_id = ?',
+            [$enseignant->getId(), $departement->getId()]
+        ));
     }
 }
