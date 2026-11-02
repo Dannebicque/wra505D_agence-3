@@ -20,12 +20,14 @@ framework:
     router:
         utf8: true
 
-    # Suspension temporaire de la vérification des certificats SSL
-#    TODO: à réactiver en production
-    http_client:
-        default_options:
-            verify_peer: false
-            verify_host: false
+
+when@dev:
+    framework:
+        # Dev seulement : l'intranet de test peut avoir un certificat non reconnu
+        http_client:
+            default_options:
+                verify_peer: false
+                verify_host: false
 
 when@test:
     framework:
