@@ -59,7 +59,7 @@ Hors périmètre de ce plan (YAGNI) : CV, modèles de pages, réponses aux comme
 - Tester : `tests/unit/shared/iri.test.ts`, `tests/unit/shared/domaine.test.ts`
 - Modifier : `docs/DECISIONS.md` (entrée « Modèle de données du front »)
 
-**Interfaces produites** (utilisées par toutes les tâches suivantes et par Solène et Mathéo) — définitions exactes :
+**Interfaces produites** (`Notification` renommé `NotificationUtilisateur`, voir ledger ; utilisées par toutes les tâches suivantes et par Solène et Mathéo) — définitions exactes :
 
 ```ts
 // shared/types/api.ts
