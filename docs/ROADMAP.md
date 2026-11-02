@@ -4,6 +4,24 @@ Planification des fonctionnalités **retenues** de [`FONCTIONNALITES.md`](./FONC
 
 Les fonctionnalités « À discuter » et « À questionner » n'entrent dans un sprint qu'après décision du client (via le PO).
 
+## Répartition de l'équipe
+
+Travail réparti à parts égales entre Enzo, Mathéo et Solène : le rôle de PO de Mathéo s'ajoute à sa part de code, il ne la remplace pas. Chacun porte un domaine **de bout en bout** à chaque sprint (types, route Nitro, service, store, pages, tests Vitest) et écrit le test E2E du parcours qu'il livre.
+
+| Sprint | Enzo | Solène | Mathéo |
+|---|---|---|---|
+| 0 — Socle | Initialisation (#3), types du domaine, utilitaires de format ApiPlatform côté Nitro, squelette `app/services/` | Authentification simulée par rôle, middleware, contrôle du rôle côté serveur, données factices utilisateurs et structure (C-13) | Layout responsive, navigation, mode sombre, accessibilité clavier, confirmation de suppression, messages d'erreur (C-01, C-02, C-08, C-10, C-11) |
+| 1 — Traces et compétences | Éditeur de trace, brouillon, sauvegarde automatique (E-TR-01, E-TR-05, E-TR-10, C-06) ; E2E « déposer une trace » | Contenus de trace et prévisualisation des fichiers (E-TR-02, E-TR-04) | Référentiel, association des compétences, critères attendus (E-CP-01, E-CP-02, E-CP-03) |
+| 2 — Portfolio | Tableau de bord des traces (E-DB-02, E-DB-06, E-DB-07), portfolio public par lien (E-PF-06) | Portfolio (E-PF-01 à E-PF-05, E-PF-08, E-PF-10) ; E2E « composer et publier un portfolio » | Pages-projets et glisser-déposer avec alternative clavier (E-PG-01, E-PG-02, E-PG-04, E-TR-08) |
+| 3 — Évaluation | Évaluation des traces (P-EV-01 à P-EV-04, P-EV-07, P-EV-09, P-EV-10, P-OR-03) ; E2E « évaluer une trace » | Espace enseignant : étudiants et portfolios (P-ET-01 à P-ET-06, P-PF-02 à P-PF-04, P-OR-01, P-OR-02) | Retours côté étudiant : évaluations, commentaires, notifications, progression (E-EV-01, E-EV-02, E-EV-04 à E-EV-07, P-CO-01, E-CP-04, E-CP-07) |
+| 4 — Bascule ApiPlatform | Docker, mise en place d'ApiPlatform, ressources Trace et Bibliotheque, téléversement des fichiers | Ressources Portfolio, Page et Référentiel ; bascule de ses services | Authentification réelle, ressources Users, Validation, Commentaire et Notification |
+| 5 — Finition | Bilans et exports (P-ST-03, P-ST-08, P-ST-09, P-ST-10), annuler / rétablir (E-TR-11) | CV (E-CV-01, E-CV-03, E-CV-05, E-CV-06) | Recherche globale, filtres, corbeille, aide contextuelle, échéances (C-03, C-04, C-09, C-12, E-DB-03, P-OR-06) |
+
+- **Relecture tournante** (en plus du QA) : Enzo relit Solène, Solène relit Mathéo, Mathéo relit Enzo.
+- **Fichiers partagés** (`shared/types/`, `nuxt.config.ts`, `package.json`, `app/app.config.ts`) : petite PR dédiée, annoncée au groupe. Au Sprint 0, les types du domaine sont fusionnés en premier : l'authentification et le layout s'appuient dessus.
+- **Documentation** : chacun tient `docs/DECISIONS.md` et `AI_PROMPT_BOOK.md` pour ses propres tâches.
+- Audit accessibilité et performance, release `v1.0.0` et présentation finale (Sprint 5) : toute l'équipe.
+
 ## Phase 0 — Cadrage
 
 - Audit de l'ancien UniFolio (`../unifolio_old`) : écrans, parcours, bugs à corriger.
