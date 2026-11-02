@@ -68,7 +68,7 @@ class DiplomeFixture extends Fixture implements OrderedFixtureInterface
         $diplome3 = new Diplome();
         $diplome3->setLibelle('Métiers du Multimédia et de l\'Internet Parcours : Développement web et dispositifs interactifs FC')
             ->setId(3)
-            ->setSigle('MMI-DWeb-Di-FC')
+            ->setSigle('MMI-DWeb-DI-FC')
             ->setApcParcours($parcours5)
             ->setDepartement($departement1);
         $manager->persist($diplome3);
@@ -76,7 +76,7 @@ class DiplomeFixture extends Fixture implements OrderedFixtureInterface
         $diplome4 = new Diplome();
         $diplome4->setLibelle('Métiers du Multimédia et de l\'Internet Parcours : Développement web et dispositifs interactifs')
             ->setId(4)
-            ->setSigle('MMI-DWeb-Di')
+            ->setSigle('MMI-DWeb-DI')
             ->setApcParcours($parcours4)
             ->setDepartement($departement1);
         $manager->persist($diplome4);
