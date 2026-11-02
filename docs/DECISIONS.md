@@ -85,3 +85,9 @@ Format : date, décision, alternatives écartées, raison.
 - **Décision** : `hookTimeout: 60_000` dans le projet Vitest `nuxt`.
 - **Alternatives écartées** : délai passé à chaque fichier de test (à répéter partout) ; garder 10 s (un test sans import lourd échoue systématiquement).
 - **Raison** : sous Windows, le démarrage de l'environnement Nuxt (`beforeAll` de `@nuxt/test-utils`) prend 12 à 15 s. Même un test vide échouait ; `index.test.ts` ne passait que parce que l'import de la page laissait à Nuxt le temps de démarrer. Le délai ne concerne que ce démarrage : un test bloqué échoue toujours.
+
+## 2026-11-02 — Thème du style A (éditorial) et polices servies par l'application
+
+- **Décision** : le style « éditorial » (maquette `docs/design/maquette-a-editorial.png`) est porté uniquement par des jetons : palette `sarcelle` et variables `--ui-*` de Nuxt UI dans `app/assets/css/main.css`, couleurs `primary` / `neutral` dans `app/app.config.ts`, classes `bg-cadre`, `rounded-feuille`, `rounded-panneau`, `font-serif`. La couleur d'action est le sarcelle 700 en mode clair (texte blanc à contraste AA) et 400 en mode sombre (texte foncé). Les polices Instrument Sans et Instrument Serif sont téléchargées au build par `@nuxt/fonts` (fourni par Nuxt UI) et servies par l'application ; un test E2E vérifie qu'aucune requête ne part vers Google.
+- **Alternatives écartées** : polices chargées depuis Google Fonts (requête tierce à chaque visite, vie privée des étudiants) ; couleurs posées dans les composants (chaque ajustement visuel, prévu par l'équipe, toucherait des dizaines de fichiers) ; garder le primaire Nuxt UI par défaut en clair (500, contraste insuffisant avec un texte blanc).
+- **Raison** : l'équipe ajustera le visuel plus tard ; tout changement se fait dans deux fichiers, et le contraste reste vérifié par axe en clair et en sombre.

@@ -10,6 +10,13 @@ export default defineNuxtConfig({
     },
   },
   css: ['~/assets/css/main.css'],
+  fonts: {
+    // Polices téléchargées au build et servies par l'application : aucune requête vers Google en production
+    families: [
+      { name: 'Instrument Sans', weights: [400, 500, 600], global: true },
+      { name: 'Instrument Serif', weights: [400], global: true },
+    ],
+  },
   runtimeConfig: {
     public: {
       // Origine de l'API : vide = routes Nitro locales ; URL d'ApiPlatform via NUXT_PUBLIC_API_BASE

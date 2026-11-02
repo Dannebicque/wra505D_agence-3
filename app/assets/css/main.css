@@ -1,2 +1,62 @@
 @import 'tailwindcss';
 @import '@nuxt/ui';
+
+/*
+ * Thème du style A, éditorial (docs/superpowers/specs/2026-11-02-charpente-visuelle-design.md).
+ * Seul endroit où sont fixées les couleurs, polices et formes : les composants n'utilisent que ces jetons.
+ */
+@theme static {
+  --font-sans: 'Instrument Sans', system-ui, sans-serif;
+  /* Réservée au grand titre d'accueil */
+  --font-serif: 'Instrument Serif', Georgia, serif;
+
+  /* Couleur d'action : sarcelle (ancre : 700 = #1b6e66) */
+  --color-sarcelle-50: #effaf8;
+  --color-sarcelle-100: #d7f1ed;
+  --color-sarcelle-200: #b0e3db;
+  --color-sarcelle-300: #7fcdc2;
+  --color-sarcelle-400: #4fb0a5;
+  --color-sarcelle-500: #33968b;
+  --color-sarcelle-600: #247f76;
+  --color-sarcelle-700: #1b6e66;
+  --color-sarcelle-800: #185852;
+  --color-sarcelle-900: #164944;
+  --color-sarcelle-950: #072b28;
+
+  /* Fond du cadre (barre latérale, barre haute) : classe `bg-cadre` */
+  --color-cadre: var(--uf-cadre);
+
+  /* Rayons : `rounded-feuille` (contenu), `rounded-panneau` (aplats) */
+  --radius-feuille: 16px;
+  --radius-panneau: 22px;
+}
+
+:root {
+  --uf-cadre: #eef1f4;
+  /* 700 : texte blanc lisible (contraste AA) sur les boutons */
+  --ui-primary: var(--ui-color-primary-700);
+  --ui-bg: #ffffff;
+  --ui-bg-muted: #f6f7f8;
+  --ui-bg-elevated: #e1e5ea;
+  --ui-text: #1f201d;
+  --ui-text-highlighted: #1f201d;
+  --ui-text-muted: #636361;
+  --ui-border: #e3e6ea;
+}
+
+.dark {
+  --uf-cadre: #0f1214;
+  /* 400 : sarcelle éclairci, texte foncé sur les boutons */
+  --ui-primary: var(--ui-color-primary-400);
+  --ui-bg: #16191c;
+  --ui-bg-muted: #1e2226;
+  --ui-bg-elevated: #262b30;
+  --ui-text: #e8eaeb;
+  --ui-text-highlighted: #e8eaeb;
+  --ui-text-muted: #a0a6ab;
+  --ui-border: #262a2e;
+}
+
+body {
+  font-variant-numeric: tabular-nums;
+}
