@@ -1,0 +1,195 @@
+<?php
+
+/*
+ * Copyright (c) 2023. | Cyndel Herolt | IUT de Troyes  - All Rights Reserved
+ * @author cyndelherolt
+ * @project UniFolio
+ */
+namespace App\Repository;
+
+use App\Entity\Semestre;
+use App\Entity\Trace;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @extends ServiceEntityRepository<Trace>
+ *
+ * @method Trace|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Trace|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Trace[]    findAll()
+ * @method Trace[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class TraceRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Trace::class);
+    }
+
+    public function save(Trace $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->persist($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    public function remove(Trace $entity, bool $flush = false): void
+    {
+        $this->getEntityManager()->remove($entity);
+
+        if ($flush) {
+            $this->getEntityManager()->flush();
+        }
+    }
+
+    // Requete pour récupérer les traces en fonction des compétences récupérées dans le controller
+    public function findByCompetence(array $competences): array
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->join('t.validations', 'v')
+            ->join('v.apcNiveau', 'c')
+            ->where('c.id IN (:competences)')
+            ->setParameter('competences', $competences)
+            ->getQuery()
+            ->getResult();
+
+        return $qb;
+    }
+
+    public function findByCompetenceAndEtudiant(array $competences, $etudiantId): array
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->join('t.validations', 'v')
+            ->join('v.apcNiveau', 'c')
+            ->join('t.bibliotheque', 'b')
+            ->join('b.etudiant', 'e')
+            ->where('c.id IN (:competences)')
+            ->andWhere('e.id = :etudiantId')
+            ->setParameter('competences', $competences)
+            ->setParameter('etudiantId', $etudiantId)
+            ->getQuery()
+            ->getResult();
+
+        return $qb;
+    }
+
+    private function createFiltersQb($dept, ?Semestre $semestre = null, array $competences = [], array $groupes = [], array $etudiants = [], ?int $etat = null, ?int $annee = null)
+    {
+        $qb = $this->createQueryBuilder('t')
+            ->innerJoin('t.validations', 'v')
+            ->innerJoin('v.apcNiveau', 'c')
+            ->join('t.bibliotheque', 'b')
+            ->join('b.etudiant', 'e')
+            ->join('e.groupe', 'g')
+            ->join('e.semestre', 's')
+            ->join('s.annee', 'a')
+            ->join('a.diplome', 'd')
+            ->join('d.departement', 'dep')
+            ->where('dep.id = :departement')
+            ->setParameter('departement', $dept)
+        ;
+        if ($etat !== null) {
+            switch($etat) {
+                case 0: // Toutes les traces
+                    break;
+                case 1: // Traces évaluées
+                    $qb->andWhere('v.etat != 0');
+                    break;
+                case 2: // Traces non évaluées
+                    $qb->andWhere('v.etat = 0');
+                    break;
+            }
+        }
+        if (!empty($semestre)) {
+            $qb->andWhere('s.id = :semestre')
+                ->setParameter('semestre', $semestre->getId());
+        }
+
+        // If annee is provided, restrict traces to those that are present in portfolios for that year
+        if (!empty($annee)) {
+            // join through ordreTrace -> page -> ordrePage -> portfolio
+            $qb->innerJoin('t.ordreTrace', 'ot')
+                ->innerJoin('ot.page', 'pa')
+                ->innerJoin('pa.ordrePage', 'op')
+                ->innerJoin('op.portfolio', 'p')
+                ->andWhere('p.annee = :annee')
+                ->andWhere('p.visibilite = true')
+                ->setParameter('annee', $annee);
+        }
+        if (!empty($competences)) {
+            $qb->andWhere('c.id IN (:competences)')
+                ->setParameter('competences', $competences);
+        }
+        if (!empty($groupes)) {
+            $qb->andWhere('g.id IN (:groupes)')
+                ->setParameter('groupes', $groupes);
+        }
+        if (!empty($etudiants)) {
+            $qb->andWhere('e.id IN (:etudiants)')
+                ->setParameter('etudiants', $etudiants);
+        }
+
+        return $qb;
+    }
+
+    public function countByFilters($dept, ?Semestre $semestre = null, array $competences = [], array $groupes = [], array $etudiants = [], ?int $etat = null, ?int $annee = null): int
+    {
+        $qb = $this->createFiltersQb($dept, $semestre, $competences, $groupes, $etudiants, $etat, $annee)
+            ->select('COUNT(DISTINCT t.id)');
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
+    public function findIdsByFilters($dept, ?Semestre $semestre = null, array $competences = [], array $groupes = [], array $etudiants = [], ?int $etat = null, int $limit = 20, int $offset = 0, ?int $annee = null): array
+    {
+        $rows = $this->createFiltersQb($dept, $semestre, $competences, $groupes, $etudiants, $etat, $annee)
+            ->select('DISTINCT t.id AS id')
+            ->addSelect('t.date_modification')
+            ->orderBy('t.date_modification', 'DESC')
+            ->setMaxResults($limit)
+            ->setFirstResult($offset)
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(static fn (array $row) => (int) $row['id'], $rows);
+    }
+
+    public function findByFilters($dept, ?Semestre $semestre = null, array $competences = [], array $groupes = [], array $etudiants = [], ?int $etat = null, ?int $annee = null): array
+    {
+        $qb = $this->createFiltersQb($dept, $semestre, $competences, $groupes, $etudiants, $etat, $annee);
+
+        $qb->distinct('t.id')
+            ->addSelect('t.dateModification')
+            ->orderBy('t.date_modification', 'DESC');
+
+        return $qb->getQuery()->getResult();
+    }
+
+//    /**
+//     * @return Trace[] Returns an array of Trace objects
+//     */
+//    public function findByExampleField($value): array
+//    {
+//        return $this->createQueryBuilder('t')
+//            ->andWhere('t.exampleField = :val')
+//            ->setParameter('val', $value)
+//            ->orderBy('t.id', 'ASC')
+//            ->setMaxResults(10)
+//            ->getQuery()
+//            ->getResult()
+//        ;
+//    }
+
+//    public function findOneBySomeField($value): ?Trace
+//    {
+//        return $this->createQueryBuilder('t')
+//            ->andWhere('t.exampleField = :val')
+//            ->setParameter('val', $value)
+//            ->getQuery()
+//            ->getOneOrNullResult()
+//        ;
+//    }
+}
