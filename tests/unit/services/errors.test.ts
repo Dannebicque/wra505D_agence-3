@@ -2,13 +2,26 @@ import { describe, expect, it } from 'vitest'
 import { ApiError, toApiError } from '../../../app/services/errors'
 
 describe('toApiError', () => {
-  it('reprend le message d’une erreur 4xx au format Nitro', () => {
-    const error = toApiError({ statusCode: 404, data: { message: 'Référentiel introuvable.' } })
+  it('reprend le message d’une erreur de validation au format Nitro', () => {
+    const error = toApiError({ statusCode: 400, data: { message: 'Le titre est obligatoire.' } })
 
     expect(error).toBeInstanceOf(ApiError)
-    expect(error.status).toBe(404)
-    expect(error.message).toBe('Référentiel introuvable.')
+    expect(error.status).toBe(400)
+    expect(error.message).toBe('Le titre est obligatoire.')
   })
+
+  // Messages techniques ou en anglais (« Page not found: /api/… », « Access Denied. »)
+  it.each([
+    [401, 'JWT Token not found', 'Vous devez vous connecter pour continuer.'],
+    [403, 'Access Denied.', 'Vous n’avez pas accès à cette ressource.'],
+    [404, 'Page not found: /api/inconnu', 'Ressource introuvable.'],
+    [405, 'Method Not Allowed', 'La requête n’a pas pu aboutir.'],
+  ])(
+    'remplace le message du serveur d’un %i par un message français',
+    (status, message, attendu) => {
+      expect(toApiError({ statusCode: status, data: { message } }).message).toBe(attendu)
+    },
+  )
 
   it('reprend le détail d’une erreur 4xx au format ApiPlatform', () => {
     const error = toApiError({
@@ -51,5 +64,8 @@ describe('toApiError', () => {
       'Ressource introuvable.',
     )
     expect(toApiError({ statusCode: 409 }).message).toBe('La requête n’a pas pu aboutir.')
+    expect(toApiError({ statusCode: 409, data: { detail: '   ' } }).message).toBe(
+      'La requête n’a pas pu aboutir.',
+    )
   })
 })

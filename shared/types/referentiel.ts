@@ -11,11 +11,21 @@ export interface ApprentissageCritique extends JsonLdResource {
   libelle: string
 }
 
+/** Parcours du diplôme (en B.U.T., certains niveaux 2 et 3 sont propres à un parcours). */
+export interface Parcours extends JsonLdResource {
+  '@type': 'Parcours'
+  libelle: string
+  code: string
+  referentiel: Iri
+}
+
 export interface Niveau extends JsonLdResource {
   '@type': 'Niveau'
   libelle: string
   ordre: number
   annee: Iri | null
+  /** Parcours concernés ; tableau vide = niveau commun à tous les parcours. */
+  parcours: Iri[]
   apprentissagesCritiques: ApprentissageCritique[]
 }
 

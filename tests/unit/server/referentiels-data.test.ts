@@ -39,6 +39,8 @@ describe('référentiel factice', () => {
       expect(competence.niveaux.map((niveau) => niveau.ordre)).toEqual([1, 2, 3])
       for (const niveau of competence.niveaux) {
         expect(niveau.apprentissagesCritiques.length).toBeGreaterThan(0)
+        // Tableau vide = niveau commun à tous les parcours
+        expect(niveau.parcours).toEqual([])
       }
     }
   })

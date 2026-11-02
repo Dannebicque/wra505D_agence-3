@@ -88,6 +88,7 @@ const competences: Competence[] = COMPETENCES_MMI.map((competence, index) => {
     libelle,
     ordre: niveauIndex + 1,
     annee: null,
+    parcours: [],
     apprentissagesCritiques: buildApprentissages(numero, niveauIndex + 1, competence.nomCourt),
   }))
 

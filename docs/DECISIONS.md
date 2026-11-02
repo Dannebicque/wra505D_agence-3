@@ -73,8 +73,11 @@ Format : date, décision, alternatives écartées, raison.
 
 ## 2026-11-02 — Couche services et bascule vers ApiPlatform
 
-- **Décision** : tout appel passe par `apiFetch()` (`app/services/api.ts`). `runtimeConfig.public.apiBase` est une **origine** (vide = routes Nitro locales, `NUXT_PUBLIC_API_BASE` pour ApiPlatform) et les chemins sont toujours complets (`/api/...`). Toute erreur devient une `ApiError` (`status`, message en français) : le message du serveur est repris pour les erreurs 4xx (`detail` d'ApiPlatform, puis `message` de Nitro), jamais pour les 5xx (détails techniques), et un message dédié couvre la panne réseau.
-- **Alternatives écartées** : `baseURL: '/api'` (un IRI comme `/api/traces/12` deviendrait `/api/api/traces/12`) ; laisser remonter la `FetchError` d'ofetch (chaque composant devrait traduire les erreurs lui-même).
+- **Décision** : tout appel passe par `apiFetch()` (`app/services/api.ts`).
+  - `runtimeConfig.public.apiBase` est une **origine** (vide = routes Nitro locales, `NUXT_PUBLIC_API_BASE` pour ApiPlatform) et les chemins sont toujours complets (`/api/...`). Le plugin `app/plugins/api.ts` la transmet une fois au démarrage : `apiFetch` n'appelle aucun composable Nuxt, car pendant le rendu serveur le contexte Nuxt est perdu après un `await` (une action de store qui enchaîne deux appels planterait).
+  - `Accept: application/ld+json` est ajouté sans écraser les en-têtes de l'appelant (sinon ApiPlatform répond en JSON simple, sans `@id` ni `member`).
+  - Toute erreur devient une `ApiError` (`status`, message en français). Le message du serveur (`detail` d'ApiPlatform, puis `message` de Nitro) n'est repris que pour 400, 409 et 422, rédigés pour l'utilisateur ; pour 401, 403, 404, 405 et 5xx, un message français par défaut (le serveur renvoie souvent de l'anglais ou des détails techniques, comme « Page not found: /api/… ») ; un message dédié couvre la panne réseau.
+- **Alternatives écartées** : `baseURL: '/api'` (un IRI comme `/api/traces/12` deviendrait `/api/api/traces/12`) ; `useRuntimeConfig()` dans `apiFetch` (erreur `NUXT_E1001` en SSR après un `await`) ; `experimental.asyncContext` (option expérimentale de Nuxt) ; laisser remonter la `FetchError` d'ofetch (chaque composant devrait traduire les erreurs lui-même).
 - **Raison** : la bascule du Sprint 4 se limite à une variable d'environnement ; les composants affichent `error.message` sans traitement, et le format d'erreur d'ApiPlatform est déjà pris en charge.
 
 ## 2026-11-02 — Délai du hook de démarrage Nuxt dans Vitest

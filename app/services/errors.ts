@@ -46,16 +46,22 @@ function defaultMessage(status: number): string {
 }
 
 /**
- * Convertit n'importe quelle erreur d'appel en `ApiError`.
- * Le message du serveur n'est repris que pour les erreurs 4xx : celui d'une erreur 5xx
- * peut contenir des détails techniques à ne pas montrer.
+ * Statuts dont le message du serveur est montré à l'utilisateur : erreurs de saisie et conflits,
+ * rédigés pour lui (validation ApiPlatform en français, `createError` de nos routes Nitro).
+ * Pour les autres (401, 403, 404, 405, 5xx…), le serveur renvoie souvent un message technique
+ * ou en anglais (« Page not found: /api/… », « Access Denied. ») : on affiche le message par défaut.
  */
+const STATUTS_MESSAGE_SERVEUR = new Set([400, 409, 422])
+
+/** Convertit n'importe quelle erreur d'appel en `ApiError`. */
 export function toApiError(error: unknown): ApiError {
   if (error instanceof ApiError) return error
 
   const status = isRecord(error) ? readStatus(error) : 0
   const serverMessage = isRecord(error) ? readServerMessage(error) : undefined
-  const isClientError = status >= 400 && status < 500
 
-  return new ApiError(status, (isClientError && serverMessage) || defaultMessage(status))
+  return new ApiError(
+    status,
+    (STATUTS_MESSAGE_SERVEUR.has(status) && serverMessage) || defaultMessage(status),
+  )
 }

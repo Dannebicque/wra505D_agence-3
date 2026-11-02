@@ -34,8 +34,12 @@ export interface NotificationUtilisateur extends JsonLdResource {
   '@type': 'Notification'
   destinataire: Iri
   type: NotificationType
-  /** Trace à ouvrir depuis la notification. */
+  /** Trace à ouvrir depuis la notification (E-EV-07). */
   trace: Iri | null
+  /** Évaluation à l'origine de la notification (type `evaluation`). */
+  validation: Iri | null
+  /** Commentaire à l'origine de la notification (type `commentaire`), sur une trace ou un portfolio. */
+  commentaire: Iri | null
   lu: boolean
   dateCreation: DateIso
 }
