@@ -11,10 +11,14 @@ require dirname(__DIR__).'/vendor/autoload.php';
 
 (new Dotenv())->bootEnv(dirname(__DIR__).'/.env');
 
-// Garde-fou : on va tout effacer, la base doit être celle des tests (suffixe _test de doctrine.yaml)
-$base = trim((string) shell_exec(sprintf('php "%s/bin/console" dbal:run-sql "SELECT current_database()" --env=test 2>&1', dirname(__DIR__))));
-if (!preg_match('/\b\w+_test\b/', $base)) {
-    fwrite(STDERR, "Base de test introuvable ou mal nommée, rien n'est effacé :\n$base\n");
+// Garde-fou : on va tout effacer, la base doit être celle des tests (suffixe _test de doctrine.yaml).
+// Nom lu dans la configuration, sans connexion : ne dépend ni de l'existence de la base ni d'un message d'erreur.
+$kernel = new App\Kernel('test', true);
+$kernel->boot();
+$base = (string) ($kernel->getContainer()->get('doctrine')->getConnection()->getParams()['dbname'] ?? '');
+$kernel->shutdown();
+if (!str_ends_with($base, '_test')) {
+    fwrite(STDERR, sprintf("La base de test doit finir par _test (trouvé : « %s ») : rien n'est effacé.\n", $base));
     exit(1);
 }
 
