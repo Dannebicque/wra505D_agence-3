@@ -243,5 +243,6 @@ Une page correspond *a priori* à un **projet** (note Notion sur E-PG-01 : « tr
 8. **Consultation d'un portfolio par l'enseignant** : P-PF-01 (en intégralité) est à discuter, alors que P-ET-04, P-ET-05 et P-PF-02 (accéder au portfolio, le parcourir) sont retenues. Quelle différence attend le client ?
 9. **Traces à compléter** : E-CP-06 est à discuter, mais E-DB-02 (voir les traces en brouillon, à compléter et évaluées) est retenue. Qu'est-ce qu'une trace « à compléter », par rapport à un brouillon ?
 10. **Suivi des dépôts** : P-ST-02 et P-CS-06 sont à discuter, mais P-OR-01 et P-ET-06 (évaluations en attente, étudiants ayant des travaux en attente) sont retenues. Le comptage des traces restantes est-il attendu en plus ?
+11. **Tableau de bord étudiant** (E-CP-07) : la tuile compte les **évaluations** acquises (une par trace et par niveau : « 3 sur 8 »). Le client préfère-t-il compter les **niveaux** de compétence acquis (un niveau acquis dès qu'une trace le valide) ?
 
 **Proposition de l'équipe** : 17 fonctionnalités sont « À discuter » ; en retenir deux ou trois au maximum, planifiées au dernier sprint.

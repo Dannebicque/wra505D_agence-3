@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { apiFetch, setApiBase } from '../../../app/services/api'
+import { apiFetch, apiFetchAll, setApiBase } from '../../../app/services/api'
 import { ApiError } from '../../../app/services/errors'
 
 // Projet `unit` : aucun contexte Nuxt, comme après un `await` pendant le rendu serveur.
@@ -60,5 +60,20 @@ describe('apiFetch', () => {
       status: 500,
       message: 'Le serveur a rencontré une erreur. Réessayez plus tard.',
     })
+  })
+
+  // ApiPlatform pagine par 30 : un compteur calculé sur la première page serait faux
+  it('lit toutes les pages d’une collection', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ member: [1, 2], view: { next: '/api/traces?page=2' } })
+      .mockResolvedValueOnce({ member: [3], view: { previous: '/api/traces?page=1' } })
+    vi.stubGlobal('$fetch', fetchMock)
+
+    await expect(apiFetchAll('/api/traces')).resolves.toEqual([1, 2, 3])
+    expect(fetchMock.mock.calls.map((call) => call[0])).toEqual([
+      '/api/traces',
+      '/api/traces?page=2',
+    ])
   })
 })

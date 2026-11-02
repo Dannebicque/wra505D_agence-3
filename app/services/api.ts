@@ -1,3 +1,4 @@
+import type { HydraCollection } from '../../shared/types/api'
 import { toApiError } from './errors'
 
 type ApiFetchOptions = NonNullable<Parameters<typeof $fetch>[1]>
@@ -31,4 +32,19 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   } catch (error) {
     throw toApiError(error)
   }
+}
+
+/**
+ * Tous les éléments d'une collection, en suivant la pagination (`view.next`) :
+ * ApiPlatform pagine par 30, un calcul sur la seule première page serait faux.
+ */
+export async function apiFetchAll<T>(path: string): Promise<T[]> {
+  const items: T[] = []
+  let next: string | undefined = path
+  while (next) {
+    const page: HydraCollection<T> = await apiFetch<HydraCollection<T>>(next)
+    items.push(...page.member)
+    next = page.view?.next
+  }
+  return items
 }
