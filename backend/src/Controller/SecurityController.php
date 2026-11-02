@@ -2,8 +2,8 @@
 
 namespace App\Controller;
 
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Symfony\Component\Security\Core\User\UserInterface;
 
@@ -15,7 +15,8 @@ class SecurityController
     public function login(#[CurrentUser] ?UserInterface $user): Response
     {
         if (null === $user) {
-            throw new UnauthorizedHttpException('', 'Identifiant ou mot de passe manquant.');
+            // Requête qui n'est pas du JSON : json_login ne l'a pas traitée
+            return new JsonResponse(['message' => 'Identifiant ou mot de passe manquant.'], Response::HTTP_UNAUTHORIZED);
         }
 
         return new Response(null, Response::HTTP_NO_CONTENT);

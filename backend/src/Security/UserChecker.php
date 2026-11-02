@@ -15,12 +15,13 @@ class UserChecker implements UserCheckerInterface
 {
     public function checkPreAuth(UserInterface $user): void
     {
+    }
+
+    // Après la vérification du mot de passe : sinon un mauvais mot de passe suffirait à savoir qu'un compte existe
+    public function checkPostAuth(UserInterface $user, ?TokenInterface $token = null): void
+    {
         if ($user instanceof Users && !$user->getIsVerified()) {
             throw new CustomUserMessageAccountStatusException("Votre compte n'est pas encore activé : vérifiez votre adresse mail.");
         }
-    }
-
-    public function checkPostAuth(UserInterface $user, ?TokenInterface $token = null): void
-    {
     }
 }

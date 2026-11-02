@@ -14,6 +14,7 @@ class ConnexionTest extends ApiTestCase
         $cookie = $this->client->getCookieJar()->get('MOCKSESSID');
         self::assertNotNull($cookie, 'Cookie de session attendu');
         self::assertTrue($cookie->isHttpOnly(), 'Le cookie de session doit être HttpOnly');
+        self::assertSame('lax', strtolower((string) $cookie->getSameSite()));
 
         $me = $this->lire('/api/me');
         self::assertResponseIsSuccessful();
@@ -57,6 +58,28 @@ class ConnexionTest extends ApiTestCase
         self::assertResponseStatusCodeSame(401);
     }
 
+    public function testCompteNonVerifieAvecMauvaisMotDePasseIndiscernable(): void
+    {
+        // Sans le bon mot de passe, un compte non activé répond comme un compte inconnu
+        $this->connection->executeStatement("UPDATE users SET is_verified = false WHERE username = 'etudiant'");
+
+        $this->client->jsonRequest('POST', '/api/login', ['username' => 'etudiant', 'password' => 'faux']);
+
+        self::assertResponseStatusCodeSame(401);
+        self::assertSame(['message' => 'Identifiant ou mot de passe incorrect.'], json_decode($this->client->getResponse()->getContent(), true));
+    }
+
+    public function testNouvelleSessionALaConnexion(): void
+    {
+        // Contre la fixation de session : un identifiant de session imposé avant la connexion est remplacé
+        $this->lire('/api/me');
+        $this->client->getCookieJar()->set(new \Symfony\Component\BrowserKit\Cookie('MOCKSESSID', 'session-imposee'));
+
+        $this->connecter('etudiant');
+
+        self::assertNotSame('session-imposee', $this->client->getCookieJar()->get('MOCKSESSID')?->getValue());
+    }
+
     public function testLimitationDesTentatives(): void
     {
         for ($i = 0; $i < 5; ++$i) {
@@ -74,6 +97,7 @@ class ConnexionTest extends ApiTestCase
         $this->client->request('POST', '/api/login', ['username' => 'etudiant', 'password' => 'test']);
 
         self::assertResponseStatusCodeSame(401);
+        self::assertSame(['message' => 'Identifiant ou mot de passe manquant.'], json_decode($this->client->getResponse()->getContent(), true));
         $this->lire('/api/me');
         self::assertResponseStatusCodeSame(401);
     }
