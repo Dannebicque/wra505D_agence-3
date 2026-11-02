@@ -352,7 +352,7 @@ class UserSynchro extends AbstractController
         }
     }
 
-    #[Route('/api/intranet/etudiant/update', name: 'app_update_intranet_etudiant', methods: ['POST'])]
+    #[Route('/api/intranet/etudiant/update', name: 'app_update_intranet_etudiant', methods: ['POST'], condition: "request.getContentTypeFormat() === 'json'")]
     public function updateEtudiant(
         HttpClientInterface $client,
         EtudiantRepository $etudiantRepository,
@@ -365,7 +365,8 @@ class UserSynchro extends AbstractController
         foreach ($etudiants as $etudiant) {
             $login = $etudiant->getUsername();
 
-            if ($login !== 'etudiant') {
+            // Comptes de démo des fixtures, inconnus de l'intranet
+            if (!in_array($login, ['etudiant', 'etudiant2'], true)) {
                 try {
                     $response = $client->request(
                         'GET',
@@ -434,7 +435,7 @@ class UserSynchro extends AbstractController
         return $this->json(['message' => 'Les données ont bien été mises à jour.', 'erreurs' => $erreurs]);
     }
 
-    #[Route('/api/intranet/enseignant/update', name: 'app_update_intranet_enseignant', methods: ['POST'])]
+    #[Route('/api/intranet/enseignant/update', name: 'app_update_intranet_enseignant', methods: ['POST'], condition: "request.getContentTypeFormat() === 'json'")]
     public function updateEnseignant(
         HttpClientInterface $client,
         EnseignantRepository $enseignantRepository,

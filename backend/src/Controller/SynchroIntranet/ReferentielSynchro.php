@@ -41,7 +41,7 @@ class ReferentielSynchro extends AbstractController
         $this->params = $params;
     }
 
-    #[Route('/api/intranet/referentiel', name: 'app_synchro_intranet_referentiel', methods: ['POST'])]
+    #[Route('/api/intranet/referentiel', name: 'app_synchro_intranet_referentiel', methods: ['POST'], condition: "request.getContentTypeFormat() === 'json'")]
     public function synchroReferentiel(
         HttpClientInterface $client,
         ApcReferentielRepository $referentielRepository,

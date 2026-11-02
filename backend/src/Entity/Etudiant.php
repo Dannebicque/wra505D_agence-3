@@ -20,7 +20,7 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
 
 #[ApiResource(
     operations: [
-        new Get(security: "is_granted('ROLE_ENSEIGNANT') or is_granted('ROLE_ADMIN') or object.getUsers() == user"),
+        new Get(security: "is_granted('ROLE_ENSEIGNANT') or is_granted('ROLE_ADMIN') or object.getUsers() === user"),
         new GetCollection(security: "is_granted('ROLE_ENSEIGNANT') or is_granted('ROLE_ADMIN')"),
     ],
     normalizationContext: ['groups' => ['etudiant:read']],

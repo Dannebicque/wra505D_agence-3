@@ -17,12 +17,12 @@ class UserSynchroTest extends DatabaseTestCase
 
         $reponse = $this->appelerAction(UserSynchro::class, 'updateEtudiant', new MockResponse('panne', ['http_code' => 500]));
 
-        $json = json_decode($reponse->getContent(), true);
+        // Les comptes de démo (etudiant, etudiant2) ne sont pas interrogés : seule l'erreur de jdupont remonte
         self::assertSame(200, $reponse->getStatusCode());
-        self::assertSame('Les données ont bien été mises à jour.', $json['message']);
-        // Une erreur par étudiant interrogé (l'étudiant de démo « etudiant » est ignoré par la synchro)
-        self::assertContains('Erreur API (500) pour jdupont : panne', $json['erreurs']);
-        self::assertNotContains('Erreur API (500) pour etudiant : panne', $json['erreurs']);
+        self::assertSame([
+            'message' => 'Les données ont bien été mises à jour.',
+            'erreurs' => ['Erreur API (500) pour jdupont : panne'],
+        ], json_decode($reponse->getContent(), true));
         $this->em->refresh($etudiant);
         self::assertSame('Dupont', $etudiant->getNom(), "Un étudiant en erreur ne doit pas être modifié");
     }

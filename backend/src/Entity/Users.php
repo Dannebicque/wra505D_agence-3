@@ -20,7 +20,7 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
 #[ApiResource(
     shortName: 'User',
     operations: [
-        new Get(uriTemplate: '/users/{id}', security: "object == user or is_granted('ROLE_ADMIN')"),
+        new Get(uriTemplate: '/users/{id}', security: "object === user or is_granted('ROLE_ADMIN')"),
         new Get(uriTemplate: '/me', provider: MeProvider::class, normalizationContext: ['groups' => ['user:read'], 'item_uri_template' => '/users/{id}']),
     ],
     normalizationContext: ['groups' => ['user:read']],

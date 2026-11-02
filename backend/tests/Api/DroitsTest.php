@@ -61,9 +61,37 @@ class DroitsTest extends ApiTestCase
     {
         $this->connecter('etudiant');
 
-        $this->client->request('POST', '/api/intranet/structure');
+        $this->client->jsonRequest('POST', '/api/intranet/structure');
 
         self::assertResponseStatusCodeSame(403);
+    }
+
+    public function testEnseignantNeLitPasLeCompteDUnEtudiant(): void
+    {
+        $this->connecter('enseignant');
+
+        $this->lire($this->iri("SELECT '/api/users/' || id FROM users WHERE username = 'etudiant'"));
+
+        self::assertResponseStatusCodeSame(403);
+    }
+
+    public static function ecritures(): iterable
+    {
+        foreach (['POST', 'PUT', 'PATCH', 'DELETE'] as $methode) {
+            yield "$methode étudiant" => [$methode, "SELECT '/api/etudiants/' || id FROM etudiant WHERE username = 'etudiant'"];
+            yield "$methode utilisateur" => [$methode, "SELECT '/api/users/' || id FROM users WHERE username = 'etudiant'"];
+            yield "$methode département" => [$methode, "SELECT '/api/departements/' || id FROM departement LIMIT 1"];
+        }
+    }
+
+    #[DataProvider('ecritures')]
+    public function testAucuneEcritureAuSprint0(string $methode, string $sql): void
+    {
+        $this->connecter('admin');
+
+        $this->client->jsonRequest($methode, $this->iri($sql), ['nom' => 'Pirate']);
+
+        self::assertResponseStatusCodeSame(405);
     }
 
     public function testEnseignantVoitTousLesEtudiants(): void
