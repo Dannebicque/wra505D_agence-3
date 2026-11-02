@@ -12,7 +12,20 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
+#[ApiResource(
+    operations: [
+        new Get(security: "is_granted('ROLE_ENSEIGNANT') or is_granted('ROLE_ADMIN') or object.getUsers() == user"),
+        new GetCollection(security: "is_granted('ROLE_ENSEIGNANT') or is_granted('ROLE_ADMIN')"),
+    ],
+    normalizationContext: ['groups' => ['etudiant:read']],
+    security: "is_granted('ROLE_USER')",
+)]
 #[ORM\Entity(repositoryClass: EtudiantRepository::class)]
 class Etudiant
 {
@@ -101,6 +114,7 @@ class Etudiant
         return $this->id;
     }
 
+    #[Groups(['etudiant:read'])]
     public function getPrenom(): ?string
     {
         return $this->prenom;
@@ -113,6 +127,7 @@ class Etudiant
         return $this;
     }
 
+    #[Groups(['etudiant:read'])]
     public function getNom(): ?string
     {
         return $this->nom;
@@ -137,6 +152,7 @@ class Etudiant
         return $this;
     }
 
+    #[Groups(['etudiant:read'])]
     public function getMailUniv(): ?string
     {
         return $this->mail_univ;
@@ -152,6 +168,8 @@ class Etudiant
     /**
      * @return Collection<int, Groupe>
      */
+    #[Groups(['etudiant:read'])]
+    #[SerializedName('groupes')]
     public function getGroupe(): ?Collection
     {
         return $this->groupe;
@@ -224,6 +242,7 @@ class Etudiant
         return $this;
     }
 
+    #[Groups(['etudiant:read'])]
     public function getAnneeUniversitaire(): ?AnneeUniversitaire
     {
         return $this->annee_universitaire;
@@ -296,6 +315,8 @@ class Etudiant
         return $this;
     }
 
+    #[Groups(['etudiant:read'])]
+    #[SerializedName('user')]
     public function getUsers(): ?Users
     {
         return $this->users;
@@ -357,6 +378,7 @@ class Etudiant
     /**
      * @return Semestre|null
      */
+    #[Groups(['etudiant:read'])]
     public function getSemestre(): ?Semestre
     {
         return $this->semestre;

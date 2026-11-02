@@ -13,6 +13,9 @@ api_platform:
         stateless: false
         # Même taille de page que le front (ITEMS_PER_PAGE de server/utils/hydra.ts)
         pagination_items_per_page: 30
+        # Le contrat du front (shared/types) déclare les champs nullables toujours présents
+        normalization_context:
+            skip_null_values: false
         cache_headers:
             vary: ['Content-Type', 'Authorization', 'Origin']
 

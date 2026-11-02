@@ -11,7 +11,17 @@ use App\Repository\AnneeUniversitaireRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
+#[ApiResource(
+    operations: [new Get(), new GetCollection()],
+    normalizationContext: ['groups' => ['annee_universitaire:read']],
+    security: "is_granted('ROLE_USER')",
+)]
 #[ORM\Entity(repositoryClass: AnneeUniversitaireRepository::class)]
 class AnneeUniversitaire
 {
@@ -46,6 +56,7 @@ class AnneeUniversitaire
         return $this->id;
     }
 
+    #[Groups(['annee_universitaire:read'])]
     public function getLibelle(): ?string
     {
         return $this->libelle;
@@ -58,6 +69,7 @@ class AnneeUniversitaire
         return $this;
     }
 
+    #[Groups(['annee_universitaire:read'])]
     public function getAnnee(): ?int
     {
         return $this->annee;
@@ -70,6 +82,8 @@ class AnneeUniversitaire
         return $this;
     }
 
+    #[Groups(['annee_universitaire:read'])]
+    #[SerializedName('active')]
     public function isActive(): ?bool
     {
         return $this->active;

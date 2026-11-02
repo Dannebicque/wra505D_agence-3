@@ -11,7 +11,21 @@ use App\Repository\UsersRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use App\State\MeProvider;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
+#[ApiResource(
+    shortName: 'User',
+    operations: [
+        new Get(uriTemplate: '/users/{id}', security: "object == user or is_granted('ROLE_ADMIN')"),
+        new Get(uriTemplate: '/me', provider: MeProvider::class, normalizationContext: ['groups' => ['user:read'], 'item_uri_template' => '/users/{id}']),
+    ],
+    normalizationContext: ['groups' => ['user:read']],
+    security: "is_granted('ROLE_USER')",
+)]
 #[ORM\Entity(repositoryClass: UsersRepository::class)]
 class Users implements UserInterface, PasswordAuthenticatedUserInterface
 {
@@ -49,6 +63,7 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->id;
     }
 
+    #[Groups(['user:read'])]
     public function getUsername(): ?string
     {
         return $this->username;
@@ -114,6 +129,7 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         // $this->plainPassword = null;
     }
 
+    #[Groups(['user:read'])]
     public function getEtudiant(): ?Etudiant
     {
         return $this->etudiant;
@@ -126,6 +142,7 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['user:read'])]
     public function getEnseignant(): ?Enseignant
     {
         return $this->enseignant;
@@ -138,6 +155,7 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    #[Groups(['user:read'])]
     public function getEmail(): ?string
     {
         return $this->email;
@@ -168,5 +186,17 @@ class Users implements UserInterface, PasswordAuthenticatedUserInterface
     public function getIsVerified(): ?bool
     {
         return $this->isVerified;
+    }
+
+    /**
+     * Rôles métier exposés à l'API (sans ROLE_USER, ajouté par Symfony à tout utilisateur).
+     *
+     * @return string[]
+     */
+    #[Groups(['user:read'])]
+    #[SerializedName('roles')]
+    public function getRolesMetier(): array
+    {
+        return array_values(array_intersect($this->roles, ['ROLE_ETUDIANT', 'ROLE_ENSEIGNANT', 'ROLE_ADMIN']));
     }
 }

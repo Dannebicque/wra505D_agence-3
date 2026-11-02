@@ -12,7 +12,18 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
+#[ApiResource(
+    shortName: 'Parcours',
+    operations: [new Get(uriTemplate: '/parcours/{id}'), new GetCollection(uriTemplate: '/parcours')],
+    normalizationContext: ['groups' => ['parcours:read']],
+    security: "is_granted('ROLE_USER')",
+)]
 #[ORM\Entity(repositoryClass: ApcParcoursRepository::class)]
 class ApcParcours
 {
@@ -69,6 +80,7 @@ class ApcParcours
         return $this->id;
     }
 
+    #[Groups(['parcours:read'])]
     public function getLibelle(): ?string
     {
         return $this->libelle;
@@ -81,6 +93,7 @@ class ApcParcours
         return $this;
     }
 
+    #[Groups(['parcours:read'])]
     public function getCode(): ?string
     {
         return $this->code;
@@ -105,6 +118,8 @@ class ApcParcours
         return $this;
     }
 
+    #[Groups(['parcours:read'])]
+    #[SerializedName('referentiel')]
     public function getApcReferentiel(): ?ApcReferentiel
     {
         return $this->ApcReferentiel;

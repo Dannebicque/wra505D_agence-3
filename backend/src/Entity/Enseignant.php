@@ -11,7 +11,17 @@ use App\Repository\EnseignantRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
+#[ApiResource(
+    operations: [new Get(), new GetCollection()],
+    normalizationContext: ['groups' => ['enseignant:read']],
+    security: "is_granted('ROLE_USER')",
+)]
 #[ORM\Entity(repositoryClass: EnseignantRepository::class)]
 class Enseignant
 {
@@ -69,6 +79,7 @@ class Enseignant
         return $this->id;
     }
 
+    #[Groups(['enseignant:read'])]
     public function getPrenom(): ?string
     {
         return $this->prenom;
@@ -81,6 +92,7 @@ class Enseignant
         return $this;
     }
 
+    #[Groups(['enseignant:read'])]
     public function getNom(): ?string
     {
         return $this->nom;
@@ -93,6 +105,7 @@ class Enseignant
         return $this;
     }
 
+    #[Groups(['enseignant:read'])]
     public function getMailUniv(): ?string
     {
         return $this->mail_univ;
@@ -165,6 +178,8 @@ class Enseignant
         return $this;
     }
 
+    #[Groups(['enseignant:read'])]
+    #[SerializedName('user')]
     public function getUsers(): ?Users
     {
         return $this->users;
@@ -291,5 +306,14 @@ class Enseignant
         }
 
         return $this;
+    }
+
+    /** @return Departement[] départements de l'enseignant */
+    #[Groups(['enseignant:read'])]
+    public function getDepartements(): array
+    {
+        return array_values(array_filter($this->enseignantDepartements->map(
+            static fn (EnseignantDepartement $ed) => $ed->getDepartement()
+        )->toArray()));
     }
 }

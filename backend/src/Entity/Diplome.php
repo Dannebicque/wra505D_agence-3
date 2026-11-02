@@ -11,7 +11,17 @@ use App\Repository\DiplomeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
+#[ApiResource(
+    operations: [new Get(), new GetCollection()],
+    normalizationContext: ['groups' => ['diplome:read']],
+    security: "is_granted('ROLE_USER')",
+)]
 #[ORM\Entity(repositoryClass: DiplomeRepository::class)]
 class Diplome
 {
@@ -103,6 +113,7 @@ class Diplome
         return $this;
     }
 
+    #[Groups(['diplome:read'])]
     public function getLibelle(): ?string
     {
         return $this->libelle;
@@ -115,6 +126,7 @@ class Diplome
         return $this;
     }
 
+    #[Groups(['diplome:read'])]
     public function getSigle(): ?string
     {
         return $this->sigle;
@@ -127,6 +139,7 @@ class Diplome
         return $this;
     }
 
+    #[Groups(['diplome:read'])]
     public function getDepartement(): Departement
     {
         return $this->departement;
@@ -137,6 +150,8 @@ class Diplome
         $this->departement = $departement;
     }
 
+    #[Groups(['diplome:read'])]
+    #[SerializedName('parcours')]
     public function getApcParcours(): ?ApcParcours
     {
         return $this->apcParcours;

@@ -12,7 +12,13 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\NotExposed;
 
+#[ApiResource(
+    shortName: 'Referentiel',
+    operations: [new NotExposed(uriTemplate: '/referentiels/{id}')],
+)]
 #[ORM\Entity(repositoryClass: ApcReferentielRepository::class)]
 class ApcReferentiel
 {

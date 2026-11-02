@@ -11,7 +11,16 @@ use App\Repository\AnneeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
 
+#[ApiResource(
+    operations: [new Get(), new GetCollection()],
+    normalizationContext: ['groups' => ['annee:read']],
+    security: "is_granted('ROLE_USER')",
+)]
 #[ORM\Entity(repositoryClass: AnneeRepository::class)]
 class Annee
 {
@@ -76,6 +85,7 @@ class Annee
         return $this;
     }
 
+    #[Groups(['annee:read'])]
     public function getLibelle(): ?string
     {
         return $this->libelle;
@@ -88,6 +98,7 @@ class Annee
         return $this;
     }
 
+    #[Groups(['annee:read'])]
     public function getOrdre(): ?int
     {
         return $this->ordre;
@@ -136,6 +147,7 @@ class Annee
         return $this;
     }
 
+    #[Groups(['annee:read'])]
     public function getDiplome(): ?Diplome
     {
         return $this->diplome;

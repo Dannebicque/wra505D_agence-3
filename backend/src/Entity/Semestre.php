@@ -12,7 +12,17 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
+#[ApiResource(
+    operations: [new Get(), new GetCollection()],
+    normalizationContext: ['groups' => ['semestre:read']],
+    security: "is_granted('ROLE_USER')",
+)]
 #[ORM\Entity(repositoryClass: SemestreRepository::class)]
 class Semestre
 {
@@ -114,6 +124,7 @@ class Semestre
         return $this;
     }
 
+    #[Groups(['semestre:read'])]
     public function getLibelle(): ?string
     {
         return $this->libelle;
@@ -186,6 +197,7 @@ class Semestre
         return $this;
     }
 
+    #[Groups(['semestre:read'])]
     public function getAnnee(): ?Annee
     {
         return $this->annee;
@@ -233,6 +245,8 @@ class Semestre
         return $this;
     }
 
+    #[Groups(['semestre:read'])]
+    #[SerializedName('ordre')]
     public function getOrdreLmd(): ?int
     {
         return $this->ordre_lmd;

@@ -66,8 +66,18 @@ class UsersFixture extends Fixture implements OrderedFixtureInterface
         //---------------------------------------------------------
 
         // Deux étudiants de démo (le second sert à tester qu'un étudiant ne voit pas la fiche d'un autre)
-        $groupes = $this->groupeRepository->findBy(['apcParcours' => 5]);
         $semestre = $this->semestreRepository->findOneBy(['id' => 7]);
+        // Un groupe de chaque type (CM, TD, TP) du semestre, comme un vrai étudiant
+        $groupes = [];
+        foreach ($this->groupeRepository->createQueryBuilder('g')
+            ->join('g.type_groupe', 't')
+            ->join('t.semestre', 's')
+            ->where('s = :semestre')
+            ->setParameter('semestre', $semestre)
+            ->orderBy('g.id')
+            ->getQuery()->getResult() as $groupe) {
+            $groupes[$groupe->getType()] ??= $groupe;
+        }
         $anneeUniversitaire = $this->anneeUniversitaireRepository->findOneBy(['active' => true]);
         $this->etudiant($manager, 'etudiant', 'Camille', 'Martin', $semestre, $groupes, $anneeUniversitaire);
         $this->etudiant($manager, 'etudiant2', 'Lucas', 'Bernard', $semestre, $groupes, $anneeUniversitaire);

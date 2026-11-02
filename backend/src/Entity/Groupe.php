@@ -11,7 +11,17 @@ use App\Repository\GroupeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
+#[ApiResource(
+    operations: [new Get(), new GetCollection()],
+    normalizationContext: ['groups' => ['groupe:read']],
+    security: "is_granted('ROLE_USER')",
+)]
 #[ORM\Entity(repositoryClass: GroupeRepository::class)]
 class Groupe
 {
@@ -60,6 +70,7 @@ class Groupe
         return $this;
     }
 
+    #[Groups(['groupe:read'])]
     public function getLibelle(): ?string
     {
         return $this->libelle;
@@ -135,6 +146,8 @@ class Groupe
         return $this;
     }
 
+    #[Groups(['groupe:read'])]
+    #[SerializedName('parcours')]
     public function getApcParcours(): ?ApcParcours
     {
         return $this->apcParcours;
@@ -145,5 +158,19 @@ class Groupe
         $this->apcParcours = $apcParcours;
 
         return $this;
+    }
+
+    /** Type du groupe (CM, TD ou TP), porté par son type de groupe. */
+    #[Groups(['groupe:read'])]
+    public function getType(): ?string
+    {
+        return $this->type_groupe?->getType();
+    }
+
+    /** Semestre du groupe, porté par son type de groupe. */
+    #[Groups(['groupe:read'])]
+    public function getSemestre(): ?Semestre
+    {
+        return $this->type_groupe?->getSemestre()->first() ?: null;
     }
 }

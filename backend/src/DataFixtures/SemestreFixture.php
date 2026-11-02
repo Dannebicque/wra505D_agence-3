@@ -58,6 +58,7 @@ class SemestreFixture extends Fixture implements OrderedFixtureInterface
                 $currentSemester->setId($semestreCount)
                     ->setLibelle($libelle)
                     ->setOrdreAnnee($j + 1)
+                    ->setOrdreLmd((int) substr($libelle, 1))
                     ->setActif($j % 2)
                     ->setAnnee($currentAnnee);
                 $manager->persist($currentSemester);
