@@ -54,12 +54,10 @@ class ApcParcoursRepository extends ServiceEntityRepository
 
     public function truncate(): void
     {
-        $this->getEntityManager()->getConnection()->executeQuery('SET FOREIGN_KEY_CHECKS=0');
         $this->createQueryBuilder('p')
             ->delete()
             ->getQuery()
             ->execute();
-        $this->getEntityManager()->getConnection()->executeQuery('SET FOREIGN_KEY_CHECKS=1');
     }
 
 //    /**

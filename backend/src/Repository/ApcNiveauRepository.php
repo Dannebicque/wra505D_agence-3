@@ -91,12 +91,10 @@ class ApcNiveauRepository extends ServiceEntityRepository
 
     public function truncate(): void
     {
-        $this->getEntityManager()->getConnection()->executeQuery('SET FOREIGN_KEY_CHECKS=0');
         $this->createQueryBuilder('n')
             ->delete()
             ->getQuery()
             ->execute();
-        $this->getEntityManager()->getConnection()->executeQuery('SET FOREIGN_KEY_CHECKS=1');
     }
 
 //    /**

@@ -66,16 +66,18 @@ class StructureSynchro extends AbstractController
             $enseignantRepository->remove($enseignant, true);
 
             // Vide les tables
-            $apcReferentielRepository->truncate();
-            $competenceRepository->truncate();
-            $niveauRepository->truncate();
+            // Ordre enfants -> parents imposé par les clés étrangères (PostgreSQL les vérifie toujours).
+            // S'il reste des données liées (validations, étudiants…), la suppression échoue au lieu de les effacer.
             $apprentissageCritiqueRepository->truncate();
-            $apcParcoursRepository->truncate();
+            $niveauRepository->truncate();
+            $competenceRepository->truncate();
             $groupeRepository->truncate();
             $typeGroupeRepository->truncate();
             $semestreRepository->truncate();
             $anneeRepository->truncate();
             $diplomeRepository->truncate();
+            $apcParcoursRepository->truncate();
+            $apcReferentielRepository->truncate();
             $departementRepository->truncate();
         }
 
