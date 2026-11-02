@@ -96,4 +96,3 @@ describe('formulaire de trace', () => {
     })
   })
 })
-
