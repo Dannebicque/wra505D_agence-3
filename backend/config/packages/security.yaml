@@ -4,33 +4,43 @@ security:
     App\Entity\Users: 'auto'
 
   role_hierarchy:
-    ROLE_ADMIN: [ ROLE_USER, ROLE_ALLOWED_TO_SWITCH ]
+    ROLE_ETUDIANT: [ ROLE_USER ]
+    ROLE_ENSEIGNANT: [ ROLE_USER ]
+    ROLE_ADMIN: [ ROLE_USER ]
 
-    Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
-  # https://symfony.com/doc/current/security.html#loading-the-user-the-user-provider
   providers:
-    # used to reload user from session & other features (e.g. switch_user)
     app_user_provider:
       entity:
         class: App\Entity\Users
         property: username
+
   firewalls:
     dev:
-      pattern: ^/(_(profiler|wdt)|css|images|js)/
+      pattern: ^/_(profiler|wdt)/
       security: false
     main:
       lazy: true
       provider: app_user_provider
-      # shortcut: aucune authentification tant que l'API n'a pas la sienne (JWT ou autre, Sprint 4)
+      user_checker: App\Security\UserChecker
+      # Connexion par identifiant et mot de passe ; la session est gardée dans un cookie HttpOnly
+      json_login:
+        check_path: api_login
+        username_path: username
+        password_path: password
+        failure_handler: App\Security\LoginFailureHandler
+      login_throttling:
+        max_attempts: 5
+        interval: '1 minute'
+      logout:
+        path: api_logout
 
-  # Easy way to control access for large sections of your site
-  # Note: Only the *first* access control that matches will be used
+  # La première règle qui correspond s'applique : tout /api exige une connexion, sauf la connexion elle-même
   access_control:
-    # Synchro intranet : écrit en base, réservée aux admins (401 tant que l'authentification API n'existe pas)
+    - { path: ^/api/login$, roles: PUBLIC_ACCESS }
+    - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+    # Synchro intranet : écrit en base, réservée aux admins
     - { path: ^/api/intranet, roles: ROLE_ADMIN }
-    - { path: ^/admin, roles: ROLE_ADMIN }
-    - { path: ^/etudiant, roles: [ROLE_ETUDIANT, ROLE_ADMIN] }
-    - { path: ^/enseignant, roles: [ROLE_ENSEIGNANT, ROLE_ADMIN] }
+    - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
   security:
