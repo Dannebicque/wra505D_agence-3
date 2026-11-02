@@ -43,7 +43,6 @@ class Competence
 
     public function __construct()
     {
-        $this->validations = new ArrayCollection();
         $this->apcNiveaux = new ArrayCollection();
     }
 

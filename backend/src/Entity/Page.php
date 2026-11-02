@@ -49,7 +49,6 @@ class Page
     {
         $this->trace = new ArrayCollection();
         $this->portfolio = new ArrayCollection();
-        $this->pageTraces = new ArrayCollection();
         $this->ordreTraces = new ArrayCollection();
     }
 

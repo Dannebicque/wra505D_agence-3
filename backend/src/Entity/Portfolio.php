@@ -66,7 +66,6 @@ class Portfolio
         $this->date_modification = null;
         $this->pages = new ArrayCollection();
         $this->commentaires = new ArrayCollection();
-        $this->pagePortfolios = new ArrayCollection();
         $this->ordrePages = new ArrayCollection();
     }
 

@@ -144,7 +144,7 @@ class EtudiantRepository extends ServiceEntityRepository
         return $this->findOneBy(['mail_univ' => $mailUniv]);
     }
 
-    public function findByFilters($dept, Semestre $semestre = null, array $groupes = [], array $etudiants = [], array $competences = [], int $etat = null): array
+    public function findByFilters($dept, ?Semestre $semestre = null, array $groupes = [], array $etudiants = [], array $competences = [], ?int $etat = null): array
     {
         //obtenir tous les étudiants du département
         $qb = $this->createQueryBuilder('e')

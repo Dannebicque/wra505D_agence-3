@@ -52,7 +52,6 @@ class Departement
     public function __construct()
     {
         $this->diplomes = new ArrayCollection();
-        $this->enseignants = new ArrayCollection();
         $this->apcReferentiels = new ArrayCollection();
         $this->enseignantDepartements = new ArrayCollection();
     }
