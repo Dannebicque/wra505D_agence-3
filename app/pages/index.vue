@@ -13,11 +13,8 @@ const ESPACES_ACCUEIL = [
 </script>
 
 <template>
-  <main class="mx-auto flex min-h-dvh max-w-3xl flex-col justify-center gap-6 px-4 py-12">
-    <div class="flex items-start justify-between gap-4">
-      <h1 class="text-4xl font-bold text-highlighted">UniFolio</h1>
-      <UColorModeButton />
-    </div>
+  <div class="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-16 sm:py-24">
+    <h1 class="font-serif text-5xl text-highlighted">UniFolio</h1>
     <p class="text-lg text-muted">
       Déposez vos traces, composez votre portfolio de compétences et suivez vos évaluations.
     </p>
@@ -26,5 +23,5 @@ const ESPACES_ACCUEIL = [
         {{ espace.label }}
       </UButton>
     </div>
-  </main>
+  </div>
 </template>

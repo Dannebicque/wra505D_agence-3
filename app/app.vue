@@ -4,7 +4,10 @@ import { fr } from '@nuxt/ui/locale'
 
 <template>
   <UApp :locale="fr">
+    <LayoutSkipLink />
     <NuxtRouteAnnouncer />
-    <NuxtPage />
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
   </UApp>
 </template>
