@@ -22,25 +22,28 @@ const savedStatut = ref<TraceStatut>(props.trace?.statut ?? 'brouillon')
 const draft = ref<TraceInput | null>(null)
 /** Enregistrement explicite en cours (y compris l'attente de la sauvegarde automatique). */
 const finishing = ref(false)
+/** Révision de la saisie au moment de l'enregistrement explicite. */
+let submittedRevision: number | undefined
 let mounted = true
 
-const autosave = createAutosave(
-  () => (draft.value ? { ...draft.value, statut: savedStatut.value } : null),
-  {
-    isValid: (input) => input !== null && validateTrace(input, { today }).ok,
-    // Pas d'envoi concurrent pendant un enregistrement explicite (sinon une création en double)
-    isEnabled: () => !finishing.value && !submitting.value,
-    save: async (input) => {
-      const result = input && validateTrace(input, { today })
-      if (!result?.ok) return
-      const saved = await store.save(traceId.value, result.value)
-      if (!traceId.value) {
-        traceId.value = idFromIri(saved['@id'])
-        rewriteAddress(`/etudiant/traces/${traceId.value}`)
-      }
-    },
+/** Saisie à enregistrer automatiquement, avec le statut enregistré (jamais celui d'un clic refusé). */
+const withSavedStatut = (input: TraceInput): TraceInput => ({ ...input, statut: savedStatut.value })
+
+// La source ne contient pas le statut : un changement de statut ne déclenche aucun envoi
+const autosave = createAutosave(() => draft.value, {
+  isValid: (input) => input !== null && validateTrace(withSavedStatut(input), { today }).ok,
+  // Pas d'envoi concurrent pendant un enregistrement explicite (sinon une création en double)
+  isEnabled: () => !finishing.value && !submitting.value,
+  save: async (input) => {
+    const result = input && validateTrace(withSavedStatut(input), { today })
+    if (!result?.ok) return
+    const saved = await store.save(traceId.value, result.value)
+    if (!traceId.value) {
+      traceId.value = idFromIri(saved['@id'])
+      rewriteAddress(`/etudiant/traces/${traceId.value}`)
+    }
   },
-)
+})
 
 /**
  * Nouvelle trace créée en brouillon : l'adresse devient celle de la trace, sans recharger la page
@@ -54,10 +57,14 @@ function rewriteAddress(path: string) {
   window.history.replaceState({ ...window.history.state, current: path }, '', path)
 }
 
+// Le statut enregistré ne change qu'après un enregistrement explicite RÉUSSI
 const { submit, submitting } = useTraceSubmit(
   () => traceId.value,
   form,
-  () => autosave.markSaved(),
+  (input) => {
+    savedStatut.value = input.statut
+    autosave.markSaved(submittedRevision)
+  },
 )
 
 async function onSubmit(input: TraceInput) {
@@ -66,8 +73,8 @@ async function onSubmit(input: TraceInput) {
   try {
     // Une sauvegarde automatique en cours se termine d'abord (la trace a alors son identifiant)
     await autosave.flush()
+    submittedRevision = autosave.revision.value
     await submit(input)
-    savedStatut.value = input.statut
   } finally {
     finishing.value = false
   }

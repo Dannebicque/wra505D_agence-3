@@ -34,7 +34,7 @@ describe('useTraceSubmit', () => {
       ]),
     )
 
-    await submit(INPUT)
+    expect(await submit(INPUT)).toBe(false)
 
     expect(setServerErrors).toHaveBeenCalledOnce()
     expect(toasts.value.at(-1)?.description).toBe('Statut refusé.')

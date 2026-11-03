@@ -225,4 +225,18 @@ describe('sauvegarde automatique', () => {
     expect(save).not.toHaveBeenCalled()
     expect(autosave.hasUnsavedChanges.value).toBe(false)
   })
+
+  // Une frappe pendant un enregistrement explicite ne doit pas être effacée
+  it('garde les modifications faites après la révision enregistrée', async () => {
+    const { value, autosave } = setup()
+
+    value.value = 'a'
+    await nextTick()
+    const revision = autosave.revision.value
+    value.value = 'ab'
+    await nextTick()
+    autosave.markSaved(revision)
+
+    expect(autosave.hasUnsavedChanges.value).toBe(true)
+  })
 })

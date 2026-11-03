@@ -35,6 +35,8 @@ export function createAutosave<T>(
   const lastError = ref<unknown>(null)
   /** Modifications pas encore enregistrées. */
   const dirty = ref(false)
+  /** Compteur de modifications : permet de savoir si la saisie a changé depuis un instant donné. */
+  const revision = ref(0)
 
   let timer: ReturnType<typeof setTimeout> | undefined
   let inFlight: Promise<void> | null = null
@@ -92,6 +94,7 @@ export function createAutosave<T>(
   const stopWatch = watch(
     source,
     () => {
+      revision.value++
       dirty.value = true
       status.value = 'pending'
       schedule()
@@ -103,14 +106,19 @@ export function createAutosave<T>(
     status,
     lastSavedAt,
     lastError,
+    revision,
     hasUnsavedChanges: computed(() => dirty.value || status.value === 'saving'),
     /** Enregistre tout de suite ce qui est en attente (avant de quitter la page). */
     async flush() {
       if (inFlight) await inFlight
       await run()
     },
-    /** La saisie vient d'être enregistrée autrement (enregistrement explicite) : plus rien en attente. */
-    markSaved() {
+    /**
+     * La saisie vient d'être enregistrée autrement (enregistrement explicite) : plus rien en attente,
+     * sauf si elle a changé depuis `atRevision` (une frappe pendant l'envoi n'est pas effacée).
+     */
+    markSaved(atRevision?: number) {
+      if (atRevision !== undefined && atRevision !== revision.value) return
       clearTimeout(timer)
       dirty.value = false
       status.value = 'saved'
