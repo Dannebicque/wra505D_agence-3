@@ -119,4 +119,33 @@ describe('formulaire de trace', () => {
       statut: 'brouillon',
     })
   })
+
+  // Relecture : passer d'Image à PDF gardait l'image (refusée ensuite par le serveur)
+  it('ne garde pas le fichier d’un autre type quand on change de type', async () => {
+    const form = await mountSuspended(TraceForm, {
+      props: {
+        initial: {
+          titre: 'Affiche',
+          description: null,
+          contexte: null,
+          legende: 'Affiche orange',
+          type: 'image',
+          contenu: ['/fichiers/affiche.jpg'],
+          statut: 'brouillon',
+          conceptionIa: 'aucun',
+          realisationIa: 'aucun',
+          dateRealisation: null,
+        },
+      },
+    })
+    expect(form.text()).toContain('affiche.jpg')
+
+    // Les boutons radio de Nuxt UI (Reka) sont des `button role="radio"`
+    await form.get('[role="radio"][value="pdf"]').trigger('click')
+
+    await vi.waitFor(() =>
+      expect(form.emitted('change')?.at(-1)?.[0]).toMatchObject({ type: 'pdf', contenu: [] }),
+    )
+    expect(form.text()).not.toContain('affiche.jpg')
+  })
 })

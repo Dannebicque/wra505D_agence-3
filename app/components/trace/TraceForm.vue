@@ -28,7 +28,11 @@ const state = reactive({
   type: (props.initial?.type ?? 'lien') as TraceType,
   // Contenu selon le type : une adresse web (lien, vidéo) ou un fichier déposé (image, PDF)
   adresse: initialIsFile ? '' : (props.initial?.contenu[0] ?? ''),
-  fichier: initialIsFile ? (props.initial?.contenu[0] ?? null) : null,
+  // Un fichier par type : passer d'Image à PDF ne garde pas l'image (refusée par le serveur)
+  fichiers: {
+    image: props.initial?.type === 'image' ? (props.initial.contenu[0] ?? null) : null,
+    pdf: props.initial?.type === 'pdf' ? (props.initial.contenu[0] ?? null) : null,
+  } as Record<'image' | 'pdf', string | null>,
   legende: props.initial?.legende ?? '',
   description: props.initial?.description ?? '',
   contexte: props.initial?.contexte ?? '',
@@ -38,6 +42,9 @@ const state = reactive({
 })
 
 const hasFile = computed(() => isFileType(state.type))
+const currentFile = computed(() =>
+  state.type === 'image' || state.type === 'pdf' ? state.fichiers[state.type] : null,
+)
 
 // Fixé par le bouton cliqué, avant la validation du formulaire
 const statut = ref<TraceStatut>(props.initial?.statut ?? 'brouillon')
@@ -49,8 +56,8 @@ function toInput(): TraceInput {
     titre: state.titre,
     type: state.type,
     contenu: hasFile.value
-      ? state.fichier
-        ? [state.fichier]
+      ? currentFile.value
+        ? [currentFile.value]
         : []
       : state.adresse.trim()
         ? [state.adresse.trim()]
@@ -102,6 +109,8 @@ function onSubmit() {
 }
 
 const form = useTemplateRef('form')
+/** Erreur du formulaire pour le fichier (validation, serveur), affichée par le champ fichier. */
+const fichierError = computed(() => form.value?.getErrors('fichier')[0]?.message ?? null)
 // NB : `submit()` de UForm appelle `reportValidity()` du navigateur, qui ignore `novalidate`.
 // Aucun champ ne porte donc de contrainte native (type="url", max…) : les règles en français
 // de `validateTrace` s'appliquent seules, sans bulle native ni envoi bloqué.
@@ -187,8 +196,10 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
 
     <TraceFileField
       v-if="state.type === 'image' || state.type === 'pdf'"
-      v-model="state.fichier"
+      :key="state.type"
+      v-model="state.fichiers[state.type]"
       :type="state.type"
+      :form-error="fichierError"
     />
 
     <UFormField

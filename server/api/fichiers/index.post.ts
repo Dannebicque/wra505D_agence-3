@@ -6,9 +6,22 @@ const MAX_BODY = FILE_RULES.pdf.maxBytes + 64 * 1024
 const fail = (message: string) => validationError([{ propertyPath: 'fichier', message }])
 
 export default defineEventHandler(async (event) => {
-  // Refus avant lecture du corps : un envoi énorme n'est pas chargé en mémoire
-  if (Number(getRequestHeader(event, 'content-length') ?? 0) > MAX_BODY) {
-    throw fail('Le fichier dépasse la taille maximale (10 Mo).')
+  // Refus avant lecture du corps : un envoi énorme, ou de taille inconnue (envoi « chunked »),
+  // n'est jamais chargé en mémoire. Les navigateurs envoient toujours la taille d'un FormData.
+  const length = Number(getRequestHeader(event, 'content-length'))
+  if (!Number.isFinite(length) || length <= 0) {
+    throw createError({
+      statusCode: 411,
+      statusMessage: 'Length Required',
+      message: 'Taille de l’envoi requise.',
+    })
+  }
+  if (length > MAX_BODY) {
+    throw createError({
+      statusCode: 413,
+      statusMessage: 'Payload Too Large',
+      message: 'Le fichier dépasse la taille maximale (10 Mo).',
+    })
   }
 
   const parts = await readMultipartFormData(event).catch(() => undefined)

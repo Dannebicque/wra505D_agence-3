@@ -19,7 +19,10 @@ registerEndpoint('/api/fichiers', { method: 'POST', handler: upload })
 const fileOf = (content: ConstructorParameters<typeof NodeFile>[0], name: string, type: string) =>
   new NodeFile(content, name, { type }) as unknown as File
 
-async function choose(field: Awaited<ReturnType<typeof mountSuspended>>, file: File) {
+async function choose(
+  field: Awaited<ReturnType<typeof mountSuspended<typeof TraceFileField>>>,
+  file: File,
+) {
   const input = field.get('input[type="file"]')
   Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
   await input.trigger('change')
@@ -76,5 +79,76 @@ describe('champ fichier d’une trace', () => {
 
     expect(field.text()).toContain('etude-ux.pdf')
     expect(field.text()).toContain('Remplacer')
+  })
+
+  describe('accessibilité', () => {
+    const describedBy = (
+      field: Awaited<ReturnType<typeof mountSuspended<typeof TraceFileField>>>,
+    ) =>
+      (field.get('button[name="fichier"]').attributes('aria-describedby') ?? '')
+        .split(' ')
+        .map((id) => field.find(`[id="${id}"]`))
+        .filter((el) => el.exists())
+        .map((el) => el.text())
+        .join(' ')
+
+    it('donne au bouton un nom et une description (type, formats acceptés)', async () => {
+      const field = await mountSuspended(TraceFileField, {
+        props: { type: 'image', modelValue: null },
+      })
+      const button = field.get('button[name="fichier"]')
+
+      const labels = (button.attributes('aria-labelledby') ?? '')
+        .split(' ')
+        .map((id) => field.find(`[id="${id}"]`).text())
+      expect(labels.join(' ')).toContain('Image')
+      expect(describedBy(field)).toContain('JPEG, PNG, WebP ou GIF')
+    })
+
+    it('relie l’erreur au bouton et l’annonce', async () => {
+      const field = await mountSuspended(TraceFileField, {
+        props: { type: 'pdf', modelValue: null },
+      })
+
+      await choose(field, fileOf(['texte'], 'notes.pdf', 'application/pdf'))
+
+      await vi.waitFor(() => expect(describedBy(field)).toContain('Choisissez un fichier PDF.'))
+      expect(field.get('button[name="fichier"]').attributes('aria-invalid')).toBe('true')
+      expect(field.get('[role="status"]').text()).toContain('Choisissez un fichier PDF.')
+    })
+
+    it('annonce le fichier déposé', async () => {
+      const field = await mountSuspended(TraceFileField, {
+        props: { type: 'image', modelValue: null },
+      })
+
+      await choose(field, fileOf([new Uint8Array(PNG_BYTES)], 'affiche.png', 'image/png'))
+
+      await vi.waitFor(() =>
+        expect(field.get('[role="status"]').text()).toContain('affiche.png déposé'),
+      )
+    })
+
+    it('affiche une erreur venue du formulaire', async () => {
+      const field = await mountSuspended(TraceFileField, {
+        props: { type: 'image', modelValue: null, formError: 'Ajoutez le contenu de la trace.' },
+      })
+
+      expect(describedBy(field)).toContain('Ajoutez le contenu de la trace.')
+    })
+  })
+
+  // Un fichier glissé hors des formats acceptés n'est plus ignoré en silence
+  it('traite un fichier glissé dans la zone, avec un message s’il est refusé', async () => {
+    const field = await mountSuspended(TraceFileField, {
+      props: { type: 'image', modelValue: null },
+    })
+    const file = fileOf(['<svg></svg>'], 'logo.svg', 'image/svg+xml')
+
+    await field.get('[data-zone="depot"]').trigger('drop', { dataTransfer: { files: [file] } })
+
+    await vi.waitFor(() =>
+      expect(field.text()).toContain('Choisissez une image JPEG, PNG, WebP ou GIF.'),
+    )
   })
 })

@@ -20,7 +20,7 @@ test.describe('fichiers image et PDF', () => {
   test('dépose une image, la décrit et finalise la trace', async ({ page }) => {
     await startImageTrace(page, 'Affiche de la nuit de l’info')
     await chooseFile(page, 'affiche.png', 'image/png', PNG)
-    await expect(page.getByText('affiche.png')).toBeVisible()
+    await expect(page.getByText('affiche.png', { exact: true })).toBeVisible()
     await page
       .getByRole('textbox', { name: /Légende/ })
       .fill('Affiche violette, un hibou au centre')
@@ -54,14 +54,17 @@ test.describe('fichiers image et PDF', () => {
     await startImageTrace(page, 'Logo')
     await chooseFile(page, 'logo.png', 'image/png', Buffer.from('<svg onload="alert(1)"></svg>'))
 
-    await expect(page.getByText('Choisissez une image JPEG, PNG, WebP ou GIF.')).toBeVisible()
+    // Message visible sous le champ (et répété dans la zone annoncée aux lecteurs d'écran)
+    await expect(
+      page.getByText('Choisissez une image JPEG, PNG, WebP ou GIF.').first(),
+    ).toBeVisible()
     await expect(page.getByRole('link', { name: /Ouvrir/ })).toHaveCount(0)
   })
 
   test('exige une légende pour finaliser une image', async ({ page }) => {
     await startImageTrace(page, 'Affiche sans légende')
     await chooseFile(page, 'affiche.png', 'image/png', PNG)
-    await expect(page.getByText('affiche.png')).toBeVisible()
+    await expect(page.getByText('affiche.png', { exact: true })).toBeVisible()
 
     await page.getByRole('button', { name: 'Finaliser la trace' }).click()
 
@@ -83,4 +86,74 @@ test.describe('fichiers image et PDF', () => {
       expect(results.violations).toEqual([])
     })
   }
+
+  test('place le focus sur le bouton du fichier après « Finaliser » sans fichier', async ({
+    page,
+  }) => {
+    await startImageTrace(page, 'Sans fichier')
+    await page.getByRole('textbox', { name: /Légende/ }).fill('Une affiche')
+
+    await page.getByRole('button', { name: 'Finaliser la trace' }).click()
+
+    await expect(
+      page.getByText('Ajoutez le contenu de la trace avant de la finaliser.').first(),
+    ).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Image Choisir un fichier' })).toBeFocused()
+  })
+})
+
+// Contrôles du serveur, sans passer par le formulaire (une requête peut être forgée)
+test.describe('routes des fichiers', () => {
+  test('refuse un faux fichier envoyé directement', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant/traces')
+
+    const response = await page.request.post('/api/fichiers', {
+      multipart: {
+        type: 'image',
+        fichier: { name: 'logo.png', mimeType: 'image/png', buffer: Buffer.from('<svg></svg>') },
+      },
+    })
+
+    expect(response.status()).toBe(422)
+    expect(JSON.stringify(await response.json())).toContain(
+      'Choisissez une image JPEG, PNG, WebP ou GIF.',
+    )
+  })
+
+  test('refuse un envoi sans type de trace', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant/traces')
+
+    const response = await page.request.post('/api/fichiers', {
+      multipart: { fichier: { name: 'a.png', mimeType: 'image/png', buffer: PNG } },
+    })
+
+    expect(response.status()).toBe(422)
+  })
+
+  test('refuse une trace qui référence le fichier d’un autre visiteur', async ({
+    page,
+    browser,
+  }) => {
+    await gotoHydrated(page, '/etudiant/traces')
+    const upload = await page.request.post('/api/fichiers', {
+      multipart: { type: 'image', fichier: { name: 'a.png', mimeType: 'image/png', buffer: PNG } },
+    })
+    const fichier = (await upload.json()) as { '@id': string }
+
+    const stranger = await browser.newContext({ baseURL: new URL(page.url()).origin })
+    const response = await stranger.request.post('/api/traces', {
+      data: {
+        titre: 'Vol',
+        type: 'image',
+        contenu: [fichier['@id']],
+        legende: 'Image volée',
+        statut: 'brouillon',
+      },
+    })
+    const body = JSON.stringify(await response.json())
+    await stranger.close()
+
+    expect(response.status()).toBe(422)
+    expect(body).toContain('Déposez un fichier du bon format avant de l’associer.')
+  })
 })

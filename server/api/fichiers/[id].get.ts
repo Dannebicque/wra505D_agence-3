@@ -19,6 +19,8 @@ export default defineEventHandler(async (event) => {
     'content-length': file.bytes.length,
     // Le navigateur ne devine jamais un autre type que celui déclaré
     'x-content-type-options': 'nosniff',
+    // Pas d'intégration depuis un autre site
+    'cross-origin-resource-policy': 'same-origin',
     'content-disposition': `inline; filename*=UTF-8''${encodeURIComponent(file.fichier.nom)}`,
     'cache-control': 'private, max-age=3600',
     // Une image ouverte seule ne peut rien exécuter (le lecteur PDF du navigateur refuse `sandbox`)

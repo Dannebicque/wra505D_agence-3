@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { Trace } from '../../../shared/types/trace'
-import { fileFieldViolations, mergeTracePatch } from '../../../server/utils/trace-patch'
+import {
+  fileFieldViolations,
+  mergeTracePatch,
+  uploadedFileId,
+} from '../../../server/utils/trace-patch'
 
 const EXISTING: Trace = {
   '@id': '/api/traces/3',
@@ -83,5 +87,16 @@ describe('fileFieldViolations', () => {
     expect(
       fileFieldViolations(null, { type: 'lien', contenu: ['https://a.example'] }, null),
     ).toEqual([])
+  })
+})
+
+describe('uploadedFileId', () => {
+  it('extrait l’identifiant d’un fichier déposé, et seulement lui', () => {
+    expect(uploadedFileId(['/api/fichiers/0b7c1f0e-3a1d-4c55-9a52-2f0e8a9d1c11'])).toBe(
+      '0b7c1f0e-3a1d-4c55-9a52-2f0e8a9d1c11',
+    )
+    expect(uploadedFileId(['/fichiers/a.pdf'])).toBeNull()
+    expect(uploadedFileId(['/api/fichiers/../traces/1'])).toBeNull()
+    expect(uploadedFileId([])).toBeNull()
   })
 })
