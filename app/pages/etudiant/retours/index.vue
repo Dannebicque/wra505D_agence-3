@@ -90,7 +90,7 @@ const emptyMessage = computed(() => {
       <UButton
         v-for="f in filtres"
         :key="f.value"
-        :color="filtre === f.value ? 'primary' : 'neutral'"
+        color="neutral"
         :variant="filtre === f.value ? 'solid' : 'outline'"
         :aria-pressed="filtre === f.value"
         size="sm"

@@ -12,13 +12,14 @@ const props = defineProps<{
   taille: string | null
 }>()
 
-const KINDS: Record<TraceType, { label: string; action: string }> = {
-  image: { label: 'Image', action: 'Ouvrir l’image' },
-  pdf: { label: 'Document PDF', action: 'Ouvrir le PDF' },
-  video: { label: 'Vidéo', action: 'Lire la vidéo' },
-  lien: { label: 'Lien externe', action: 'Ouvrir le lien' },
+const KINDS: Record<TraceType, { label: string; action: string; icon: string }> = {
+  image: { label: 'Image', action: 'Ouvrir l’image', icon: 'i-lucide-external-link' },
+  pdf: { label: 'Document PDF', action: 'Ouvrir le PDF', icon: 'i-lucide-external-link' },
+  video: { label: 'Vidéo', action: 'Lire la vidéo', icon: 'i-lucide-play' },
+  lien: { label: 'Lien externe', action: 'Ouvrir le lien', icon: 'i-lucide-external-link' },
 }
 const kind = computed(() => KINDS[props.type])
+const unavailableId = useId()
 // Une adresse (lien, vidéo) peut être longue et sans espace : elle passe à la ligne n'importe où
 const isAddress = computed(() => props.type === 'lien' || props.type === 'video')
 </script>
@@ -38,15 +39,26 @@ const isAddress = computed(() => props.type === 'lien' || props.type === 'video'
           {{ kind.label }}<template v-if="taille"> · {{ taille }}</template>
         </p>
       </div>
-      <UButton color="neutral" variant="outline" icon="i-lucide-external-link">
-        {{ kind.action }}
-      </UButton>
+      <!-- Maquette : pas encore de fichier à ouvrir. aria-disabled plutôt que disabled : le bouton
+           reste focalisable et « Bientôt disponible » est lu avec lui (aucune action silencieuse) -->
+      <div class="flex flex-col items-start gap-1 sm:items-end">
+        <UButton
+          color="neutral"
+          variant="outline"
+          :icon="kind.icon"
+          aria-disabled="true"
+          :aria-describedby="unavailableId"
+        >
+          {{ kind.action }}
+        </UButton>
+        <p :id="unavailableId" class="text-xs text-muted">Bientôt disponible</p>
+      </div>
     </div>
 
     <!-- Image : la légende sert de texte alternatif ; l'enseignant doit pouvoir la lire et l'évaluer -->
     <p v-if="type === 'image'" class="rounded-feuille bg-default px-4 py-3 text-sm text-default">
       <span class="font-medium text-highlighted">Légende (texte alternatif) :</span>
-      {{ legende ?? 'aucune légende fournie par l’étudiant.' }}
+      {{ legende || 'aucune légende fournie par l’étudiant.' }}
     </p>
   </div>
 </template>

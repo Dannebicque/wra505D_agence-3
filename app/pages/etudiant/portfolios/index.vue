@@ -127,7 +127,13 @@ const newPortfolioLink = computed(() =>
           </dl>
 
           <div class="mt-auto flex flex-wrap gap-2 pt-1">
-            <UButton :to="`/etudiant/portfolios/${portfolio.id}`" icon="i-lucide-pencil" size="sm">
+            <UButton
+              :to="`/etudiant/portfolios/${portfolio.id}`"
+              icon="i-lucide-pencil"
+              color="neutral"
+              variant="outline"
+              size="sm"
+            >
               Modifier<span class="sr-only"> « {{ portfolio.intitule }} »</span>
             </UButton>
             <UButton

@@ -40,6 +40,7 @@ const competencesOf = (trace: DemoTrace) =>
       <p class="mt-6 text-sm text-muted">
         <template v-if="auteur">{{ auteur }} · </template>Portfolio {{ portfolio.annee }}
       </p>
+      <!-- Plus grand que les titres des espaces : c'est une page publique, que l'aperçu reproduit -->
       <h1 class="mt-2 font-titre text-3xl text-highlighted sm:text-4xl">
         {{ portfolio.intitule }}
       </h1>

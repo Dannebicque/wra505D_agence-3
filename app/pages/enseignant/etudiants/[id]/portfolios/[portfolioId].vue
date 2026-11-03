@@ -137,6 +137,8 @@ const pageLink = (id: number) => ({ query: { page: String(id) } })
               <UButton
                 v-if="isTracePending(trace)"
                 :to="`/enseignant/evaluations/${trace.id}`"
+                color="neutral"
+                variant="outline"
                 size="sm"
                 trailing-icon="i-lucide-arrow-right"
               >

@@ -133,7 +133,7 @@ function removeCompetence(competence: string) {
         v-for="v in VIEWS"
         :key="v.value"
         :icon="v.icon"
-        :color="view === v.value ? 'primary' : 'neutral'"
+        color="neutral"
         :variant="view === v.value ? 'solid' : 'outline'"
         :aria-pressed="view === v.value"
         @click="view = v.value"

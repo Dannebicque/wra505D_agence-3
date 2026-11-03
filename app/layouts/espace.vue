@@ -49,6 +49,7 @@ const items = computed(() =>
       <UNavigationMenu
         :items="items"
         color="neutral"
+        :ui="{ link: 'font-normal' }"
         orientation="vertical"
         aria-label="Navigation de l’espace"
       />

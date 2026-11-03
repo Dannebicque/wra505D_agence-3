@@ -9,7 +9,7 @@ withDefaults(defineProps<{ size?: 'sm' | 'lg' }>(), { size: 'lg' })
 <template>
   <div
     aria-hidden="true"
-    class="rounded-panneau bg-sarcelle-700 dark:bg-sarcelle-800"
+    class="rounded-panneau bg-(--ui-color-primary-700) dark:bg-(--ui-color-primary-800)"
     :class="size === 'lg' ? 'h-32 sm:h-44 lg:h-52' : 'h-16'"
   />
 </template>

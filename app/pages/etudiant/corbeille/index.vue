@@ -81,12 +81,11 @@ const eraseReturnFocus = (reason: 'confirm' | 'cancel') =>
         class="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
       >
         <div class="flex min-w-0 gap-4">
-          <span
-            class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-elevated text-highlighted"
+          <UIcon
+            :name="ELEMENT_SUPPRIME_TYPES[element.type].icon"
+            class="mt-1 size-4 shrink-0 text-muted"
             aria-hidden="true"
-          >
-            <UIcon :name="ELEMENT_SUPPRIME_TYPES[element.type].icon" class="size-4" />
-          </span>
+          />
           <div class="min-w-0">
             <p class="text-sm text-muted">{{ ELEMENT_SUPPRIME_TYPES[element.type].label }}</p>
             <h2 class="font-medium wrap-break-word text-highlighted">{{ element.titre }}</h2>

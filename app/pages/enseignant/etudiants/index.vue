@@ -64,7 +64,7 @@ const columns: TableColumn<EtudiantRow>[] = [
     accessorFn: (row) => row.counters.traces,
     header: 'Traces',
     // Nombres alignés à droite, chiffre sous chiffre
-    meta: { class: { th: 'text-right', td: 'text-right tabular-nums' } },
+    meta: { class: { th: 'text-right', td: 'text-right' } },
   },
 ]
 
