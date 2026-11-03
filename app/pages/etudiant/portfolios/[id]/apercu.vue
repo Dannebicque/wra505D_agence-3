@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ETUDIANT_COURANT_ID, etudiantById } from '~/demo/base'
+import { etudiantById } from '~/demo/base'
 import { numericParam, portfolioById } from '~/demo/portfolio'
 
 // MAQUETTE (E-PF-04) : le portfolio tel que le verront les visiteurs, avant publication.
@@ -13,7 +13,7 @@ const portfolio = found
 useSeoMeta({ title: `Aperçu de « ${portfolio.intitule} »` })
 
 const editPath = `/etudiant/portfolios/${portfolio.id}`
-const etudiant = etudiantById(ETUDIANT_COURANT_ID)
+const etudiant = etudiantById(portfolio.etudiantId)
 const auteur = etudiant ? `${etudiant.prenom} ${etudiant.nom}, ${etudiant.annee}` : undefined
 </script>
 
