@@ -4,20 +4,24 @@ import { ENSEIGNANT_COURANT, ETUDIANTS, formatDate } from '~/demo/base'
 import {
   ECHEANCES_PROVISOIRES,
   TRACES_SOUMISES,
-  estEnAttente,
-  nomEtudiant,
+  etudiantName,
+  evaluationCounters,
+  studentCounters,
 } from '~/demo/enseignant'
 
 useSeoMeta({ title: ESPACE_LABELS.enseignant })
 
 const NB_EN_ATTENTE_AFFICHEES = 5
 
-const pending = TRACES_SOUMISES.filter(estEnAttente)
-const evaluated = TRACES_SOUMISES.filter((t) => !estEnAttente(t))
-const studentsWithPending = ETUDIANTS.filter((e) => e.enAttente > 0).sort(
-  (a, b) => b.enAttente - a.enAttente,
-)
-const validations = TRACES_SOUMISES.flatMap((t) => t.competences)
+const pending = TRACES_SOUMISES.filter(isTracePending)
+// Mêmes compteurs que la fiche étudiant et les bilans (une seule définition, dans app/demo/enseignant.ts)
+const counters = evaluationCounters(TRACES_SOUMISES)
+const studentsWithPending = ETUDIANTS.map((etudiant) => ({
+  etudiant,
+  pendingTraces: studentCounters(etudiant.id).pendingTraces,
+}))
+  .filter((s) => s.pendingTraces > 0)
+  .sort((a, b) => b.pendingTraces - a.pendingTraces)
 
 const pendingSentence =
   pending.length === 0
@@ -38,17 +42,17 @@ const today = new Intl.DateTimeFormat('fr-FR', {
 const todayLabel = today.charAt(0).toUpperCase() + today.slice(1)
 
 const tiles = [
-  { label: 'Traces à évaluer', value: pending.length },
+  { label: 'Traces à évaluer', value: counters.pendingTraces },
   {
     label: 'Étudiants concernés',
     value: studentsWithPending.length,
     suffix: `sur ${ETUDIANTS.length}`,
   },
-  { label: 'Traces évaluées', value: evaluated.length },
+  { label: 'Traces évaluées', value: counters.evaluatedTraces },
   {
     label: 'Évaluations acquises',
-    value: validations.filter((v) => v.etat === 3).length,
-    suffix: `sur ${validations.filter((v) => v.etat !== 0).length}`,
+    value: counters.acquired,
+    suffix: `sur ${counters.evaluations}`,
   },
 ]
 
@@ -92,7 +96,7 @@ const firstPending = pending[0]
             <div class="min-w-0">
               <p class="font-medium text-highlighted">{{ trace.titre }}</p>
               <p class="text-sm text-muted">
-                {{ nomEtudiant(trace.etudiantId) }} · déposée le {{ formatDate(trace.date) }}
+                {{ etudiantName(trace.etudiantId) }} · déposée le {{ formatDate(trace.date) }}
               </p>
             </div>
             <UButton
@@ -159,7 +163,7 @@ const firstPending = pending[0]
       </div>
       <ul v-if="studentsWithPending.length" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <li
-          v-for="etudiant in studentsWithPending"
+          v-for="{ etudiant, pendingTraces } in studentsWithPending"
           :key="etudiant.id"
           class="flex items-center justify-between gap-3 rounded-feuille bg-default p-4"
         >
@@ -173,9 +177,9 @@ const firstPending = pending[0]
             <p class="text-xs text-muted">{{ etudiant.groupe }} · {{ etudiant.parcours }}</p>
           </div>
           <span class="shrink-0 text-sm font-semibold text-highlighted">
-            {{ etudiant.enAttente }}
+            {{ pendingTraces }}
             <span class="font-normal text-muted">
-              {{ etudiant.enAttente > 1 ? 'traces' : 'trace' }}
+              {{ pendingTraces > 1 ? 'traces' : 'trace' }}
             </span>
           </span>
         </li>

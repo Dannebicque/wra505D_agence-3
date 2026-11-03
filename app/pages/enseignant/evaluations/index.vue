@@ -1,53 +1,50 @@
 <script setup lang="ts">
-// MAQUETTE (P-EV-10, P-OR-02, P-OR-03) : filtres en état local appliqués aux données de démonstration.
+// MAQUETTE (P-EV-10, P-OR-02, P-OR-03) : filtres gardés dans l'URL, appliqués aux données de démonstration.
 import { COMPETENCES, ETUDIANTS, competenceById, formatDate } from '~/demo/base'
 import {
   GROUPES,
-  TOUS,
-  criteresDepuisQuery,
-  criteresVersQuery,
-  estEnAttente,
-  filtrerTraces,
-  nomEtudiant,
-  type CriteresTraces,
+  TRACE_FILTER_OPTIONS,
+  etudiantName,
+  filterSubmittedTraces,
 } from '~/demo/enseignant'
 
 useSeoMeta({ title: 'Traces à évaluer' })
 
-const route = useRoute()
-const router = useRouter()
+// Les filtres vivent dans l'URL : la liste filtrée se retrouve au retour d'une évaluation,
+// et un lien vers la liste sans paramètres (menu) remet les filtres par défaut
+const criteria = useQueryCriteria(
+  (query) => criteriaFromQuery(query, TRACE_FILTER_OPTIONS),
+  criteriaToQuery,
+)
 
-// Les filtres vivent dans l'URL : la liste filtrée se retrouve au retour d'une évaluation
-const criteres = reactive<CriteresTraces>(criteresDepuisQuery(route.query))
-watch(criteres, () => router.replace({ query: criteresVersQuery(criteres) }), { deep: true })
-
-const traces = computed(() => filtrerTraces(criteres))
-const query = computed(() => criteresVersQuery(criteres))
+const traces = computed(() => filterSubmittedTraces(criteria))
+const query = computed(() => criteriaToQuery(criteria))
 
 const etudiantItems = [
-  { label: 'Tous les étudiants', value: TOUS },
+  { label: 'Tous les étudiants', value: ALL },
   ...[...ETUDIANTS]
     .sort((a, b) => a.nom.localeCompare(b.nom))
     .map((e) => ({ label: `${e.nom} ${e.prenom}`, value: String(e.id) })),
 ]
 const groupeItems = [
-  { label: 'Tous les groupes', value: TOUS },
+  { label: 'Tous les groupes', value: ALL },
   ...GROUPES.map((g) => ({ label: g, value: g })),
 ]
 const competenceItems = [
-  { label: 'Toutes les compétences', value: TOUS },
+  { label: 'Toutes les compétences', value: ALL },
   ...COMPETENCES.map((c) => ({ label: c.nomCourt, value: String(c.id) })),
 ]
 const statutItems = [
   { label: 'Non évaluées', value: 'a-evaluer' },
   { label: 'Évaluées', value: 'evaluees' },
-  { label: 'Toutes', value: TOUS },
+  { label: 'Toutes', value: ALL },
 ]
 
 const hasFilters = computed(() => Object.keys(query.value).length > 0)
 
 function resetFilters() {
-  Object.assign(criteres, criteresDepuisQuery({}))
+  if (!hasFilters.value) return
+  Object.assign(criteria, DEFAULT_CRITERIA)
 }
 
 const resultLabel = computed(() =>
@@ -79,7 +76,7 @@ const resultLabel = computed(() =>
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <UFormField label="Rechercher" class="sm:col-span-2 lg:col-span-1">
           <UInput
-            v-model="criteres.recherche"
+            v-model="criteria.recherche"
             type="search"
             icon="i-lucide-search"
             placeholder="Titre ou nom d’étudiant"
@@ -87,23 +84,25 @@ const resultLabel = computed(() =>
           />
         </UFormField>
         <UFormField label="Statut">
-          <USelect v-model="criteres.statut" :items="statutItems" class="w-full" />
+          <USelect v-model="criteria.statut" :items="statutItems" class="w-full" />
         </UFormField>
         <UFormField label="Étudiant">
-          <USelect v-model="criteres.etudiant" :items="etudiantItems" class="w-full" />
+          <USelect v-model="criteria.etudiant" :items="etudiantItems" class="w-full" />
         </UFormField>
         <UFormField label="Groupe">
-          <USelect v-model="criteres.groupe" :items="groupeItems" class="w-full" />
+          <USelect v-model="criteria.groupe" :items="groupeItems" class="w-full" />
         </UFormField>
         <UFormField label="Compétence">
-          <USelect v-model="criteres.competence" :items="competenceItems" class="w-full" />
+          <USelect v-model="criteria.competence" :items="competenceItems" class="w-full" />
         </UFormField>
         <div class="flex items-end">
+          <!-- Toujours présent (aria-disabled plutôt que v-if) : le focus n'est pas perdu après le clic -->
           <UButton
-            v-if="hasFilters"
             color="neutral"
             variant="ghost"
             icon="i-lucide-x"
+            :aria-disabled="!hasFilters"
+            :class="{ 'cursor-not-allowed opacity-75': !hasFilters }"
             @click="resetFilters"
           >
             Réinitialiser les filtres
@@ -130,10 +129,10 @@ const resultLabel = computed(() =>
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
               <h3 class="font-medium text-highlighted">{{ trace.titre }}</h3>
-              <EvaluationTraceStatutBadge :en-attente="estEnAttente(trace)" />
+              <EvaluationTraceStatutBadge :en-attente="isTracePending(trace)" />
             </div>
             <p class="mt-1 text-sm text-muted">
-              {{ nomEtudiant(trace.etudiantId) }} · {{ TRACE_TYPE_LIBELLES[trace.type] }} · déposée
+              {{ etudiantName(trace.etudiantId) }} · {{ TRACE_TYPE_LIBELLES[trace.type] }} · déposée
               le {{ formatDate(trace.date) }}
             </p>
             <p class="mt-1 text-sm text-muted">
@@ -148,13 +147,13 @@ const resultLabel = computed(() =>
           </div>
           <UButton
             :to="{ path: `/enseignant/evaluations/${trace.id}`, query }"
-            :color="estEnAttente(trace) ? 'primary' : 'neutral'"
-            :variant="estEnAttente(trace) ? 'solid' : 'outline'"
+            :color="isTracePending(trace) ? 'primary' : 'neutral'"
+            :variant="isTracePending(trace) ? 'solid' : 'outline'"
             size="sm"
             class="justify-self-start"
             trailing-icon="i-lucide-arrow-right"
           >
-            {{ estEnAttente(trace) ? 'Évaluer' : 'Modifier l’évaluation'
+            {{ isTracePending(trace) ? 'Évaluer' : 'Modifier l’évaluation'
             }}<span class="sr-only"> « {{ trace.titre }} »</span>
           </UButton>
         </li>
