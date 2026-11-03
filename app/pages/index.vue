@@ -19,9 +19,17 @@ const SPACE_LINKS = [
       Déposez vos traces, composez votre portfolio de compétences et suivez vos évaluations.
     </p>
     <div class="flex flex-wrap gap-3">
-      <UButton v-for="espace in SPACE_LINKS" :key="espace.to" :to="espace.to" size="lg">
-        {{ espace.label }}
+      <UButton to="/connexion" size="lg" color="neutral" variant="outline" icon="i-lucide-log-in">
+        Se connecter
       </UButton>
     </div>
+    <section aria-labelledby="acces-direct" class="flex flex-col gap-3">
+      <h2 id="acces-direct" class="text-sm font-medium text-muted">Accès de démonstration</h2>
+      <div class="flex flex-wrap gap-3">
+        <UButton v-for="espace in SPACE_LINKS" :key="espace.to" :to="espace.to" size="lg">
+          {{ espace.label }}
+        </UButton>
+      </div>
+    </section>
   </div>
 </template>
