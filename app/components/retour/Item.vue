@@ -1,7 +1,8 @@
 <script setup lang="ts">
 // Un retour de la boîte de réception (E-EV-06) : évaluation (E-EV-01, E-EV-04) ou commentaire
 // (E-EV-02, E-EV-05), qui mène à sa trace (E-EV-07). Un retour non lu est signalé par un badge
-// « Nouveau », un texte en gras et un liseré : jamais par la seule couleur.
+// « Nouveau », un texte en gras et un liseré (jamais par la seule couleur), et par « Non lu » dans
+// son titre pour les lecteurs d'écran.
 import { formatDate, traceById, type DemoRetour } from '~/demo/base'
 
 const props = defineProps<{ retour: DemoRetour }>()
@@ -31,7 +32,14 @@ const trace = computed(() => traceById(props.retour.traceId))
 
     <div class="min-w-0 flex-1">
       <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <UBadge v-if="!retour.lu" color="primary" variant="solid" class="rounded-full">
+        <!-- Signalé aux lecteurs d'écran dans le titre (« non lu »), ce badge est visuel -->
+        <UBadge
+          v-if="!retour.lu"
+          color="primary"
+          variant="solid"
+          class="rounded-full"
+          aria-hidden="true"
+        >
           Nouveau
         </UBadge>
         <p class="text-sm text-muted">
@@ -41,7 +49,9 @@ const trace = computed(() => traceById(props.retour.traceId))
         </p>
       </div>
 
-      <h3 class="mt-1.5" :class="retour.lu ? 'font-medium' : 'font-semibold'">
+      <!-- h2 : la page n'a pas d'autre titre entre le h1 et la liste des retours -->
+      <h2 class="mt-1.5" :class="retour.lu ? 'font-medium' : 'font-semibold'">
+        <span v-if="!retour.lu" class="sr-only">Non lu : </span>
         <NuxtLink
           v-if="trace"
           :to="`/etudiant/traces/${trace.id}`"
@@ -51,7 +61,7 @@ const trace = computed(() => traceById(props.retour.traceId))
           {{ trace.titre }}
         </NuxtLink>
         <span v-else class="text-muted">Trace supprimée</span>
-      </h3>
+      </h2>
 
       <p class="mt-1 text-sm wrap-break-word">{{ retour.contenu }}</p>
     </div>
