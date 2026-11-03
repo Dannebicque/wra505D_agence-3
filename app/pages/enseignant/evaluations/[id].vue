@@ -84,7 +84,7 @@ async function saveAndNext() {
 
     <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
       <div class="min-w-0">
-        <h1 class="font-titre text-3xl text-highlighted">{{ trace.titre }}</h1>
+        <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">{{ trace.titre }}</h1>
         <p class="mt-2 text-muted">
           <NuxtLink
             :to="`/enseignant/etudiants/${trace.etudiantId}`"

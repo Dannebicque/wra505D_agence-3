@@ -122,7 +122,7 @@ const competenceNames = (trace: DemoTrace) =>
 <template>
   <div>
     <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
-    <h1 class="mt-4 font-titre text-3xl text-highlighted">Modifier la page</h1>
+    <h1 class="mt-4 font-titre text-2xl text-highlighted sm:text-3xl">Modifier la page</h1>
     <p class="mt-2 text-muted">Page-projet du portfolio « {{ portfolio.intitule }} ».</p>
 
     <div class="mt-8 grid gap-6 lg:grid-cols-[1fr_20rem] lg:gap-8">

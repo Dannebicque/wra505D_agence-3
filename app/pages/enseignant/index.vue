@@ -25,10 +25,10 @@ const studentsWithPending = ETUDIANTS.map((etudiant) => ({
 
 const pendingSentence =
   pending.length === 0
-    ? 'Aucune trace n’attend votre évaluation.'
+    ? 'Aucune trace à évaluer.'
     : pending.length === 1
-      ? 'Une trace attend votre évaluation.'
-      : `${pending.length} traces attendent votre évaluation.`
+      ? 'Une trace à évaluer.'
+      : `${pending.length} traces à évaluer.`
 
 const greeting = `Bonjour ${ENSEIGNANT_COURANT.prenom}. ${pendingSentence}`
 
@@ -61,7 +61,7 @@ const firstPending = pending[0]
 
 <template>
   <div>
-    <h1 class="font-titre text-3xl leading-tight text-highlighted sm:text-4xl">{{ greeting }}</h1>
+    <h1 class="font-titre text-2xl leading-tight text-highlighted sm:text-3xl">{{ greeting }}</h1>
     <p class="mt-3 text-muted">{{ todayLabel }} · {{ ETUDIANTS.length }} étudiants suivis</p>
 
     <EnseignantStatTiles :tiles="tiles" title="En chiffres" class="mt-9" />

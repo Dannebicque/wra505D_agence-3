@@ -64,7 +64,7 @@ const emptyMessage = computed(() => {
   <div>
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="font-titre text-3xl text-highlighted">Mes retours</h1>
+        <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mes retours</h1>
         <p class="mt-3 text-muted">
           <template v-if="nonLus === 0">Aucun retour non lu.</template>
           <template v-else-if="nonLus === 1">1 retour non lu.</template>

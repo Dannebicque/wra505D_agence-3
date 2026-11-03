@@ -59,7 +59,7 @@ const breadcrumb = [{ label: 'Étudiants', to: '/enseignant/etudiants' }, { labe
 
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="font-titre text-3xl text-highlighted">{{ nom }}</h1>
+        <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">{{ nom }}</h1>
         <p class="mt-2 text-muted">
           {{ etudiant.annee }} · parcours {{ etudiant.parcours }} · groupe {{ etudiant.groupe }}
         </p>

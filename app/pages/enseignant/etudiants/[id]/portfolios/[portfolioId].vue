@@ -69,7 +69,7 @@ const pageLink = (id: number) => ({ query: { page: String(id) } })
     <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
 
     <div class="mt-4">
-      <h1 class="font-titre text-3xl text-highlighted">{{ portfolio.intitule }}</h1>
+      <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">{{ portfolio.intitule }}</h1>
       <p class="mt-2 text-muted">
         Portfolio · {{ nom }} · {{ portfolio.annee }} · modifié le
         {{ formatDate(portfolio.dateModification) }}

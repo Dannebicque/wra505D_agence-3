@@ -26,7 +26,7 @@ function onSubmit() {
 <template>
   <div class="max-w-2xl">
     <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
-    <h1 class="mt-4 font-titre text-3xl text-highlighted">Nouveau portfolio</h1>
+    <h1 class="mt-4 font-titre text-2xl text-highlighted sm:text-3xl">Nouveau portfolio</h1>
 
     <template v-if="currentYearPortfolio">
       <p

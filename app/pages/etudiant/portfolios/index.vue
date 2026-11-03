@@ -29,7 +29,7 @@ const newPortfolioLink = computed(() =>
   <div>
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="font-titre text-3xl text-highlighted">Mes portfolios</h1>
+        <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mes portfolios</h1>
         <p class="mt-2 text-muted">Un portfolio par année universitaire.</p>
       </div>
       <UButton

@@ -169,7 +169,7 @@ const traceCount = (page: EditablePage) =>
 
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
       <div class="min-w-0">
-        <h1 class="font-titre text-3xl text-highlighted">Modifier le portfolio</h1>
+        <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Modifier le portfolio</h1>
         <p class="mt-2 text-muted">
           {{ intitule }} · année {{ portfolio.annee }} · modifié le
           {{ formatDate(portfolio.dateModification) }}

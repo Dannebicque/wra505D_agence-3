@@ -59,7 +59,7 @@ const eraseReturnFocus = (reason: 'confirm' | 'cancel') =>
     <h1
       ref="pageHeading"
       tabindex="-1"
-      class="font-titre text-3xl text-highlighted focus:outline-none"
+      class="font-titre text-2xl text-highlighted sm:text-3xl focus:outline-none"
     >
       Corbeille
     </h1>

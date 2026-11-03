@@ -94,7 +94,7 @@ function removeCompetence(competence: string) {
 
 <template>
   <div>
-    <h1 class="font-titre text-3xl text-highlighted">Mon CV</h1>
+    <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mon CV</h1>
     <p class="mt-3 max-w-2xl text-muted">
       Complétez votre CV et adaptez-le à chaque candidature. L’aperçu se met à jour au fil de la
       saisie.

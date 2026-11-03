@@ -12,7 +12,7 @@ useSeoMeta({
 
 <template>
   <div class="max-w-2xl">
-    <h1 class="font-titre text-3xl text-highlighted">Modifier la trace</h1>
+    <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Modifier la trace</h1>
     <UiAsyncState :status="status" :error="error" class="mt-8" @retry="refresh()">
       <TraceEditor v-if="trace" :trace="trace" />
     </UiAsyncState>

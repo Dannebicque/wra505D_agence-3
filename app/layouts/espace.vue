@@ -39,7 +39,14 @@ const items = computed(() =>
         <LayoutAppLogo :to="homePath" />
       </template>
 
-      <UNavigationMenu :items="items" orientation="vertical" aria-label="Navigation de l’espace" />
+      <!-- Élément actif : pilule grise et libellé en encre (maquette éditoriale) ; la couleur
+           d'accent reste aux données et à l'action principale de chaque page -->
+      <UNavigationMenu
+        :items="items"
+        color="neutral"
+        orientation="vertical"
+        aria-label="Navigation de l’espace"
+      />
 
       <template #footer>
         <LayoutAccountMenu />

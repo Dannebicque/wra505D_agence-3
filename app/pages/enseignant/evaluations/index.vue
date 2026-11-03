@@ -57,7 +57,7 @@ const resultLabel = computed(() =>
 <template>
   <div>
     <div class="flex flex-wrap items-end justify-between gap-4">
-      <h1 class="font-titre text-3xl text-highlighted">Traces à évaluer</h1>
+      <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Traces à évaluer</h1>
       <UButton
         v-if="traces[0]"
         :to="{ path: `/enseignant/evaluations/${traces[0].id}`, query }"
@@ -147,8 +147,8 @@ const resultLabel = computed(() =>
           </div>
           <UButton
             :to="{ path: `/enseignant/evaluations/${trace.id}`, query }"
-            :color="isTracePending(trace) ? 'primary' : 'neutral'"
-            :variant="isTracePending(trace) ? 'solid' : 'outline'"
+            color="neutral"
+            variant="outline"
             size="sm"
             class="justify-self-start"
             trailing-icon="i-lucide-arrow-right"

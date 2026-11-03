@@ -55,7 +55,7 @@ const resultLabel = computed(() =>
 <template>
   <div>
     <div class="flex flex-wrap items-end justify-between gap-4">
-      <h1 class="font-titre text-3xl text-highlighted">Bilans</h1>
+      <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Bilans</h1>
       <div class="flex flex-wrap gap-2">
         <UButton color="neutral" variant="outline" icon="i-lucide-file-spreadsheet">
           Exporter en CSV

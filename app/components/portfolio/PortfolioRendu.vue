@@ -93,13 +93,6 @@ const competencesOf = (trace: DemoTrace) =>
           >
             <li v-for="trace in page.traces" :key="trace.id">
               <article class="flex h-full flex-col gap-3 rounded-panneau bg-muted p-4 sm:p-5">
-                <!-- Emplacement du contenu (image, PDF, vidéo, lien) : décoratif dans la maquette -->
-                <div
-                  class="flex aspect-video items-center justify-center rounded-feuille bg-elevated text-muted"
-                  aria-hidden="true"
-                >
-                  <UIcon :name="TRACE_TYPE_ICONS[trace.type]" class="size-10" />
-                </div>
                 <h3 class="font-semibold text-highlighted">{{ trace.titre }}</h3>
                 <p class="flex flex-wrap items-center gap-x-2 text-sm text-muted">
                   <UIcon :name="TRACE_TYPE_ICONS[trace.type]" class="size-4" aria-hidden="true" />

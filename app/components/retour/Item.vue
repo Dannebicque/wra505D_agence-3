@@ -23,12 +23,8 @@ const trace = computed(() => traceById(props.retour.traceId))
     class="flex gap-4 border-l-4 px-4 py-4 sm:px-5"
     :class="retour.lu ? 'border-transparent' : 'border-primary bg-default'"
   >
-    <span
-      class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-full bg-elevated text-highlighted"
-      aria-hidden="true"
-    >
-      <UIcon :name="type.icon" class="size-4" />
-    </span>
+    <!-- Icône seule, sans pastille : le type est aussi écrit dans le badge -->
+    <UIcon :name="type.icon" class="mt-1 size-4 shrink-0 text-muted" aria-hidden="true" />
 
     <div class="min-w-0 flex-1">
       <div class="flex flex-wrap items-center gap-x-3 gap-y-1">

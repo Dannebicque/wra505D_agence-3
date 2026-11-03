@@ -59,7 +59,13 @@ const columns: TableColumn<EtudiantRow>[] = [
     header: 'Parcours',
     meta: HIDDEN_BELOW_MD,
   },
-  { id: 'traces', accessorFn: (row) => row.counters.traces, header: 'Traces' },
+  {
+    id: 'traces',
+    accessorFn: (row) => row.counters.traces,
+    header: 'Traces',
+    // Nombres alignés à droite, chiffre sous chiffre
+    meta: { class: { th: 'text-right', td: 'text-right tabular-nums' } },
+  },
 ]
 
 const resultLabel = computed(() =>
@@ -71,7 +77,7 @@ const resultLabel = computed(() =>
 
 <template>
   <div>
-    <h1 class="font-titre text-3xl text-highlighted">Étudiants</h1>
+    <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Étudiants</h1>
     <p class="mt-3 text-muted">
       Les étudiants dont des traces attendent une évaluation sont signalés dans la colonne « Travaux
       en attente ».

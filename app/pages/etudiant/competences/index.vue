@@ -35,7 +35,7 @@ const totalEvaluations = totaux.acquired + totaux.inProgress + totaux.notAcquire
 
 <template>
   <div>
-    <h1 class="font-titre text-3xl text-highlighted">Mes compétences</h1>
+    <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mes compétences</h1>
     <p v-if="etudiant" class="mt-3 text-muted">
       Référentiel du {{ etudiant.annee }}, parcours {{ etudiant.parcours }}.
       <template v-if="niveau"> Niveau travaillé cette année : {{ niveau }}. </template>
