@@ -87,7 +87,7 @@ export function searchGroups(espace: Espace): SearchGroup[] {
         })),
       },
       {
-        // Une trace mène à la fiche de son auteur, où l'enseignant l'évalue
+        // Une trace mène à sa page d'évaluation
         id: 'traces',
         label: 'Traces',
         items: TRACES.filter((trace) => trace.statut === 'finalisee').map((trace) => {
@@ -96,7 +96,7 @@ export function searchGroups(espace: Espace): SearchGroup[] {
             label: trace.titre,
             description: auteur ? `${auteur.prenom} ${auteur.nom}` : undefined,
             icon: TRACE_TYPE_ICONS[trace.type],
-            to: `/enseignant/etudiants/${trace.etudiantId}`,
+            to: `/enseignant/evaluations/${trace.id}`,
           }
         }),
       },
