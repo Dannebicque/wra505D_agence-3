@@ -2,10 +2,10 @@
 // MAQUETTE (P-ET-04, P-ET-05, P-ST-03, P-ST-08) : données de démonstration, bouton de bilan sans effet.
 import { etudiantById, formatDate, type DemoEtudiant } from '~/demo/base'
 import {
-  estEnAttente,
-  portfoliosDeEtudiant,
-  repartitionParCompetence,
-  tracesDeEtudiant,
+  portfoliosOfEtudiant,
+  progressionByCompetence,
+  studentCounters,
+  tracesOfEtudiant,
 } from '~/demo/enseignant'
 
 const route = useRoute()
@@ -20,27 +20,37 @@ const nom = `${etudiant.prenom} ${etudiant.nom}`
 useSeoMeta({ title: nom })
 
 // Les plus récentes d'abord
-const traces = [...tracesDeEtudiant(etudiant.id)].sort((a, b) => b.date.localeCompare(a.date))
-const repartition = repartitionParCompetence(traces)
-const portfolios = portfoliosDeEtudiant(etudiant.id)
+const traces = [...tracesOfEtudiant(etudiant.id)].sort((a, b) => b.date.localeCompare(a.date))
+const repartition = progressionByCompetence(traces)
+const portfolios = portfoliosOfEtudiant(etudiant.id)
+// Mêmes compteurs que le tableau de bord, la liste des étudiants et les bilans
+const counters = studentCounters(etudiant.id)
 
 const tiles = [
-  { label: 'Traces déposées', value: etudiant.traces },
+  { label: 'Traces déposées', value: counters.traces },
   {
     label: 'Évaluations acquises',
-    value: etudiant.acquises,
-    suffix: `sur ${etudiant.evaluations}`,
+    value: counters.acquired,
+    suffix: `sur ${counters.evaluations}`,
   },
-  { label: 'En attente d’évaluation', value: etudiant.enAttente },
+  { label: 'En attente d’évaluation', value: counters.pendingTraces },
   { label: 'Portfolios', value: portfolios.length },
 ]
+
+// File d'évaluation limitée à cet étudiant, évaluées comprises : « Voir l'évaluation » ouvre
+// une trace qui figure bien dans la liste, et les flèches restent sur ses traces
+const queueQuery = criteriaToQuery({
+  ...DEFAULT_CRITERIA,
+  etudiant: String(etudiant.id),
+  statut: ALL,
+})
 
 const breadcrumb = [{ label: 'Étudiants', to: '/enseignant/etudiants' }, { label: nom }]
 </script>
 
 <template>
   <div>
-    <UBreadcrumb :items="breadcrumb" />
+    <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
 
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
       <div>
@@ -87,14 +97,14 @@ const breadcrumb = [{ label: 'Étudiants', to: '/enseignant/etudiants' }, { labe
               </p>
             </div>
             <div class="flex flex-wrap items-center gap-3">
-              <EvaluationTraceStatutBadge :en-attente="estEnAttente(trace)" />
+              <EvaluationTraceStatutBadge :en-attente="isTracePending(trace)" />
               <UButton
-                :to="`/enseignant/evaluations/${trace.id}`"
+                :to="{ path: `/enseignant/evaluations/${trace.id}`, query: queueQuery }"
                 color="neutral"
                 variant="outline"
                 size="sm"
               >
-                {{ estEnAttente(trace) ? 'Évaluer' : 'Voir l’évaluation'
+                {{ isTracePending(trace) ? 'Évaluer' : 'Voir l’évaluation'
                 }}<span class="sr-only"> « {{ trace.titre }} »</span>
               </UButton>
             </div>

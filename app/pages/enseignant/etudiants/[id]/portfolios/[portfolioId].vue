@@ -1,14 +1,9 @@
 <script setup lang="ts">
 // MAQUETTE (P-PF-02, P-PF-03, P-PF-04) : parcours d'un portfolio d'étudiant, page par page.
 // La page affichée est dans l'URL (?page=…) : elle se partage et suit l'historique du navigateur.
-import type { DemoTrace } from '~/demo/base'
+import type { DemoPortfolio, DemoTrace } from '~/demo/base'
 import { competenceById, etudiantById, formatDate } from '~/demo/base'
-import {
-  PORTFOLIOS_ETUDIANTS,
-  estEnAttente,
-  traceSoumiseById,
-  type DemoPortfolioEtudiant,
-} from '~/demo/enseignant'
+import { PORTFOLIOS_ETUDIANTS, traceSoumiseById } from '~/demo/enseignant'
 
 const route = useRoute()
 
@@ -19,10 +14,8 @@ const found = PORTFOLIOS_ETUDIANTS.find(
 if (!etudiant || !found) {
   throw createError({ statusCode: 404, statusMessage: 'Portfolio introuvable', fatal: true })
 }
-const portfolio: DemoPortfolioEtudiant = found
+const portfolio: DemoPortfolio = found
 const nom = `${etudiant.prenom} ${etudiant.nom}`
-
-useSeoMeta({ title: `${portfolio.intitule} · ${nom}` })
 
 const breadcrumb = [
   { label: 'Étudiants', to: '/enseignant/etudiants' },
@@ -40,6 +33,22 @@ const page = computed(() => portfolio.pages[pageIndex.value])
 const previousPage = computed(() => portfolio.pages[pageIndex.value - 1])
 const nextPage = computed(() => portfolio.pages[pageIndex.value + 1])
 
+// Le titre de l'onglet suit la page affichée (annoncé par les lecteurs d'écran au changement)
+useSeoMeta({
+  title: () =>
+    page.value
+      ? `${page.value.intitule} · ${portfolio.intitule} · ${nom}`
+      : `${portfolio.intitule} · ${nom}`,
+})
+
+// Au changement de page, le contenu change sans rechargement : le focus va sur le titre de la
+// page affichée, pour que clavier et lecteur d'écran repartent du début de son contenu
+const pageHeading = useTemplateRef<HTMLElement>('pageHeading')
+watch(pageIndex, async () => {
+  await nextTick()
+  pageHeading.value?.focus()
+})
+
 // Les brouillons ne sont pas soumis à l'enseignant : ils n'apparaissent pas
 const traces = computed(() =>
   (page.value?.traceIds ?? [])
@@ -52,7 +61,7 @@ const pageLink = (id: number) => ({ query: { page: String(id) } })
 
 <template>
   <div>
-    <UBreadcrumb :items="breadcrumb" />
+    <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
 
     <div class="mt-4">
       <h1 class="font-titre text-3xl text-highlighted">{{ portfolio.intitule }}</h1>
@@ -97,8 +106,16 @@ const pageLink = (id: number) => ({ query: { page: String(id) } })
       </nav>
 
       <section v-if="page" aria-labelledby="page-titre" class="rounded-panneau bg-muted p-5 lg:p-6">
-        <p class="text-xs text-muted">Page {{ pageIndex + 1 }} sur {{ portfolio.pages.length }}</p>
-        <h2 id="page-titre" class="mt-1 font-titre text-2xl text-highlighted">
+        <p id="page-position" class="text-xs text-muted">
+          Page {{ pageIndex + 1 }} sur {{ portfolio.pages.length }}
+        </p>
+        <h2
+          id="page-titre"
+          ref="pageHeading"
+          tabindex="-1"
+          aria-describedby="page-position"
+          class="mt-1 font-titre text-2xl text-highlighted"
+        >
           {{ page.intitule }}
         </h2>
         <p class="mt-2 text-muted">{{ page.description }}</p>
@@ -113,7 +130,7 @@ const pageLink = (id: number) => ({ query: { page: String(id) } })
                 </p>
               </div>
               <UButton
-                v-if="estEnAttente(trace)"
+                v-if="isTracePending(trace)"
                 :to="`/enseignant/evaluations/${trace.id}`"
                 size="sm"
                 trailing-icon="i-lucide-arrow-right"

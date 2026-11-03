@@ -1,14 +1,14 @@
 <script setup lang="ts">
 // MAQUETTE (P-EV-01 à P-EV-04, P-EV-07, P-EV-09, P-CO-01) : l'évaluation reste en état local,
 // rien n'est envoyé. La file des traces suit les filtres de la liste (passés dans l'URL).
-import { competenceById, etudiantById, formatDate, type DemoTrace } from '~/demo/base'
+import type { ValidationEtat } from '#shared/types/evaluation'
+import { ETATS, competenceById, etudiantById, formatDate, type DemoTrace } from '~/demo/base'
 import {
   TRACES_SOUMISES,
-  criteresDepuisQuery,
-  criteresVersQuery,
-  detailTrace,
-  filtrerTraces,
-  nomEtudiant,
+  TRACE_FILTER_OPTIONS,
+  etudiantName,
+  filterSubmittedTraces,
+  traceDetail,
   traceSoumiseById,
 } from '~/demo/enseignant'
 
@@ -19,32 +19,32 @@ if (!found) {
   throw createError({ statusCode: 404, statusMessage: 'Trace introuvable', fatal: true })
 }
 const trace: DemoTrace = found
-const detail = detailTrace(trace)
+const detail = traceDetail(trace)
 const etudiant = etudiantById(trace.etudiantId)
 
 useSeoMeta({ title: `Évaluer « ${trace.titre} »` })
 
-// File d'évaluation (P-EV-09) : la liste filtrée d'où l'on vient ; si la trace n'y figure pas
-// (ouverte depuis une fiche étudiant, par exemple), toutes les traces déposées.
-const query = criteresVersQuery(criteresDepuisQuery(route.query))
-const filtered = filtrerTraces(criteresDepuisQuery(route.query))
+// File d'évaluation (P-EV-09) : la liste filtrée d'où l'on vient. Si la trace n'y figure pas
+// (lien partagé, filtres modifiés), toutes les traces déposées, et les filtres ne sont pas
+// conservés : ils décriraient une liste qui ne contient pas la trace.
+const criteria = criteriaFromQuery(route.query, TRACE_FILTER_OPTIONS)
+const filtered = filterSubmittedTraces(criteria)
 const inFiltered = filtered.some((t) => t.id === trace.id)
 const queue = inFiltered ? filtered : TRACES_SOUMISES
+const query = inFiltered ? criteriaToQuery(criteria) : {}
 const position = queue.findIndex((t) => t.id === trace.id)
 const previous = queue[position - 1]
 const next = queue[position + 1]
 const linkTo = (t: DemoTrace) => ({ path: `/enseignant/evaluations/${t.id}`, query })
+const listLink = { path: '/enseignant/evaluations', query }
 
-const breadcrumb = [
-  { label: 'Traces à évaluer', to: { path: '/enseignant/evaluations', query } },
-  { label: trace.titre },
-]
+const breadcrumb = [{ label: 'Traces à évaluer', to: listLink }, { label: trace.titre }]
 
-const NIVEAU_ITEMS = [
-  { label: 'Non acquis', value: 1 },
-  { label: 'En cours d’acquisition', value: 2 },
-  { label: 'Acquis', value: 3 },
-]
+// Niveaux proposés : tous les états sauf « en attente » (qui veut dire « pas encore évalué »)
+const NIVEAU_ITEMS = ([1, 2, 3] as const satisfies readonly ValidationEtat[]).map((etat) => ({
+  label: ETATS[etat].label,
+  value: etat,
+}))
 
 const competences = trace.competences.map((c) => ({
   ...c,
@@ -52,16 +52,19 @@ const competences = trace.competences.map((c) => ({
 }))
 
 // Évaluation existante pré-remplie (P-EV-07) ; « en attente » = aucun niveau choisi
-const niveaux = reactive<Record<number, number | undefined>>(
+const niveaux = reactive<Record<number, Exclude<ValidationEtat, 0> | undefined>>(
   Object.fromEntries(trace.competences.map((c) => [c.competenceId, c.etat || undefined])),
 )
 const commentaire = ref(detail.evaluation?.commentaire ?? '')
-const savedMessage = ref('')
+const { message: savedMessage, announce } = useStatusMessage()
 
 function save() {
   const done = Object.values(niveaux).filter((n) => n !== undefined).length
   const total = trace.competences.length
-  savedMessage.value = `Évaluation enregistrée (démonstration : rien n’est envoyé). ${done} compétence${done > 1 ? 's' : ''} évaluée${done > 1 ? 's' : ''} sur ${total}.`
+  // Annoncé à chaque enregistrement, même si le texte est identique au précédent
+  announce(
+    `Évaluation enregistrée (démonstration : rien n’est envoyé). ${done} compétence${done > 1 ? 's' : ''} évaluée${done > 1 ? 's' : ''} sur ${total}.`,
+  )
 }
 
 async function saveAndNext() {
@@ -72,7 +75,7 @@ async function saveAndNext() {
 
 <template>
   <div>
-    <UBreadcrumb :items="breadcrumb" />
+    <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
 
     <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
       <div class="min-w-0">
@@ -82,7 +85,7 @@ async function saveAndNext() {
             :to="`/enseignant/etudiants/${trace.etudiantId}`"
             class="font-medium text-highlighted underline underline-offset-4"
           >
-            {{ nomEtudiant(trace.etudiantId) }}
+            {{ etudiantName(trace.etudiantId) }}
           </NuxtLink>
           <template v-if="etudiant"> · {{ etudiant.groupe }}</template>
           · {{ TRACE_TYPE_LIBELLES[trace.type] }} · déposée le {{ formatDate(trace.date) }}
@@ -220,7 +223,20 @@ async function saveAndNext() {
             >
               Enregistrer et passer à la trace suivante
             </UButton>
+            <UButton
+              v-else
+              :to="listLink"
+              color="neutral"
+              variant="ghost"
+              icon="i-lucide-arrow-left"
+              class="justify-center"
+            >
+              Revenir à la liste
+            </UButton>
           </div>
+          <p v-if="!next" class="text-sm text-muted">
+            C’est la dernière trace de la liste{{ inFiltered ? ' filtrée' : '' }}.
+          </p>
 
           <p role="status" class="text-sm text-muted">
             <UIcon

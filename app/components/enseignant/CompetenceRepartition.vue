@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import type { RepartitionCompetence } from '~/demo/enseignant'
-import { resumeRepartition } from '~/demo/enseignant'
+import type { CompetenceBreakdown } from '~/demo/enseignant'
 
 // Répartition des évaluations par compétence : barre (décorative) et résumé en texte.
 const props = defineProps<{
-  repartition: RepartitionCompetence[]
+  repartition: CompetenceBreakdown[]
   /** Nom accessible de la liste. */
   label: string
 }>()
@@ -21,14 +20,14 @@ const max = computed(() => Math.max(1, ...props.repartition.map((r) => r.total))
     >
       <span>{{ r.nomCourt }}</span>
       <TableauDeBordProgressionBar
-        :acquired="r.acquis"
-        :in-progress="r.enCours"
-        :not-acquired="r.nonAcquis"
-        :pending="r.enAttente"
+        :acquired="r.acquired"
+        :in-progress="r.inProgress"
+        :not-acquired="r.notAcquired"
+        :pending="r.pending"
         :max="max"
       />
       <span class="col-span-2 text-xs text-muted sm:col-span-1 sm:text-right">
-        {{ resumeRepartition(r) }}
+        {{ progressionSummary(r) }}
       </span>
     </li>
   </ul>

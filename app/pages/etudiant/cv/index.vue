@@ -19,9 +19,11 @@ const varianteLabel = computed(
   () => CV_VARIANTES.find((v) => v.value === variante.value)?.label.toLowerCase() ?? '',
 )
 
-// Mobile : un onglet pour modifier, un pour l'aperçu. Desktop : les deux côte à côte.
-const onglet = ref<'edition' | 'apercu'>('edition')
-const ONGLETS = [
+// Mobile : un bouton pour modifier, un pour l'aperçu (boutons à bascule, pas un motif d'onglets
+// incomplet). Desktop : les deux côte à côte.
+type View = 'edition' | 'apercu'
+const view = ref<View>('edition')
+const VIEWS: { label: string; value: View; icon: string }[] = [
   { label: 'Modifier', value: 'edition', icon: 'i-lucide-pencil' },
   { label: 'Aperçu', value: 'apercu', icon: 'i-lucide-eye' },
 ]
@@ -30,14 +32,15 @@ const ONGLETS = [
 
 type Section = 'experiences' | 'formations' | 'langues'
 
-const LIBELLES: Record<Section, string> = {
+const SECTION_LABELS: Record<Section, string> = {
   experiences: 'Expérience',
   formations: 'Formation',
   langues: 'Langue',
 }
 
 let nextId = 100
-const annonce = ref('')
+// Chaque annonce est perçue, même identique à la précédente (deux langues ajoutées de suite)
+const { message: announcement, announce } = useStatusMessage()
 
 /** Place le focus dans le premier champ d'un élément (après ajout) ou sur un bouton d'ajout. */
 async function focusSelector(selector: string) {
@@ -54,7 +57,7 @@ function add(section: Section) {
   } else {
     cv.langues.push({ id, langue: '', niveau: 'B1 : intermédiaire' })
   }
-  annonce.value = `${LIBELLES[section]} ajoutée.`
+  announce(`${SECTION_LABELS[section]} ajoutée.`)
   focusSelector(`[data-cv-item="${section}-${id}"] input`)
 }
 
@@ -62,29 +65,29 @@ function remove(section: Section, id: number) {
   const list = cv[section]
   const index = list.findIndex((item) => item.id === id)
   if (index !== -1) list.splice(index, 1)
-  annonce.value = `${LIBELLES[section]} supprimée.`
+  announce(`${SECTION_LABELS[section]} supprimée.`)
   focusSelector(`[data-cv-add="${section}"]`)
 }
 
 // Compétences (étiquettes) --------------------------------------------------------------------
 
-const nouvelleCompetence = ref('')
+const newCompetence = ref('')
 
 function addCompetence() {
-  const valeur = nouvelleCompetence.value.trim()
-  if (!valeur) return
-  if (!cv.competences.some((c) => c.toLowerCase() === valeur.toLowerCase())) {
-    cv.competences.push(valeur)
-    annonce.value = `Compétence « ${valeur} » ajoutée.`
+  const value = newCompetence.value.trim()
+  if (!value) return
+  if (!cv.competences.some((c) => c.toLowerCase() === value.toLowerCase())) {
+    cv.competences.push(value)
+    announce(`Compétence « ${value} » ajoutée.`)
   } else {
-    annonce.value = `La compétence « ${valeur} » figure déjà dans le CV.`
+    announce(`La compétence « ${value} » figure déjà dans le CV.`)
   }
-  nouvelleCompetence.value = ''
+  newCompetence.value = ''
 }
 
 function removeCompetence(competence: string) {
   cv.competences = cv.competences.filter((c) => c !== competence)
-  annonce.value = `Compétence « ${competence} » supprimée.`
+  announce(`Compétence « ${competence} » supprimée.`)
   focusSelector('#cv-nouvelle-competence')
 }
 </script>
@@ -96,7 +99,7 @@ function removeCompetence(competence: string) {
       Complétez votre CV et adaptez-le à chaque candidature. L’aperçu se met à jour au fil de la
       saisie.
     </p>
-    <p role="status" class="sr-only">{{ annonce }}</p>
+    <p role="status" class="sr-only">{{ announcement }}</p>
 
     <div
       class="mt-8 flex flex-col gap-4 rounded-panneau bg-muted p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6"
@@ -111,26 +114,39 @@ function removeCompetence(competence: string) {
         }"
       />
       <div class="flex flex-col items-start gap-1 lg:items-end">
-        <UButton icon="i-lucide-download" disabled aria-describedby="cv-pdf-bientot">
+        <!-- aria-disabled plutôt que disabled : le bouton reste focalisable, et « Bientôt
+             disponible » est lu avec lui -->
+        <UButton
+          icon="i-lucide-download"
+          aria-disabled="true"
+          aria-describedby="cv-pdf-bientot"
+          class="cursor-not-allowed opacity-75"
+        >
           Télécharger en PDF
         </UButton>
         <p id="cv-pdf-bientot" class="text-xs text-muted">Bientôt disponible</p>
       </div>
     </div>
 
-    <UTabs
-      v-model="onglet"
-      :items="ONGLETS"
-      :content="false"
-      variant="link"
-      class="mt-6 lg:hidden"
-    />
+    <div role="group" aria-label="Afficher" class="mt-6 flex gap-2 lg:hidden">
+      <UButton
+        v-for="v in VIEWS"
+        :key="v.value"
+        :icon="v.icon"
+        :color="view === v.value ? 'primary' : 'neutral'"
+        :variant="view === v.value ? 'solid' : 'outline'"
+        :aria-pressed="view === v.value"
+        @click="view = v.value"
+      >
+        {{ v.label }}
+      </UButton>
+    </div>
 
     <div class="mt-6 grid gap-6 lg:grid-cols-2 lg:items-start">
       <section
         aria-labelledby="cv-edition"
         class="space-y-4"
-        :class="{ 'max-lg:hidden': onglet !== 'edition' }"
+        :class="{ 'max-lg:hidden': view !== 'edition' }"
       >
         <h2 id="cv-edition" class="sr-only">Modifier le CV</h2>
 
@@ -344,7 +360,7 @@ function removeCompetence(competence: string) {
             <UFormField label="Nouvelle compétence" class="flex-1">
               <UInput
                 id="cv-nouvelle-competence"
-                v-model="nouvelleCompetence"
+                v-model="newCompetence"
                 placeholder="Ex. : Figma"
                 class="w-full"
               />
@@ -359,7 +375,7 @@ function removeCompetence(competence: string) {
       <section
         aria-labelledby="cv-apercu"
         class="lg:sticky lg:top-0"
-        :class="{ 'max-lg:hidden': onglet !== 'apercu' }"
+        :class="{ 'max-lg:hidden': view !== 'apercu' }"
       >
         <h2 id="cv-apercu" class="mb-3 text-sm font-semibold text-highlighted">
           Aperçu, {{ varianteLabel }}

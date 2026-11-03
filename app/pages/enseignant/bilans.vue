@@ -2,39 +2,46 @@
 // MAQUETTE (P-ST-09, P-ST-10) : synthèse collective calculée sur les données de démonstration ;
 // les exports CSV et PDF sont sans effet tant que la page n'est pas branchée.
 import { ETUDIANTS } from '~/demo/base'
-import { ANNEES, GROUPES, TOUS, TRACES_SOUMISES, repartitionParCompetence } from '~/demo/enseignant'
+import {
+  ANNEES,
+  GROUPES,
+  TRACES_SOUMISES,
+  acquiredSummary,
+  progressionByCompetence,
+  studentCounters,
+} from '~/demo/enseignant'
 
 useSeoMeta({ title: 'Bilans' })
 
-const annee = ref(ANNEES[0] ?? TOUS)
-const groupe = ref(TOUS)
+const annee = ref(ANNEES[0] ?? ALL)
+const groupe = ref(ALL)
 
 const anneeItems = [
-  { label: 'Toutes les années', value: TOUS },
+  { label: 'Toutes les années', value: ALL },
   ...ANNEES.map((a) => ({ label: a, value: a })),
 ]
 const groupeItems = [
-  { label: 'Tous les groupes', value: TOUS },
+  { label: 'Tous les groupes', value: ALL },
   ...GROUPES.map((g) => ({ label: g, value: g })),
 ]
 
 const etudiants = computed(() =>
   ETUDIANTS.filter(
     (e) =>
-      (annee.value === TOUS || e.annee === annee.value) &&
-      (groupe.value === TOUS || e.groupe === groupe.value),
+      (annee.value === ALL || e.annee === annee.value) &&
+      (groupe.value === ALL || e.groupe === groupe.value),
   ).sort((a, b) => a.nom.localeCompare(b.nom)),
 )
 
 const repartition = computed(() => {
   const ids = new Set(etudiants.value.map((e) => e.id))
-  return repartitionParCompetence(TRACES_SOUMISES.filter((t) => ids.has(t.etudiantId)))
+  return progressionByCompetence(TRACES_SOUMISES.filter((t) => ids.has(t.etudiantId)))
 })
 
 const selectionLabel = computed(() =>
   [
-    annee.value === TOUS ? 'toutes les années' : annee.value,
-    groupe.value === TOUS ? 'tous les groupes' : `groupe ${groupe.value}`,
+    annee.value === ALL ? 'toutes les années' : annee.value,
+    groupe.value === ALL ? 'tous les groupes' : `groupe ${groupe.value}`,
   ].join(', '),
 )
 
@@ -98,21 +105,21 @@ const resultLabel = computed(() =>
     <section aria-labelledby="individuels" class="mt-3 rounded-panneau bg-muted p-5 lg:mt-4 lg:p-6">
       <h2 id="individuels" class="text-sm font-semibold text-highlighted">Bilans individuels</h2>
       <ul v-if="etudiants.length" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Toute la carte mène au bilan (lien étendu) : le chevron n'est pas trompeur -->
         <li
           v-for="etudiant in etudiants"
           :key="etudiant.id"
-          class="flex items-center justify-between gap-3 rounded-feuille bg-default p-4"
+          class="relative flex items-center justify-between gap-3 rounded-feuille bg-default p-4 hover:bg-elevated"
         >
           <div class="min-w-0">
             <NuxtLink
               :to="`/enseignant/etudiants/${etudiant.id}`"
-              class="font-medium text-highlighted underline-offset-4 hover:underline"
+              class="font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille hover:underline"
             >
               {{ etudiant.prenom }} {{ etudiant.nom }}
             </NuxtLink>
             <p class="text-xs text-muted">
-              {{ etudiant.groupe }} · {{ etudiant.acquises }} acquises sur
-              {{ etudiant.evaluations }}
+              {{ etudiant.groupe }} · {{ acquiredSummary(studentCounters(etudiant.id)) }}
             </p>
           </div>
           <UIcon

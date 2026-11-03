@@ -7,6 +7,7 @@
 import type { ValidationEtat } from '../../shared/types/evaluation'
 import {
   COMPETENCES,
+  ETATS,
   ETUDIANT_COURANT_ID,
   RETOURS,
   TRACES,
@@ -21,7 +22,11 @@ import {
 
 export type CompetenceStatut = 'acquis' | 'en-cours' | 'non-acquis' | 'non-evaluee'
 
-/** Libellé, couleur et icône de chaque statut : la couleur n'est jamais la seule information. */
+/**
+ * Libellé, couleur et icône de chaque statut : la couleur n'est jamais la seule information.
+ * Les icônes sont celles des états d'évaluation (`ETATS`) ; « non évaluée » a la sienne
+ * (cercle en pointillés), distincte de « en attente » et de « en cours ».
+ */
 export const COMPETENCE_STATUTS: Record<
   CompetenceStatut,
   {
@@ -36,19 +41,19 @@ export const COMPETENCE_STATUTS: Record<
     label: 'Acquise',
     labelPluriel: 'Acquises',
     color: 'success',
-    icon: 'i-lucide-circle-check',
+    icon: ETATS[3].icon,
   },
   'en-cours': {
     label: 'En cours d’acquisition',
     labelPluriel: 'En cours d’acquisition',
     color: 'warning',
-    icon: 'i-lucide-circle-dot',
+    icon: ETATS[2].icon,
   },
   'non-acquis': {
     label: 'Non acquise',
     labelPluriel: 'Non acquises',
     color: 'error',
-    icon: 'i-lucide-circle-x',
+    icon: ETATS[1].icon,
   },
   'non-evaluee': {
     label: 'Non évaluée',
@@ -206,10 +211,10 @@ export const CV_DEMO: DemoCv = {
     {
       id: 1,
       poste: 'Développeuse web (projet tutoré)',
-      structure: 'Association Vélocité',
+      structure: 'Bureau des étudiants de l’IUT',
       periode: 'Septembre à octobre 2026',
       description:
-        'Refonte du site en Nuxt : audit, maquettes, intégration accessible et mise en ligne.',
+        'Refonte du site du BDE en Nuxt : audit, maquettes, intégration accessible et mise en ligne.',
     },
     {
       id: 2,

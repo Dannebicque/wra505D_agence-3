@@ -13,19 +13,21 @@ defineProps<{
 </script>
 
 <template>
-  <!-- Image : aplat à la place du fichier ; la légende sert de texte alternatif -->
+  <!--
+    Image : aplat décoratif à la place du fichier. La légende (texte alternatif fourni par
+    l'étudiant) n'est donnée qu'une fois, en clair dans la figcaption : l'enseignant doit la lire.
+  -->
   <figure v-if="type === 'image'" class="space-y-2">
     <div
-      role="img"
-      :aria-label="legende ?? 'Image sans légende'"
       class="flex aspect-4/3 items-center justify-center rounded-panneau bg-elevated text-muted"
+      aria-hidden="true"
     >
       <UIcon name="i-lucide-image" class="size-10" />
     </div>
     <figcaption class="text-sm text-muted">
       <span class="font-medium text-default">{{ contenu }}</span>
       <template v-if="taille"> · {{ taille }}</template>
-      <span v-if="legende" class="mt-1 block">Légende : {{ legende }}</span>
+      <span v-if="legende" class="mt-1 block">Légende (texte alternatif) : {{ legende }}</span>
       <span v-else class="mt-1 block">Aucune légende fournie par l’étudiant.</span>
     </figcaption>
   </figure>

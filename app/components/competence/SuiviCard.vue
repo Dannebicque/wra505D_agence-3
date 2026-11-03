@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Une compétence du référentiel (E-CP-01) : statut (E-CP-04), progression, critères attendus
 // (E-CP-03) et traces qui la visent.
-import { ETATS, formatDate } from '~/demo/base'
+import { formatDate } from '~/demo/base'
 import type { CompetenceSuivi } from '~/demo/etudiant'
 
 const props = defineProps<{
@@ -85,9 +85,7 @@ const criteres = computed(() => [
         >
           Brouillon, non soumis
         </UBadge>
-        <UBadge v-else :color="ETATS[etat].color" variant="subtle" class="rounded-full">
-          {{ ETATS[etat].label }}
-        </UBadge>
+        <EvaluationEtatBadge v-else :etat="etat" />
       </li>
     </ul>
     <p v-else class="mt-2 text-sm text-muted">
