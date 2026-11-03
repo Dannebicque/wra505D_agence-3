@@ -14,7 +14,11 @@ const props = defineProps<{
   submitting?: boolean
 }>()
 
-const emit = defineEmits<{ submit: [input: TraceInput] }>()
+const emit = defineEmits<{
+  submit: [input: TraceInput]
+  /** Chaque modification de la saisie (sauvegarde automatique). */
+  change: [input: TraceInput]
+}>()
 
 const state = reactive({
   titre: props.initial?.titre ?? '',
@@ -83,6 +87,8 @@ function validate(): FormError[] {
   const result = validateTrace(toInput(), { today })
   return result.ok ? [] : toFormErrors(result.violations)
 }
+
+watch(state, () => emit('change', toInput()), { deep: true })
 
 function onSubmit() {
   const result = validateTrace(toInput(), { today })

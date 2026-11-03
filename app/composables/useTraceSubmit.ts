@@ -11,7 +11,12 @@ interface FormWithServerErrors {
  * Enregistrement d'une trace depuis une page (création ou modification) : message de réussite,
  * retour à la liste, erreurs du serveur sous chaque champ ou en notification.
  */
-export function useTraceSubmit(id: () => string | null, form: Ref<FormWithServerErrors | null>) {
+export function useTraceSubmit(
+  id: () => string | null,
+  form: Ref<FormWithServerErrors | null>,
+  /** Appelé après l'enregistrement, avant de quitter la page (ex. arrêter la sauvegarde automatique). */
+  onSaved?: () => void,
+) {
   const store = useTraceStore()
   const toast = useToast()
   const submitting = ref(false)
@@ -20,6 +25,7 @@ export function useTraceSubmit(id: () => string | null, form: Ref<FormWithServer
     submitting.value = true
     try {
       await store.save(id(), input)
+      onSaved?.()
       toast.add({
         title: input.statut === 'brouillon' ? 'Brouillon enregistré' : 'Trace finalisée',
         color: 'success',

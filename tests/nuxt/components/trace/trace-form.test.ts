@@ -106,4 +106,16 @@ describe('formulaire de trace', () => {
     await vi.waitFor(() => expect(form.text()).toContain('Titre déjà utilisé.'))
     expect(unmatched).toEqual([{ propertyPath: 'statut', message: 'Statut refusé.' }])
   })
+
+  it('signale chaque modification avec la trace en cours de saisie', async () => {
+    const form = await mountSuspended(TraceForm)
+
+    await form.get('input[name="titre"]').setValue('Podcast')
+
+    await vi.waitFor(() => expect(form.emitted('change')?.length).toBeGreaterThan(0))
+    expect(form.emitted('change')?.at(-1)?.[0]).toMatchObject({
+      titre: 'Podcast',
+      statut: 'brouillon',
+    })
+  })
 })

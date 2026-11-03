@@ -87,6 +87,65 @@ test.describe('déposer une trace', () => {
   })
 })
 
+test.describe('sauvegarde automatique', () => {
+  const saved = (page: import('@playwright/test').Page) =>
+    expect(page.getByTestId('etat-sauvegarde')).toContainText('Enregistré à', { timeout: 10_000 })
+
+  test('enregistre une modification sans clic, et elle survit au rechargement', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/etudiant/traces/1')
+
+    await page
+      .getByRole('textbox', { name: /Titre/ })
+      .fill('Refonte du site du BDE, version finale')
+    await saved(page)
+
+    await gotoHydrated(page, '/etudiant/traces/1')
+    await expect(page.getByRole('textbox', { name: /Titre/ })).toHaveValue(
+      'Refonte du site du BDE, version finale',
+    )
+  })
+
+  test('crée une nouvelle trace en brouillon dès son titre, sans doublon à la finalisation', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/etudiant/traces/nouvelle')
+
+    await page.getByRole('textbox', { name: /Titre/ }).fill('Webdoc sur le tram de Tours')
+    await saved(page)
+    await expect(page).toHaveURL(/\/etudiant\/traces\/\d+$/)
+
+    await page.getByRole('textbox', { name: /Adresse du lien/ }).fill('https://webdoc.example/tram')
+    await page.getByRole('button', { name: 'Finaliser la trace' }).click()
+
+    await expect(page).toHaveURL(/\/etudiant\/traces$/)
+    const rows = page.getByRole('listitem').filter({ hasText: 'Webdoc sur le tram de Tours' })
+    await expect(rows).toHaveCount(1)
+    await expect(rows).toContainText('Finalisée')
+  })
+
+  test('ne perd rien si l’on quitte la page aussitôt après avoir écrit', async ({
+    page,
+    isMobile,
+  }) => {
+    await gotoHydrated(page, '/etudiant/traces/nouvelle')
+
+    await page.getByRole('textbox', { name: /Titre/ }).fill('Note d’intention du court-métrage')
+    // Sans attendre le délai de sauvegarde : le changement de page enregistre d'abord
+    if (isMobile) await page.getByRole('button', { name: 'Ouvrir le menu' }).click()
+    await page
+      .getByRole('navigation', { name: 'Navigation de l’espace' })
+      .getByRole('link', { name: 'Mes traces' })
+      .click()
+
+    await expect(page).toHaveURL(/\/etudiant\/traces$/)
+    await expect(
+      page.getByRole('listitem').filter({ hasText: 'Note d’intention du court-métrage' }),
+    ).toContainText('Brouillon')
+  })
+})
+
 // /etudiant/traces/1 : trace lien ; /etudiant/traces/2 : trace image (fichier conservé)
 for (const path of [
   '/etudiant/traces',
