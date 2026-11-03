@@ -9,18 +9,23 @@ const isMenuOpen = ref(false)
 
 // La barre latérale est en rem (unit="rem") : elle garde ses 224 px (14 rem) quelle que soit la fenêtre
 const items = computed(() =>
-  (espace.value ? NAVIGATION[espace.value] : []).map((item) => ({
-    ...item,
+  (espace.value ? NAVIGATION[espace.value] : []).map((item) => {
     // Accueil de l'espace : actif sur sa seule page ; autres entrées : aussi sur leurs sous-pages
     // (les routes sont plates, le routeur ne le ferait pas seul)
-    active:
+    const active =
       item.to === homePath.value
         ? route.path === item.to
-        : route.path === item.to || route.path.startsWith(`${item.to}/`),
-    onSelect: () => {
-      isMenuOpen.value = false
-    },
-  })),
+        : route.path === item.to || route.path.startsWith(`${item.to}/`)
+    return {
+      ...item,
+      active,
+      // La page courante se repère aussi par la graisse, pas seulement par la couleur (WCAG 1.4.1)
+      class: active ? 'font-semibold' : undefined,
+      onSelect: () => {
+        isMenuOpen.value = false
+      },
+    }
+  }),
 )
 </script>
 
