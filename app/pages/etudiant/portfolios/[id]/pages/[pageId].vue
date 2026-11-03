@@ -40,6 +40,8 @@ function validate(values: Partial<typeof state>): FormError[] {
   return errors
 }
 
+const { onError } = useFocusFirstError()
+
 function onSubmit() {
   infoMessage.value =
     'Maquette : modifications appliquées à cette page seulement, rien n’est enregistré.'
@@ -77,19 +79,33 @@ const availableItems = computed(() =>
 )
 const selected = ref<string[]>([])
 const addMessage = ref('')
+const addError = ref('')
+const addForm = useTemplateRef('addForm')
 
-function addSelected() {
+function onSelectionChange() {
+  addMessage.value = ''
+  addError.value = ''
+}
+
+async function addSelected() {
   const added = available.value.filter((t) => selected.value.includes(String(t.id)))
   if (added.length === 0) {
-    addMessage.value = 'Cochez au moins une trace à ajouter.'
+    // Erreur liée au groupe de cases (aria-describedby) ; le focus va à la première case
+    addError.value = 'Cochez au moins une trace à ajouter.'
+    await nextTick()
+    addForm.value?.querySelector<HTMLElement>('[role="checkbox"]')?.focus()
     return
   }
   traces.value = [...traces.value, ...added]
   selected.value = []
+  addError.value = ''
   addMessage.value =
     added.length === 1
       ? `« ${added[0]?.titre} » ajoutée en fin de page.`
       : `${added.length} traces ajoutées en fin de page.`
+  // Plus rien à ajouter : le formulaire disparaît avec le bouton cliqué, le focus va aux traces
+  await nextTick()
+  if (available.value.length === 0) tracesHeading.value?.focus()
 }
 
 const competenceNames = (trace: DemoTrace) =>
@@ -115,6 +131,7 @@ const competenceNames = (trace: DemoTrace) =>
             novalidate
             class="mt-4 space-y-6"
             @submit="onSubmit"
+            @error="onError"
           >
             <UFormField
               label="Intitulé"
@@ -219,15 +236,17 @@ const competenceNames = (trace: DemoTrace) =>
         </h2>
         <template v-if="available.length">
           <p class="text-sm text-muted">Seules vos traces finalisées peuvent être ajoutées.</p>
-          <form novalidate class="space-y-4" @submit.prevent="addSelected">
-            <UCheckboxGroup
-              v-model="selected"
-              name="traces"
-              legend="Traces disponibles"
-              :items="availableItems"
-              :ui="{ legend: 'sr-only', fieldset: 'gap-y-3' }"
-              @update:model-value="addMessage = ''"
-            />
+          <form ref="addForm" novalidate class="space-y-4" @submit.prevent="addSelected">
+            <UFormField name="traces" :error="addError || undefined">
+              <UCheckboxGroup
+                v-model="selected"
+                name="traces"
+                legend="Traces disponibles"
+                :items="availableItems"
+                :ui="{ legend: 'sr-only', fieldset: 'gap-y-3' }"
+                @update:model-value="onSelectionChange"
+              />
+            </UFormField>
             <UButton type="submit" icon="i-lucide-plus" block>
               Ajouter la sélection<template v-if="selected.length">
                 ({{ selected.length }})</template
