@@ -8,6 +8,7 @@ const INPUT = {
   titre: 'A',
   description: null,
   contexte: null,
+  legende: null,
   type: 'lien' as const,
   contenu: [],
   statut: 'brouillon' as const,

@@ -49,26 +49,39 @@ describe('mergeTracePatch', () => {
 })
 
 describe('fileFieldViolations', () => {
-  // Le téléversement arrive au lot C : aucun fichier ne peut être créé ou changé par l'API
-  it('refuse de créer une trace image ou PDF', () => {
-    expect(fileFieldViolations(null, { type: 'image', contenu: ['/fichiers/a.jpg'] })).toEqual([
-      { propertyPath: 'type', message: 'Le dépôt de fichiers image ou PDF arrive prochainement.' },
-    ])
+  const UPLOADED = '/api/fichiers/0b7c1f0e-3a1d-4c55-9a52-2f0e8a9d1c11'
+
+  it('accepte une image déposée par le visiteur, du bon format', () => {
+    expect(fileFieldViolations(null, { type: 'image', contenu: [UPLOADED] }, 'png')).toEqual([])
+    expect(fileFieldViolations(EXISTING, { type: 'pdf', contenu: [UPLOADED] }, 'pdf')).toEqual([])
+  })
+
+  it('refuse un fichier inconnu, d’un autre visiteur ou d’un autre format', () => {
+    const violation = [
+      { propertyPath: 'contenu', message: 'Déposez un fichier du bon format avant de l’associer.' },
+    ]
+    expect(fileFieldViolations(null, { type: 'image', contenu: [UPLOADED] }, null)).toEqual(
+      violation,
+    )
+    expect(fileFieldViolations(null, { type: 'image', contenu: [UPLOADED] }, 'pdf')).toEqual(
+      violation,
+    )
+    // Un fichier de l'ancienne version ne peut pas être associé à une nouvelle trace
+    expect(fileFieldViolations(null, { type: 'pdf', contenu: ['/fichiers/a.pdf'] }, null)).toEqual(
+      violation,
+    )
   })
 
   it('accepte une trace PDF dont le type et le fichier ne changent pas', () => {
     expect(
-      fileFieldViolations(EXISTING, { type: 'pdf', contenu: ['/fichiers/etude-ux.pdf'] }),
+      fileFieldViolations(EXISTING, { type: 'pdf', contenu: ['/fichiers/etude-ux.pdf'] }, null),
     ).toEqual([])
   })
 
-  it('refuse de changer le fichier d’une trace PDF', () => {
+  it('accepte un brouillon image sans fichier, et une trace lien ou vidéo', () => {
+    expect(fileFieldViolations(null, { type: 'image', contenu: [] }, null)).toEqual([])
     expect(
-      fileFieldViolations(EXISTING, { type: 'pdf', contenu: ['javascript:alert(1)'] }),
-    ).toHaveLength(1)
-  })
-
-  it('accepte une trace lien ou vidéo', () => {
-    expect(fileFieldViolations(null, { type: 'lien', contenu: ['https://a.example'] })).toEqual([])
+      fileFieldViolations(null, { type: 'lien', contenu: ['https://a.example'] }, null),
+    ).toEqual([])
   })
 })

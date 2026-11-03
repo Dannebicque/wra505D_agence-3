@@ -20,10 +20,16 @@ const emit = defineEmits<{
   change: [input: TraceInput]
 }>()
 
+const isFileType = (type: TraceType) => type === 'image' || type === 'pdf'
+const initialIsFile = props.initial ? isFileType(props.initial.type) : false
+
 const state = reactive({
   titre: props.initial?.titre ?? '',
   type: (props.initial?.type ?? 'lien') as TraceType,
-  adresse: props.initial?.contenu[0] ?? '',
+  // Contenu selon le type : une adresse web (lien, vidéo) ou un fichier déposé (image, PDF)
+  adresse: initialIsFile ? '' : (props.initial?.contenu[0] ?? ''),
+  fichier: initialIsFile ? (props.initial?.contenu[0] ?? null) : null,
+  legende: props.initial?.legende ?? '',
   description: props.initial?.description ?? '',
   contexte: props.initial?.contexte ?? '',
   dateRealisation: props.initial?.dateRealisation ?? '',
@@ -31,13 +37,7 @@ const state = reactive({
   realisationIa: (props.initial?.realisationIa ?? 'non_renseigne') as RealisationIa,
 })
 
-// Lot A : on saisit un lien ou une vidéo ; une trace image ou PDF existante garde son fichier
-// (le téléversement arrive au lot C)
-const fileName = computed(() =>
-  state.type === 'image' || state.type === 'pdf'
-    ? (props.initial?.contenu[0]?.split('/').pop() ?? '')
-    : null,
-)
+const hasFile = computed(() => isFileType(state.type))
 
 // Fixé par le bouton cliqué, avant la validation du formulaire
 const statut = ref<TraceStatut>(props.initial?.statut ?? 'brouillon')
@@ -48,12 +48,15 @@ function toInput(): TraceInput {
   return {
     titre: state.titre,
     type: state.type,
-    contenu:
-      fileName.value !== null
-        ? (props.initial?.contenu ?? [])
-        : state.adresse.trim()
-          ? [state.adresse.trim()]
-          : [],
+    contenu: hasFile.value
+      ? state.fichier
+        ? [state.fichier]
+        : []
+      : state.adresse.trim()
+        ? [state.adresse.trim()]
+        : [],
+    // La légende ne concerne que les images (texte alternatif)
+    legende: state.type === 'image' ? state.legende : null,
     description: state.description,
     contexte: state.contexte,
     dateRealisation: state.dateRealisation || null,
@@ -63,8 +66,9 @@ function toInput(): TraceInput {
   }
 }
 
-/** Les erreurs du contenu s'affichent sous le champ « adresse ». */
-const fieldOf = (propertyPath: string) => (propertyPath === 'contenu' ? 'adresse' : propertyPath)
+/** Les erreurs du contenu s'affichent sous le champ du fichier ou de l'adresse. */
+const fieldOf = (propertyPath: string) =>
+  propertyPath === 'contenu' ? (hasFile.value ? 'fichier' : 'adresse') : propertyPath
 
 /** Champs affichés, donc capables de montrer une erreur. */
 const visibleFields = computed(
@@ -76,7 +80,9 @@ const visibleFields = computed(
       'dateRealisation',
       'conceptionIa',
       'realisationIa',
-      ...(fileName.value === null ? ['type', 'adresse'] : []),
+      'type',
+      hasFile.value ? 'fichier' : 'adresse',
+      ...(state.type === 'image' ? ['legende'] : []),
     ]),
 )
 
@@ -137,6 +143,8 @@ defineExpose({ setServerErrors })
 const TYPE_ITEMS = [
   { label: 'Lien', value: 'lien' },
   { label: 'Vidéo', value: 'video' },
+  { label: 'Image', value: 'image' },
+  { label: 'PDF', value: 'pdf' },
 ]
 const CONCEPTION_ITEMS = Object.entries(CONCEPTION_IA_LIBELLES).map(([value, label]) => ({
   label,
@@ -173,18 +181,28 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
       />
     </UFormField>
 
-    <div v-if="fileName !== null" class="text-sm">
-      <p class="font-medium text-highlighted">Fichier joint</p>
-      <p>{{ TRACE_TYPE_LIBELLES[state.type] }} · {{ fileName }}</p>
-      <p class="text-muted">Le remplacement du fichier arrive prochainement.</p>
-    </div>
-
-    <UFormField v-if="fileName === null" label="Type de trace" name="type">
+    <UFormField label="Type de trace" name="type">
       <URadioGroup v-model="state.type" :items="TYPE_ITEMS" orientation="horizontal" />
     </UFormField>
 
+    <TraceFileField
+      v-if="state.type === 'image' || state.type === 'pdf'"
+      v-model="state.fichier"
+      :type="state.type"
+    />
+
     <UFormField
-      v-if="fileName === null"
+      v-if="state.type === 'image'"
+      label="Légende"
+      name="legende"
+      description="Décrivez l’image pour les personnes qui ne la voient pas. Obligatoire pour finaliser."
+      :hint="`${state.legende.length} / ${TRACE_LIMITS.legende}`"
+    >
+      <UInput v-model="state.legende" :maxlength="TRACE_LIMITS.legende" class="w-full" />
+    </UFormField>
+
+    <UFormField
+      v-if="!hasFile"
       :label="state.type === 'video' ? 'Adresse de la vidéo' : 'Adresse du lien'"
       name="adresse"
       description="Obligatoire pour finaliser la trace."

@@ -35,15 +35,20 @@ function trace(
   }
 }
 
+const withLegende = (trace: Trace, legende: string): Trace => ({ ...trace, legende })
+
 export const TRACES: readonly Trace[] = [
   trace(1, 'Refonte du site du BDE', 'lien', 'finalisee', '2026-10-24', 'https://bde.example'),
-  trace(
-    2,
-    'Affiche du festival Court Toujours',
-    'image',
-    'finalisee',
-    '2026-10-28',
-    '/fichiers/affiche-court-toujours.jpg',
+  withLegende(
+    trace(
+      2,
+      'Affiche du festival Court Toujours',
+      'image',
+      'finalisee',
+      '2026-10-28',
+      '/fichiers/affiche-court-toujours.jpg',
+    ),
+    'Affiche orange et noire du festival Court Toujours, titre en grandes lettres',
   ),
   trace(
     3,

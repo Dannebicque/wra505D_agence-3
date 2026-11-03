@@ -9,7 +9,13 @@ import type {
 } from '../types/trace'
 import { TRACE_TYPES } from './domaine'
 
-export const TRACE_LIMITS = { titre: 100, contexte: 255, description: 5000, adresse: 2048 } as const
+export const TRACE_LIMITS = {
+  titre: 100,
+  contexte: 255,
+  legende: 100,
+  description: 5000,
+  adresse: 2048,
+} as const
 
 const STATUTS: readonly TraceStatut[] = ['brouillon', 'finalisee']
 const CONCEPTION_IA: readonly ConceptionIa[] = ['non_renseigne', 'aucun', 'moyen', 'avance']
@@ -21,6 +27,9 @@ const REALISATION_IA: readonly RealisationIa[] = [
   'avance',
 ]
 const URL_TYPES: readonly TraceType[] = ['lien', 'video']
+const FILE_TYPES: readonly TraceType[] = ['image', 'pdf']
+/** Fichier déposé (`/api/fichiers/<uuid>`) ou fichier repris de l'ancienne version (`/fichiers/…`). */
+const FILE_PATH = /^\/api\/fichiers\/[0-9a-f-]{36}$|^\/fichiers\/[\w.-]+$/
 
 export type TraceValidation =
   { ok: true; value: TraceInput } | { ok: false; violations: Violation[] }
@@ -93,6 +102,16 @@ export function validateTrace(input: unknown, { today }: { today: string }): Tra
     fail('contenu', 'L’adresse ne doit pas dépasser 2 048 caractères.')
   } else if (URL_TYPES.includes(type) && contenu.some((item) => !isWebUrl(item))) {
     fail('contenu', 'Saisissez une adresse web valide, commençant par https:// ou http://.')
+  } else if (FILE_TYPES.includes(type) && contenu.some((item) => !FILE_PATH.test(item))) {
+    fail('contenu', 'Fichier invalide.')
+  }
+
+  // Légende d'une image : son texte alternatif (accessibilité), obligatoire pour finaliser
+  const legende = optionalText(raw.legende)
+  if (legende && legende.length > TRACE_LIMITS.legende) {
+    fail('legende', 'La légende ne doit pas dépasser 100 caractères.')
+  } else if (type === 'image' && statut === 'finalisee' && !legende) {
+    fail('legende', 'Ajoutez une légende décrivant l’image avant de finaliser.')
   }
 
   const conceptionIa = (raw.conceptionIa ?? 'non_renseigne') as ConceptionIa
@@ -118,6 +137,7 @@ export function validateTrace(input: unknown, { today }: { today: string }): Tra
       titre,
       description,
       contexte,
+      legende,
       type,
       contenu,
       statut,

@@ -120,3 +120,14 @@ Format : date, décision, alternatives écartées, raison.
 - **Alternatives écartées** : enregistrer à chaque frappe (requêtes en rafale) ; enregistrer seulement en quittant le champ (une fermeture d'onglet perdrait la saisie) ; naviguer vers la page de modification après la création automatique (la saisie tapée pendant le rechargement serait perdue) ; `useEventListener` de `@vueuse/core` (dépendance seulement indirecte, non déclarée).
 - **Précisions après relecture** : la sauvegarde automatique envoie toujours le **statut enregistré** (un « Finaliser » refusé ne finalise pas en douce) ; la réécriture de l'adresse ne se fait que si l'éditeur est encore affiché à `/etudiant/traces/nouvelle` et met à jour `history.state.current` (sinon le routeur la défaisait à la navigation suivante) ; un double clic sur « Finaliser » n'enregistre qu'une fois ; l'enregistrement part aussi quand la page est masquée (mobile) ; un échec affiche sa cause et un bouton « Réessayer ».
 - **Limite connue** : pas de détection des modifications simultanées dans deux onglets (la dernière écriture l'emporte) ; à traiter avec ApiPlatform (ETag ou numéro de version).
+
+## 2026-11-03 — Fichiers des traces (image, PDF)
+
+- **Décision** :
+  - Formats acceptés : JPEG, PNG, WebP et GIF jusqu'à 2 Mo (comme l'ancienne version), PDF jusqu'à 10 Mo. Le **SVG est refusé** (il peut contenir du script).
+  - Le format est reconnu sur le **contenu réel** du fichier (ses premiers octets), pas sur son extension ni sur le type déclaré par le navigateur. Les règles (`shared/utils/fichier.ts`) sont communes au formulaire (contrôle avant l'envoi, message immédiat) et au serveur (contrôle qui fait foi).
+  - Routes Nitro provisoires `POST /api/fichiers` et `GET /api/fichiers/{id}` : fichiers rangés par visiteur (cookie de démo) sur le stockage `data` de Nitro (`.data/`), 10 fichiers et 30 Mo au plus, identifiants aléatoires (UUID), noms nettoyés. Le fichier est servi au seul visiteur qui l'a déposé, avec `X-Content-Type-Options: nosniff` et, pour les images, une CSP `sandbox`.
+  - Une trace image ou PDF référence son fichier par son adresse ; le serveur vérifie que ce fichier appartient au visiteur et correspond au type (un fichier de l'ancienne version reste accepté s'il n'est pas modifié).
+  - Une **légende est obligatoire pour finaliser une image** : elle sert de texte alternatif (accessibilité). Choix de l'équipe, à confirmer par le PO.
+- **Alternatives écartées** : se fier à l'extension ou au type MIME envoyé (falsifiables) ; accepter le SVG (risque XSS) ; garder les fichiers en mémoire (saturation) ; plusieurs fichiers par trace (E-TR-03, retirée).
+- **Raison** : sécurité et accessibilité exigées par le client ; tout ce provisoire disparaît avec le téléversement d'ApiPlatform (Sprint 4), le front ne dépendant que du contrat (`Fichier`, adresse du fichier dans `contenu`).

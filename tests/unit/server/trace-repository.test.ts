@@ -27,6 +27,7 @@ const INPUT: TraceInput = {
   titre: 'Nouvelle',
   description: null,
   contexte: null,
+  legende: null,
   type: 'video',
   contenu: ['https://video.example/1'],
   statut: 'brouillon',

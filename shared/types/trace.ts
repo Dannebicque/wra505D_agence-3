@@ -45,6 +45,7 @@ export type TraceInput = Pick<
   | 'titre'
   | 'description'
   | 'contexte'
+  | 'legende'
   | 'type'
   | 'contenu'
   | 'statut'

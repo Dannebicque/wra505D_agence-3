@@ -74,6 +74,7 @@ describe('formulaire de trace', () => {
           titre: 'Étude UX',
           description: null,
           contexte: null,
+          legende: null,
           type: 'pdf',
           contenu: ['/fichiers/etude-ux.pdf'],
           statut: 'finalisee',

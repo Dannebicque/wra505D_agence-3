@@ -1,3 +1,4 @@
+import { fileRepository } from '../../data/file-repository'
 import { traceRepository } from '../../data/trace-repository'
 
 export default defineEventHandler(async (event) => {
@@ -14,7 +15,9 @@ export default defineEventHandler(async (event) => {
   const result = validateTrace(mergeTracePatch(existing, body), { today: todayInParis() })
   if (!result.ok) throw validationError(result.violations)
 
-  const fileViolations = fileFieldViolations(existing, result.value)
+  const fileId = uploadedFileId(result.value.contenu)
+  const owned = fileId ? await fileRepository.get(session, fileId) : null
+  const fileViolations = fileFieldViolations(existing, result.value, owned?.kind ?? null)
   if (fileViolations.length) throw validationError(fileViolations)
 
   return traceRepository.update(session, id, result.value, new Date().toISOString())

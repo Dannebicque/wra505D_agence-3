@@ -27,7 +27,7 @@ describe('validateTrace', () => {
 
     expect(result).toEqual({
       ok: true,
-      value: { ...VALID, description: null, titre: 'Refonte du site du BDE' },
+      value: { ...VALID, description: null, legende: null, titre: 'Refonte du site du BDE' },
     })
   })
 
@@ -105,5 +105,37 @@ describe('validateTrace', () => {
     })
     const result = validateTrace({ ...VALID, contenu: ['  https://a.example  '] }, { today: TODAY })
     expect(result.ok && result.value.contenu).toEqual(['https://a.example'])
+  })
+
+  describe('traces image et PDF', () => {
+    const FILE = '/api/fichiers/0b7c1f0e-3a1d-4c55-9a52-2f0e8a9d1c11'
+    const IMAGE = { ...VALID, type: 'image', contenu: [FILE], legende: 'Affiche orange et noire' }
+
+    it('accepte un fichier déposé, ou un fichier existant de l’ancienne version', () => {
+      expect(validateTrace(IMAGE, { today: TODAY }).ok).toBe(true)
+      expect(
+        validateTrace({ ...IMAGE, type: 'pdf', contenu: ['/fichiers/etude.pdf'] }, { today: TODAY })
+          .ok,
+      ).toBe(true)
+    })
+
+    it('refuse une adresse web ou un chemin quelconque comme fichier', () => {
+      for (const contenu of ['https://a.example/image.png', '/etc/passwd', 'javascript:alert(1)']) {
+        expect(messages({ ...IMAGE, contenu: [contenu] })).toEqual({ contenu: 'Fichier invalide.' })
+      }
+    })
+
+    // Accessibilité : la légende sert de texte alternatif à l'image
+    it('exige une légende pour finaliser une image, pas pour un brouillon', () => {
+      expect(messages({ ...IMAGE, legende: '  ' })).toEqual({
+        legende: 'Ajoutez une légende décrivant l’image avant de finaliser.',
+      })
+      expect(
+        validateTrace({ ...IMAGE, legende: null, statut: 'brouillon' }, { today: TODAY }).ok,
+      ).toBe(true)
+      expect(messages({ ...IMAGE, legende: 'a'.repeat(101) })).toEqual({
+        legende: 'La légende ne doit pas dépasser 100 caractères.',
+      })
+    })
   })
 })

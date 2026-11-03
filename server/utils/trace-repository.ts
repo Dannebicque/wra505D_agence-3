@@ -49,7 +49,6 @@ export function createTraceRepository(
         '@id': iri('traces', nextId),
         '@type': 'Trace',
         bibliotheque: BIBLIOTHEQUE,
-        legende: null,
         dateCreation: now,
         dateModification: now,
         dateSuppression: null,
