@@ -157,4 +157,72 @@ describe('sauvegarde automatique', () => {
     await autosave.flush()
     expect(save).toHaveBeenCalledExactlyOnceWith('a')
   })
+
+  it('reprend seul après la pause, sans nouvelle modification', async () => {
+    let enabled = false
+    const { value, save } = setup({ enabled: () => enabled })
+
+    value.value = 'a'
+    await nextTick()
+    await elapse()
+    expect(save).not.toHaveBeenCalled()
+
+    enabled = true
+    await elapse()
+
+    expect(save).toHaveBeenCalledExactlyOnceWith('a')
+  })
+
+  it('garde l’erreur du dernier échec, effacée par un enregistrement réussi', async () => {
+    let fail = true
+    const { value, autosave } = setup({
+      save: async () => {
+        if (fail) throw new Error('Titre déjà utilisé.')
+      },
+    })
+
+    value.value = 'a'
+    await nextTick()
+    await elapse()
+    expect((autosave.lastError.value as Error).message).toBe('Titre déjà utilisé.')
+
+    fail = false
+    await autosave.flush()
+    expect(autosave.lastError.value).toBeNull()
+  })
+
+  it('enregistre la dernière saisie quand on force pendant un envoi en cours', async () => {
+    const releases: (() => void)[] = []
+    const { value, save, autosave } = setup({
+      save: () => new Promise<void>((resolve) => releases.push(resolve)),
+    })
+
+    value.value = 'a'
+    await nextTick()
+    await elapse()
+    value.value = 'ab'
+    await nextTick()
+
+    const flushed = autosave.flush()
+    releases[0]?.()
+    await vi.advanceTimersByTimeAsync(0)
+    releases[1]?.()
+    await flushed
+
+    expect(save).toHaveBeenCalledTimes(2)
+    expect(save).toHaveBeenLastCalledWith('ab')
+  })
+
+  // Après un enregistrement explicite réussi : plus rien en attente, pas de confirmation de sortie
+  it('se considère à jour après un enregistrement explicite', async () => {
+    const { value, save, autosave } = setup()
+
+    value.value = 'a'
+    await nextTick()
+    autosave.markSaved()
+    await elapse()
+
+    expect(save).not.toHaveBeenCalled()
+    expect(autosave.hasUnsavedChanges.value).toBe(false)
+  })
 })

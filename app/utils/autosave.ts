@@ -31,6 +31,8 @@ export function createAutosave<T>(
 ) {
   const status = ref<AutosaveStatus>('idle')
   const lastSavedAt = ref<Date | null>(null)
+  /** Erreur du dernier échec (affichée à l'utilisateur), effacée par un enregistrement réussi. */
+  const lastError = ref<unknown>(null)
   /** Modifications pas encore enregistrées. */
   const dirty = ref(false)
 
@@ -49,7 +51,12 @@ export function createAutosave<T>(
       rerun = true
       return inFlight
     }
-    if (!dirty.value || !isEnabled()) return
+    if (!dirty.value) return
+    if (!isEnabled()) {
+      // En pause : on réessaie plus tard, sans attendre une nouvelle modification
+      schedule()
+      return
+    }
 
     const value = source()
     if (!isValid(value)) {
@@ -63,10 +70,12 @@ export function createAutosave<T>(
     inFlight = save(value).then(
       () => {
         lastSavedAt.value = now()
+        lastError.value = null
         if (!dirty.value) status.value = 'saved'
       },
-      () => {
+      (error: unknown) => {
         failed = true
+        lastError.value = error
         dirty.value = true
         status.value = 'error'
       },
@@ -93,11 +102,19 @@ export function createAutosave<T>(
   return {
     status,
     lastSavedAt,
+    lastError,
     hasUnsavedChanges: computed(() => dirty.value || status.value === 'saving'),
     /** Enregistre tout de suite ce qui est en attente (avant de quitter la page). */
     async flush() {
       if (inFlight) await inFlight
       await run()
+    },
+    /** La saisie vient d'être enregistrée autrement (enregistrement explicite) : plus rien en attente. */
+    markSaved() {
+      clearTimeout(timer)
+      dirty.value = false
+      status.value = 'saved'
+      lastSavedAt.value = now()
     },
     stop() {
       stopWatch()

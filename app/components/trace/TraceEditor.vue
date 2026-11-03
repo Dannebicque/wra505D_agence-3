@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import type { Trace, TraceInput } from '#shared/types/trace'
+import type { Trace, TraceInput, TraceStatut } from '#shared/types/trace'
+import { toApiError } from '~/services/errors'
 import type { AutosaveStatus } from '~/utils/autosave'
 
 // Éditeur d'une trace (création et modification) avec sauvegarde automatique (E-TR-10, C-06)
 const props = defineProps<{ trace?: Trace }>()
+
+const NEW_PATH = '/etudiant/traces/nouvelle'
 
 const store = useTraceStore()
 const form = useTemplateRef('form')
@@ -11,35 +14,63 @@ const today = todayInParis()
 
 /** Identifiant de la trace : null tant qu'une nouvelle trace n'a pas été enregistrée. */
 const traceId = ref<string | null>(props.trace ? idFromIri(props.trace['@id']) : null)
+/**
+ * Statut enregistré : la sauvegarde automatique l'envoie toujours. Seuls « Finaliser » et
+ * « Enregistrer le brouillon », une fois réussis, le changent (un clic refusé ne compte pas).
+ */
+const savedStatut = ref<TraceStatut>(props.trace?.statut ?? 'brouillon')
 const draft = ref<TraceInput | null>(null)
+/** Enregistrement explicite en cours (y compris l'attente de la sauvegarde automatique). */
+const finishing = ref(false)
+let mounted = true
+
+const autosave = createAutosave(
+  () => (draft.value ? { ...draft.value, statut: savedStatut.value } : null),
+  {
+    isValid: (input) => input !== null && validateTrace(input, { today }).ok,
+    // Pas d'envoi concurrent pendant un enregistrement explicite (sinon une création en double)
+    isEnabled: () => !finishing.value && !submitting.value,
+    save: async (input) => {
+      const result = input && validateTrace(input, { today })
+      if (!result?.ok) return
+      const saved = await store.save(traceId.value, result.value)
+      if (!traceId.value) {
+        traceId.value = idFromIri(saved['@id'])
+        rewriteAddress(`/etudiant/traces/${traceId.value}`)
+      }
+    },
+  },
+)
+
+/**
+ * Nouvelle trace créée en brouillon : l'adresse devient celle de la trace, sans recharger la page
+ * (la saisie en cours n'est pas interrompue). Seulement si l'éditeur est encore affiché à
+ * l'adresse de création (pas après un retour arrière), et `current` est mis à jour pour que le
+ * routeur ne remette pas l'ancienne adresse à la navigation suivante. `useRoute()` reste sur
+ * `/nouvelle` jusqu'à la sortie de la page.
+ */
+function rewriteAddress(path: string) {
+  if (!mounted || window.location.pathname !== NEW_PATH) return
+  window.history.replaceState({ ...window.history.state, current: path }, '', path)
+}
 
 const { submit, submitting } = useTraceSubmit(
   () => traceId.value,
   form,
-  () => autosave.stop(),
+  () => autosave.markSaved(),
 )
 
-const autosave = createAutosave(() => draft.value, {
-  isValid: (input) => input !== null && validateTrace(input, { today }).ok,
-  // Pas d'envoi concurrent pendant un enregistrement explicite (sinon une création en double)
-  isEnabled: () => !submitting.value,
-  save: async (input) => {
-    if (!input) return
-    const saved = await store.save(traceId.value, input)
-    if (!traceId.value) {
-      // Nouvelle trace créée en brouillon : l'adresse devient celle de la trace, sans recharger
-      // la page (la saisie en cours n'est pas interrompue)
-      traceId.value = idFromIri(saved['@id'])
-      window.history.replaceState(window.history.state, '', `/etudiant/traces/${traceId.value}`)
-    }
-  },
-})
-onBeforeUnmount(() => autosave.stop())
-
 async function onSubmit(input: TraceInput) {
-  // Une sauvegarde automatique en cours se termine d'abord (la trace a alors son identifiant)
-  await autosave.flush()
-  await submit(input)
+  if (finishing.value || submitting.value) return // double clic
+  finishing.value = true
+  try {
+    // Une sauvegarde automatique en cours se termine d'abord (la trace a alors son identifiant)
+    await autosave.flush()
+    await submit(input)
+    savedStatut.value = input.statut
+  } finally {
+    finishing.value = false
+  }
 }
 
 // Rien de perdu en quittant : enregistrement immédiat, puis confirmation s'il reste des modifications
@@ -49,11 +80,28 @@ onBeforeRouteLeave(async () => {
     return window.confirm('Certaines modifications ne sont pas enregistrées. Quitter quand même ?')
   }
 })
+
 function warnBeforeUnload(event: BeforeUnloadEvent) {
-  if (autosave.hasUnsavedChanges.value) event.preventDefault()
+  if (!autosave.hasUnsavedChanges.value) return
+  event.preventDefault()
+  event.returnValue = '' // navigateurs plus anciens
 }
-onMounted(() => window.addEventListener('beforeunload', warnBeforeUnload))
-onBeforeUnmount(() => window.removeEventListener('beforeunload', warnBeforeUnload))
+// Sur mobile, `beforeunload` n'est pas fiable : on enregistre dès que la page est masquée
+function saveWhenHidden() {
+  if (document.visibilityState === 'hidden') void autosave.flush()
+}
+onMounted(() => {
+  window.addEventListener('beforeunload', warnBeforeUnload)
+  document.addEventListener('visibilitychange', saveWhenHidden)
+  window.addEventListener('pagehide', saveWhenHidden)
+})
+onBeforeUnmount(() => {
+  mounted = false
+  autosave.stop()
+  window.removeEventListener('beforeunload', warnBeforeUnload)
+  document.removeEventListener('visibilitychange', saveWhenHidden)
+  window.removeEventListener('pagehide', saveWhenHidden)
+})
 
 const time = new Intl.DateTimeFormat('fr-FR', {
   hour: '2-digit',
@@ -61,47 +109,69 @@ const time = new Intl.DateTimeFormat('fr-FR', {
   timeZone: 'Europe/Paris',
 })
 
-const LABELS: Record<AutosaveStatus, string> = {
+const LABELS: Record<Exclude<AutosaveStatus, 'saved' | 'error'>, string> = {
   idle: 'Les modifications sont enregistrées automatiquement.',
   pending: 'Modifications en attente…',
   saving: 'Enregistrement…',
-  saved: '',
   invalid: 'Non enregistré : la saisie est incomplète ou invalide.',
-  error: 'Échec de l’enregistrement. Nouvel essai à la prochaine modification.',
 }
 
-const statusLabel = computed(() =>
-  autosave.status.value === 'saved' && autosave.lastSavedAt.value
-    ? `Enregistré à ${time.format(autosave.lastSavedAt.value).replace(':', ' h ')}`
-    : LABELS[autosave.status.value],
-)
-// Seuls les états qui comptent sont annoncés aux lecteurs d'écran (pas chaque pause de frappe)
-const announcement = computed(() =>
-  ['saved', 'invalid', 'error'].includes(autosave.status.value) ? statusLabel.value : '',
-)
+const statusLabel = computed(() => {
+  const status = autosave.status.value
+  if (status === 'saved') {
+    const at = autosave.lastSavedAt.value
+    return at ? `Enregistré à ${time.format(at).replace(':', ' h ')}` : 'Enregistré'
+  }
+  if (status === 'error') {
+    const error = toApiError(autosave.lastError.value)
+    const details = error.violations.map((v) => v.message).join(' ')
+    return `Échec de l’enregistrement : ${details || error.message}`
+  }
+  return LABELS[status]
+})
+
+// Annonce aux lecteurs d'écran : seulement quand l'état change vraiment (pas à chaque pause de frappe)
+const announcement = ref('')
+let announced: AutosaveStatus | null = null
+watch(autosave.status, (status) => {
+  if (!['saved', 'invalid', 'error'].includes(status) || status === announced) return
+  announced = status
+  announcement.value = statusLabel.value
+})
 </script>
 
 <template>
   <div>
-    <p
-      class="text-sm"
-      :class="autosave.status.value === 'error' ? 'text-error' : 'text-muted'"
-      data-testid="etat-sauvegarde"
-    >
-      <UIcon
-        v-if="autosave.status.value === 'saved'"
-        name="i-lucide-check"
-        class="mr-1 align-[-2px]"
-        aria-hidden="true"
-      />
-      {{ statusLabel }}
-    </p>
+    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <p
+        class="text-sm"
+        :class="autosave.status.value === 'error' ? 'text-error' : 'text-muted'"
+        data-testid="etat-sauvegarde"
+      >
+        <UIcon
+          v-if="autosave.status.value === 'saved'"
+          name="i-lucide-check"
+          class="mr-1 align-[-2px]"
+          aria-hidden="true"
+        />
+        {{ statusLabel }}
+      </p>
+      <UButton
+        v-if="autosave.status.value === 'error'"
+        size="xs"
+        color="error"
+        variant="outline"
+        @click="autosave.flush()"
+      >
+        Réessayer
+      </UButton>
+    </div>
     <p role="status" class="sr-only">{{ announcement }}</p>
 
     <TraceForm
       ref="form"
       :initial="trace"
-      :submitting="submitting"
+      :submitting="submitting || finishing"
       class="mt-6"
       @change="draft = $event"
       @submit="onSubmit"

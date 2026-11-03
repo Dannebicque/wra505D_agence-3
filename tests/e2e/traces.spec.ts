@@ -125,6 +125,49 @@ test.describe('sauvegarde automatique', () => {
     await expect(rows).toContainText('Finalisée')
   })
 
+  test('garde le brouillon quand « Finaliser » est refusé puis la saisie complétée', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/etudiant/traces/nouvelle')
+    await page.getByRole('textbox', { name: /Titre/ }).fill('Storyboard du clip')
+    await saved(page)
+
+    await page.getByRole('button', { name: 'Finaliser la trace' }).click()
+    await expect(
+      page.getByText('Ajoutez le contenu de la trace avant de la finaliser.'),
+    ).toBeVisible()
+    await page.getByRole('textbox', { name: /Adresse du lien/ }).fill('https://clip.example')
+    await saved(page)
+
+    await gotoHydrated(page, '/etudiant/traces')
+    await expect(
+      page.getByRole('listitem').filter({ hasText: 'Storyboard du clip' }),
+    ).toContainText('Brouillon')
+  })
+
+  test('retrouve la trace créée automatiquement avec le bouton Retour', async ({
+    page,
+    isMobile,
+  }) => {
+    await gotoHydrated(page, '/etudiant/traces/nouvelle')
+    await page.getByRole('textbox', { name: /Titre/ }).fill('Affiche de la soirée MMI')
+    await saved(page)
+    await expect(page).toHaveURL(/\/etudiant\/traces\/\d+$/)
+
+    if (isMobile) await page.getByRole('button', { name: 'Ouvrir le menu' }).click()
+    await page
+      .getByRole('navigation', { name: 'Navigation de l’espace' })
+      .getByRole('link', { name: 'Mes traces' })
+      .click()
+    await expect(page).toHaveURL(/\/etudiant\/traces$/)
+    await page.goBack()
+
+    await expect(page).toHaveURL(/\/etudiant\/traces\/\d+$/)
+    await expect(page.getByRole('textbox', { name: /Titre/ })).toHaveValue(
+      'Affiche de la soirée MMI',
+    )
+  })
+
   test('ne perd rien si l’on quitte la page aussitôt après avoir écrit', async ({
     page,
     isMobile,
