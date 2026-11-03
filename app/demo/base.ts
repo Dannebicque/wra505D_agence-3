@@ -55,6 +55,8 @@ export interface DemoPageProjet {
 
 export interface DemoPortfolio {
   id: number
+  /** Auteur du portfolio. */
+  etudiantId: number
   slug: string
   intitule: string
   annee: string
@@ -76,14 +78,15 @@ export interface DemoRetour {
   contenu: string
 }
 
+/** Libellé, couleur et icône de chaque état d'évaluation : seule table, pour les deux espaces. */
 export const ETATS: Record<
   ValidationEtat,
-  { label: string; color: 'neutral' | 'error' | 'warning' | 'success' }
+  { label: string; color: 'neutral' | 'error' | 'warning' | 'success'; icon: string }
 > = {
-  0: { label: 'En attente', color: 'neutral' },
-  1: { label: 'Non acquis', color: 'error' },
-  2: { label: 'En cours d’acquisition', color: 'warning' },
-  3: { label: 'Acquis', color: 'success' },
+  0: { label: 'En attente', color: 'neutral', icon: 'i-lucide-hourglass' },
+  1: { label: 'Non acquis', color: 'error', icon: 'i-lucide-circle-x' },
+  2: { label: 'En cours d’acquisition', color: 'warning', icon: 'i-lucide-circle-dot' },
+  3: { label: 'Acquis', color: 'success', icon: 'i-lucide-circle-check' },
 }
 
 export const ENSEIGNANT_COURANT = { prenom: 'Claire', nom: 'Dupont', civilite: 'Mme' }
@@ -254,15 +257,20 @@ export const ETUDIANTS: DemoEtudiant[] = [
   },
 ]
 
+/**
+ * Traces de Léa (étudiante courante) : mêmes id, titres, types, statuts et dates que les traces
+ * factices du serveur (`server/data/traces.ts`), car « Mes traces » et sa page de détail sont déjà
+ * branchées sur Nitro et les maquettes y renvoient. Les traces des autres étudiants commencent à 19.
+ */
 export const TRACES: DemoTrace[] = [
   {
     id: 1,
-    titre: 'Refonte du site de l’association Vélocité',
+    titre: 'Refonte du site du BDE',
     type: 'lien',
     statut: 'finalisee',
-    date: '2026-10-28',
+    date: '2026-10-24',
     description:
-      'Refonte complète en Nuxt du site de l’association : audit, maquettes, intégration accessible et mise en ligne.',
+      'Refonte en Nuxt du site du bureau des étudiants : audit, maquettes, intégration accessible et mise en ligne.',
     etudiantId: 1,
     competences: [
       { competenceId: 4, etat: 3 },
@@ -271,22 +279,23 @@ export const TRACES: DemoTrace[] = [
   },
   {
     id: 2,
-    titre: 'Affiche du festival Lumières',
+    titre: 'Affiche du festival Court Toujours',
     type: 'image',
     statut: 'finalisee',
-    date: '2026-10-21',
-    description: 'Affiche et déclinaisons réseaux sociaux pour le festival de la ville.',
+    date: '2026-10-28',
+    description:
+      'Affiche et déclinaisons réseaux sociaux du festival de courts-métrages Court Toujours.',
     etudiantId: 1,
     competences: [{ competenceId: 3, etat: 0 }],
   },
   {
     id: 3,
-    titre: 'Étude utilisateurs de l’ENT',
+    titre: 'Étude UX de l’appli Fil Bleu',
     type: 'pdf',
     statut: 'finalisee',
-    date: '2026-10-14',
+    date: '2026-10-21',
     description:
-      'Dix entretiens, trois personas et une carte d’expérience de l’espace numérique de travail.',
+      'Dix entretiens, trois personas et une carte d’expérience de l’application du réseau de bus Fil Bleu.',
     etudiantId: 1,
     competences: [
       { competenceId: 1, etat: 3 },
@@ -295,6 +304,42 @@ export const TRACES: DemoTrace[] = [
   },
   {
     id: 4,
+    titre: 'Générique des portes ouvertes',
+    type: 'video',
+    statut: 'finalisee',
+    date: '2026-10-22',
+    description: 'Générique animé de quarante secondes pour les journées portes ouvertes.',
+    etudiantId: 1,
+    competences: [
+      { competenceId: 3, etat: 3 },
+      { competenceId: 4, etat: 0 },
+    ],
+  },
+  {
+    id: 5,
+    titre: 'API de réservation de salles',
+    type: 'lien',
+    statut: 'finalisee',
+    date: '2026-10-15',
+    description: 'API REST et interface de réservation des salles de projet, avec tests.',
+    etudiantId: 1,
+    competences: [{ competenceId: 4, etat: 2 }],
+  },
+  {
+    id: 6,
+    titre: 'Charte graphique de Grimp’Tours',
+    type: 'pdf',
+    statut: 'finalisee',
+    date: '2026-10-18',
+    description: 'Logo, typographies, couleurs et gabarits pour la salle d’escalade Grimp’Tours.',
+    etudiantId: 1,
+    competences: [
+      { competenceId: 3, etat: 2 },
+      { competenceId: 2, etat: 3 },
+    ],
+  },
+  {
+    id: 7,
     titre: 'Business model d’une appli de covoiturage',
     type: 'pdf',
     statut: 'brouillon',
@@ -304,30 +349,27 @@ export const TRACES: DemoTrace[] = [
     competences: [{ competenceId: 5, etat: 0 }],
   },
   {
-    id: 5,
-    titre: 'Motion design du générique MMI',
-    type: 'video',
-    statut: 'finalisee',
-    date: '2026-09-30',
-    description: 'Générique animé de quarante secondes pour les journées portes ouvertes.',
+    id: 8,
+    titre: 'Podcast : interview d’une ancienne étudiante',
+    type: 'lien',
+    statut: 'brouillon',
+    date: '2026-10-29',
+    description: 'Entretien avec une ancienne étudiante devenue développeuse front-end.',
     etudiantId: 1,
-    competences: [
-      { competenceId: 3, etat: 3 },
-      { competenceId: 4, etat: 0 },
-    ],
+    competences: [{ competenceId: 3, etat: 0 }],
   },
   {
-    id: 6,
-    titre: 'API de réservation de salles',
+    id: 19,
+    titre: 'Application de réservation du fablab',
     type: 'lien',
     statut: 'finalisee',
     date: '2026-10-25',
-    description: 'API REST et interface de réservation des salles de projet, avec tests.',
+    description: 'Application web de réservation des machines du fablab, avec tests.',
     etudiantId: 3,
     competences: [{ competenceId: 4, etat: 0 }],
   },
   {
-    id: 7,
+    id: 20,
     titre: 'Charte graphique du BDE',
     type: 'pdf',
     statut: 'finalisee',
@@ -340,7 +382,7 @@ export const TRACES: DemoTrace[] = [
     ],
   },
   {
-    id: 8,
+    id: 21,
     titre: 'Podcast « Métiers du web »',
     type: 'video',
     statut: 'finalisee',
@@ -354,6 +396,7 @@ export const TRACES: DemoTrace[] = [
 export const PORTFOLIOS: DemoPortfolio[] = [
   {
     id: 1,
+    etudiantId: 1,
     slug: 'lea-martin-2026',
     intitule: 'Léa Martin, développeuse web',
     annee: '2026-2027',
@@ -365,20 +408,28 @@ export const PORTFOLIOS: DemoPortfolio[] = [
     pages: [
       {
         id: 1,
-        intitule: 'Vélocité, refonte d’un site associatif',
-        description: 'Projet tutoré de cinq semaines, en équipe de quatre.',
-        traceIds: [1, 3],
+        intitule: 'Refonte du site du BDE',
+        description:
+          'Projet tutoré de cinq semaines, en équipe de quatre : le site, puis la réservation des salles.',
+        traceIds: [1, 5],
       },
       {
         id: 2,
-        intitule: 'Festival Lumières',
-        description: 'Identité visuelle et communication d’un festival local.',
-        traceIds: [2, 5],
+        intitule: 'Festival Court Toujours',
+        description: 'Identité visuelle et communication d’un festival de courts-métrages.',
+        traceIds: [2],
+      },
+      {
+        id: 6,
+        intitule: 'Étude UX de l’appli Fil Bleu',
+        description: 'Étude des usagers du réseau de bus, menée en binôme.',
+        traceIds: [3],
       },
     ],
   },
   {
     id: 2,
+    etudiantId: 1,
     slug: 'lea-martin-2025',
     intitule: 'Portfolio de première année',
     annee: '2025-2026',
@@ -415,13 +466,13 @@ export const RETOURS: DemoRetour[] = [
     enseignant: 'Mme Dupont',
     traceId: 1,
     contenu:
-      'Très bon travail d’intégration. Pour la conception, montrez davantage comment les retours des membres de l’association ont fait évoluer vos maquettes.',
+      'Très bon travail d’intégration. Pour la conception, montrez davantage comment les retours des membres du BDE ont fait évoluer vos maquettes.',
   },
   {
     id: 3,
     type: 'evaluation',
     lu: true,
-    date: '2026-10-20',
+    date: '2026-10-27',
     enseignant: 'M. Garnier',
     traceId: 3,
     contenu: 'Comprendre : acquis. Exprimer : non acquis.',
@@ -430,11 +481,20 @@ export const RETOURS: DemoRetour[] = [
     id: 4,
     type: 'commentaire',
     lu: true,
-    date: '2026-10-20',
+    date: '2026-10-27',
     enseignant: 'M. Garnier',
     traceId: 3,
     contenu:
       'L’analyse est solide, mais le rendu écrit manque de structure : ajoutez une synthèse.',
+  },
+  {
+    id: 5,
+    type: 'evaluation',
+    lu: true,
+    date: '2026-10-20',
+    enseignant: 'M. Garnier',
+    traceId: 5,
+    contenu: 'Développer : en cours d’acquisition.',
   },
 ]
 

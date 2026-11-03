@@ -424,8 +424,7 @@ export interface DemoPortfolioEtudiant extends DemoPortfolio {
 }
 
 export const PORTFOLIOS_ETUDIANTS: DemoPortfolioEtudiant[] = [
-  // Les portfolios de `base.ts` sont ceux de Léa Martin
-  ...PORTFOLIOS.map((p) => ({ ...p, etudiantId: 1 })),
+  ...PORTFOLIOS,
   {
     id: 3,
     etudiantId: 3,
@@ -447,7 +446,7 @@ export const PORTFOLIOS_ETUDIANTS: DemoPortfolioEtudiant[] = [
         id: 5,
         intitule: 'Court-métrage « Seuil »',
         description: 'Projet audiovisuel de fin de semestre, en équipe de trois.',
-        traceIds: [10, 6],
+        traceIds: [10, 19],
       },
     ],
   },

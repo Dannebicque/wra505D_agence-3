@@ -118,19 +118,8 @@ export const SUIVI_COMPETENCES: CompetenceSuivi[] = COMPETENCES.map((c) => compe
 // Retours (E-EV-01 à E-EV-07)
 // ---------------------------------------------------------------------------------------------
 
-/** Retours de base, complétés d'une évaluation plus ancienne pour étoffer la boîte de réception. */
-export const RETOURS_ETUDIANT: DemoRetour[] = [
-  ...RETOURS,
-  {
-    id: 5,
-    type: 'evaluation',
-    lu: true,
-    date: '2026-10-06',
-    enseignant: 'M. Garnier',
-    traceId: 5,
-    contenu: 'Exprimer : acquis.',
-  },
-]
+/** Retours de l’étudiante courante (source unique : `base.ts`, aussi lue par la cloche). */
+export const RETOURS_ETUDIANT: DemoRetour[] = RETOURS
 
 // ---------------------------------------------------------------------------------------------
 // CV (E-CV-01, E-CV-05, E-CV-06)
