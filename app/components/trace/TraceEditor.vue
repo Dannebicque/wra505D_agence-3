@@ -72,8 +72,10 @@ async function onSubmit(input: TraceInput) {
   finishing.value = true
   try {
     // Une sauvegarde automatique en cours se termine d'abord (la trace a alors son identifiant)
-    await autosave.flush()
+    // Révision au moment du clic (la saisie envoyée est celle du clic) : une frappe faite ensuite,
+    // même pendant l'attente de la sauvegarde automatique, reste à enregistrer
     submittedRevision = autosave.revision.value
+    await autosave.flush()
     await submit(input)
   } finally {
     finishing.value = false
