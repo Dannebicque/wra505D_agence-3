@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FormError, FormErrorEvent } from '@nuxt/ui'
+import type { FormError } from '@nuxt/ui'
 import { PORTFOLIO_LIMITS, type DemoPortfolioForm } from '~/demo/portfolio'
 
 // Formulaire d'un portfolio, commun à la création (E-PF-01) et à la modification (E-PF-02,
@@ -37,14 +37,16 @@ function validate(values: Partial<DemoPortfolioForm>): FormError[] {
   return errors
 }
 
-/** Après un envoi refusé, le focus va au premier champ en erreur. */
-function onError(event: FormErrorEvent) {
-  const first = event.errors[0]
-  setTimeout(() => {
-    const field =
-      (first?.id ? document.getElementById(first.id) : null) ??
-      (first?.name ? document.querySelector<HTMLElement>(`[name="${first.name}"]`) : null)
-    field?.focus()
+const { onError } = useFocusFirstError()
+
+// Les recruteurs ne voient qu'un portfolio public : le choix n'a de sens que dans ce cas
+const isPrivate = computed(() => state.visibilite === 'privee')
+
+function onSubmit() {
+  emit('submit', {
+    ...state,
+    intitule: state.intitule.trim(),
+    visibleRecruteurs: !isPrivate.value && state.visibleRecruteurs,
   })
 }
 
@@ -69,7 +71,7 @@ const VISIBILITE_ITEMS = [
     :validate-on="['blur']"
     novalidate
     class="space-y-6"
-    @submit="emit('submit', { ...state, intitule: state.intitule.trim() })"
+    @submit="onSubmit"
     @error="onError"
   >
     <UFormField
@@ -113,11 +115,18 @@ const VISIBILITE_ITEMS = [
         :items="VISIBILITE_ITEMS"
         :ui="{ legend: 'mb-2 text-sm font-semibold text-highlighted' }"
       />
+      <!-- Privé : l'interrupteur s'affiche éteint, le choix revient s'il repasse en public -->
       <USwitch
-        v-model="state.visibleRecruteurs"
+        :model-value="!isPrivate && state.visibleRecruteurs"
         name="visibleRecruteurs"
         label="Visible par les recruteurs"
-        description="Les recruteurs partenaires de l’IUT peuvent consulter ce portfolio s’il est public."
+        :disabled="isPrivate"
+        :description="
+          isPrivate
+            ? 'Disponible pour un portfolio public : choisissez « Public » pour l’activer.'
+            : 'Les recruteurs partenaires de l’IUT peuvent consulter ce portfolio.'
+        "
+        @update:model-value="state.visibleRecruteurs = $event"
       />
     </div>
 

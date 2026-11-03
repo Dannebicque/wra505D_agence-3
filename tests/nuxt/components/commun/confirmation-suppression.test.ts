@@ -76,4 +76,59 @@ describe('ConfirmationSuppression', () => {
 
     await expect.poll(() => document.activeElement).toBe(button('Annuler'))
   })
+
+  describe('focus à la fermeture', () => {
+    // La fenêtre se ferme vraiment : le parent répercute `update:open` sur la prop
+    async function mountControlled(returnFocus?: (reason: 'confirm' | 'cancel') => HTMLElement) {
+      const wrapper = await mountSuspended(ConfirmationSuppression, {
+        props: {
+          open: true,
+          title: 'Supprimer cette trace ?',
+          description: 'La trace et ses évaluations seront supprimées.',
+          returnFocus,
+          'onUpdate:open': (value: boolean) => wrapper.setProps({ open: value }),
+        },
+        attachTo: document.body,
+      })
+      await flushPromises()
+      return wrapper
+    }
+
+    function stableTarget() {
+      const heading = document.createElement('h2')
+      heading.tabIndex = -1
+      heading.textContent = 'Traces de la page'
+      document.body.append(heading)
+      return heading
+    }
+
+    it('envoie le focus sur l’élément choisi par le parent après confirmation', async () => {
+      const heading = stableTarget()
+      const reasons: string[] = []
+      await mountControlled((reason) => {
+        reasons.push(reason)
+        return heading
+      })
+
+      button('Supprimer')?.click()
+      await flushPromises()
+
+      await expect.poll(() => document.activeElement).toBe(heading)
+      expect(reasons).toEqual(['confirm'])
+    })
+
+    it('indique au parent une fermeture par annulation', async () => {
+      const heading = stableTarget()
+      const reasons: string[] = []
+      await mountControlled((reason) => {
+        reasons.push(reason)
+        return heading
+      })
+
+      button('Annuler')?.click()
+      await flushPromises()
+
+      await expect.poll(() => reasons).toEqual(['cancel'])
+    })
+  })
 })

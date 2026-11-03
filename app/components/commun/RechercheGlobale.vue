@@ -17,6 +17,29 @@ const PALETTE_INPUT = {
   'aria-label': 'Rechercher dans UniFolio',
 }
 
+// Accessibilité de la palette (contrôle axe, palette ouverte) :
+// - la liste des résultats (role="listbox") n'a pas de nom et UCommandPalette ne permet pas de lui
+//   en donner : on le pose une fois la palette affichée (Vue ne retire pas un attribut qu'il ne gère pas) ;
+// - la zone qui défile doit contenir un élément atteignable au clavier : on fait défiler toute la
+//   palette (champ compris, gardé en haut) plutôt que la seule liste, dont les options ne sont pas
+//   dans l'ordre de tabulation (on les parcourt aux flèches depuis le champ).
+const PALETTE_UI = {
+  root: 'overflow-y-auto scroll-pt-14',
+  input: 'sticky top-0 z-10 bg-default',
+  content: 'overflow-visible',
+  viewport: 'overflow-visible',
+}
+const paletteWrapper = useTemplateRef('paletteWrapper')
+watch(
+  paletteWrapper,
+  (wrapper) => {
+    wrapper
+      ?.querySelector('[role="listbox"]')
+      ?.setAttribute('aria-label', 'Résultats de la recherche')
+  },
+  { flush: 'post' },
+)
+
 // Choisir un résultat ferme la palette ; le lien du résultat fait la navigation
 const groups = computed(() =>
   (espace.value ? searchGroups(espace.value) : []).map((group) => ({
@@ -29,6 +52,14 @@ const groups = computed(() =>
     })),
   })),
 )
+
+// Raccourci annoncé aux technologies d'assistance : Ctrl + K, ou ⌘ + K sur Mac. Le serveur ne
+// connaît pas le système : valeur par défaut au rendu, ajustée une fois la page montée (pas
+// d'écart d'hydratation). Même détection que Nuxt UI pour `meta_k`.
+const keyShortcut = ref('Control+K')
+onMounted(() => {
+  if (/Macintosh;/.test(navigator.userAgent)) keyShortcut.value = 'Meta+K'
+})
 
 defineShortcuts({
   // Actif aussi pendant la saisie : le même raccourci referme la palette
@@ -52,7 +83,7 @@ defineShortcuts({
       icon="i-lucide-search"
       color="neutral"
       variant="outline"
-      aria-keyshortcuts="Control+K Meta+K"
+      :aria-keyshortcuts="keyShortcut"
       class="md:min-w-56"
     >
       <!-- Libellé lu par les lecteurs d'écran à toutes les tailles, affiché à partir de la tablette -->
@@ -64,23 +95,26 @@ defineShortcuts({
     </UButton>
 
     <template #content>
-      <UCommandPalette
-        :groups="groups"
-        :input="PALETTE_INPUT"
-        close
-        class="h-[min(32rem,80dvh)]"
-        @update:open="isOpen = $event"
-      >
-        <template #empty="{ searchTerm }">
-          <p class="px-4 py-8 text-center text-sm text-muted">
-            <template v-if="searchTerm">
-              Aucun résultat pour « {{ searchTerm }} ». Essayez un autre mot, ou le titre d’une
-              trace.
-            </template>
-            <template v-else>Rien à rechercher dans cet espace pour l’instant.</template>
-          </p>
-        </template>
-      </UCommandPalette>
+      <div ref="paletteWrapper" class="contents">
+        <UCommandPalette
+          :groups="groups"
+          :input="PALETTE_INPUT"
+          :ui="PALETTE_UI"
+          close
+          class="h-[min(32rem,80dvh)]"
+          @update:open="isOpen = $event"
+        >
+          <template #empty="{ searchTerm }">
+            <p class="px-4 py-8 text-center text-sm text-muted">
+              <template v-if="searchTerm">
+                Aucun résultat pour « {{ searchTerm }} ». Essayez un autre mot, ou le titre d’une
+                trace.
+              </template>
+              <template v-else>Rien à rechercher dans cet espace pour l’instant.</template>
+            </p>
+          </template>
+        </UCommandPalette>
+      </div>
     </template>
   </UModal>
 </template>

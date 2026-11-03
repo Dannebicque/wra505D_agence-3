@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import type { TraceType } from '#shared/types/trace'
 import {
   competenceById,
   formatDate,
@@ -15,13 +14,6 @@ const props = defineProps<{
   /** Auteur et formation, affichés au-dessus de l'intitulé. */
   auteur?: string
 }>()
-
-const TYPE_ICONS: Record<TraceType, string> = {
-  image: 'i-lucide-image',
-  pdf: 'i-lucide-file-text',
-  video: 'i-lucide-video',
-  lien: 'i-lucide-link',
-}
 
 const sectionId = (pageId: number) => `projet-${pageId}`
 
@@ -106,11 +98,11 @@ const competencesOf = (trace: DemoTrace) =>
                   class="flex aspect-video items-center justify-center rounded-feuille bg-elevated text-muted"
                   aria-hidden="true"
                 >
-                  <UIcon :name="TYPE_ICONS[trace.type]" class="size-10" />
+                  <UIcon :name="TRACE_TYPE_ICONS[trace.type]" class="size-10" />
                 </div>
                 <h3 class="font-semibold text-highlighted">{{ trace.titre }}</h3>
                 <p class="flex flex-wrap items-center gap-x-2 text-sm text-muted">
-                  <UIcon :name="TYPE_ICONS[trace.type]" class="size-4" aria-hidden="true" />
+                  <UIcon :name="TRACE_TYPE_ICONS[trace.type]" class="size-4" aria-hidden="true" />
                   <span>{{ TRACE_TYPE_LIBELLES[trace.type] }}</span>
                   <span aria-hidden="true">·</span>
                   <span>{{ formatDate(trace.date) }}</span>

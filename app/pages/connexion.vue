@@ -24,6 +24,8 @@ function validate(): FormError[] {
   return errors
 }
 
+const { onError } = useFocusFirstError()
+
 // Maquette : aucun appel, on signale seulement que la connexion n'est pas encore branchée
 function onSubmit() {
   hasSubmitted.value = true
@@ -68,6 +70,7 @@ const DEMO_ACCESS = [
       novalidate
       class="flex flex-col gap-5"
       @submit="onSubmit"
+      @error="onError"
     >
       <UFormField label="Identifiant universitaire" name="identifiant" required>
         <UInput

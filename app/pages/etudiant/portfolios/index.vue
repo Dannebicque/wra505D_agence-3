@@ -62,7 +62,12 @@ const limitId = useId()
         Créez votre portfolio de l’année {{ ANNEE_COURANTE }}, puis rassemblez vos traces par
         projet.
       </p>
-      <UButton to="/etudiant/portfolios/nouveau" icon="i-lucide-plus" class="mt-5">
+      <!-- Maquette : l'état vide se prolonge sur la création (sinon le portfolio de démo la bloque) -->
+      <UButton
+        :to="{ path: '/etudiant/portfolios/nouveau', query: { etat: 'vide' } }"
+        icon="i-lucide-plus"
+        class="mt-5"
+      >
         Créer mon portfolio
       </UButton>
     </div>

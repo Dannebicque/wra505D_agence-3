@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ETUDIANT_COURANT_ID, etudiantById } from '~/demo/base'
+import { etudiantById } from '~/demo/base'
 import { isPubliclyVisible, portfolioBySlug } from '~/demo/portfolio'
 
 // MAQUETTE (E-PF-06) : page publique d'un portfolio, mise en page `default` (hors espaces).
@@ -19,7 +19,7 @@ useSeoMeta({
   ogDescription: portfolio.description,
 })
 
-const etudiant = etudiantById(ETUDIANT_COURANT_ID)
+const etudiant = etudiantById(portfolio.etudiantId)
 const auteur = etudiant ? `${etudiant.prenom} ${etudiant.nom}, ${etudiant.annee}` : undefined
 </script>
 

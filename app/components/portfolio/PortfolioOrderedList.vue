@@ -67,6 +67,18 @@ function onDragStart(event: DragEvent, index: number) {
   }
 }
 
+/** Passer d'une ligne à l'un de ses enfants déclenche aussi `dragleave` : on l'ignore. */
+function onDragLeave(event: DragEvent, index: number) {
+  const row = event.currentTarget
+  if (
+    row instanceof Node &&
+    event.relatedTarget instanceof Node &&
+    row.contains(event.relatedTarget)
+  )
+    return
+  if (overIndex.value === index) overIndex.value = null
+}
+
 function onDrop(index: number) {
   if (draggedIndex.value !== null && draggedIndex.value !== index) {
     moveItem(draggedIndex.value, index)
@@ -96,7 +108,7 @@ function onDragEnd() {
         ]"
         @dragstart="onDragStart($event, index)"
         @dragover.prevent="overIndex = index"
-        @dragleave="overIndex === index && (overIndex = null)"
+        @dragleave="onDragLeave($event, index)"
         @drop.prevent="onDrop(index)"
         @dragend="onDragEnd"
       >

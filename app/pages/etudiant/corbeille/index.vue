@@ -1,34 +1,74 @@
 <script setup lang="ts">
-// MAQUETTE (C-09) : éléments supprimés de démonstration. « Restaurer » et « Supprimer
-// définitivement » sont sans effet pour l'instant. Ajouter `?vide` à l'adresse affiche l'état vide.
+// MAQUETTE (C-09) : éléments supprimés de démonstration. « Restaurer » est sans effet pour
+// l'instant ; « Supprimer définitivement » (avec confirmation, C-08) retire l'élément de la liste
+// dans l'état local de la page seulement. Ajouter `?vide` à l'adresse affiche l'état vide.
 import { formatDate } from '~/demo/base'
 import {
   CORBEILLE,
   CORBEILLE_DUREE_JOURS,
   ELEMENT_SUPPRIME_TYPES,
   dateExpiration,
+  type DemoElementSupprime,
 } from '~/demo/etudiant'
 
 useSeoMeta({ title: 'Corbeille' })
 
 const route = useRoute()
 
+// Éléments effacés pendant cette visite (maquette : rien n'est enregistré)
+const erasedIds = ref<number[]>([])
+
 // Plus récemment supprimés d'abord
 const elements = computed(() =>
   'vide' in route.query
     ? []
-    : [...CORBEILLE].sort((a, b) => b.dateSuppression.localeCompare(a.dateSuppression)),
+    : CORBEILLE.filter((element) => !erasedIds.value.includes(element.id)).sort((a, b) =>
+        b.dateSuppression.localeCompare(a.dateSuppression),
+      ),
 )
+
+// --- Suppression définitive : confirmation obligatoire (C-08) ---
+const elementToErase = ref<DemoElementSupprime | null>(null)
+// Gardé après la fermeture : le titre de la fenêtre ne se vide pas pendant son animation
+const eraseLabel = ref('')
+const isEraseOpen = ref(false)
+const message = ref('')
+const pageHeading = useTemplateRef('pageHeading')
+
+function askErase(element: DemoElementSupprime) {
+  elementToErase.value = element
+  eraseLabel.value = element.titre
+  isEraseOpen.value = true
+}
+
+function confirmErase() {
+  const element = elementToErase.value
+  if (!element) return
+  erasedIds.value = [...erasedIds.value, element.id]
+  message.value = `Suppression définitive de « ${element.titre} » effectuée.`
+  elementToErase.value = null
+}
+
+/** La ligne supprimée emporte le bouton d'origine : le focus va au titre de la page. */
+const eraseReturnFocus = (reason: 'confirm' | 'cancel') =>
+  reason === 'confirm' ? pageHeading.value : undefined
 </script>
 
 <template>
   <div>
-    <h1 class="font-titre text-3xl text-highlighted">Corbeille</h1>
+    <h1
+      ref="pageHeading"
+      tabindex="-1"
+      class="font-titre text-3xl text-highlighted focus:outline-none"
+    >
+      Corbeille
+    </h1>
     <!-- Durée de conservation à confirmer avec le client (30 jours proposés par l'équipe) -->
     <p class="mt-3 max-w-2xl text-muted">
       Les traces, pages et portfolios supprimés restent ici {{ CORBEILLE_DUREE_JOURS }} jours avant
       d’être effacés définitivement. Vous pouvez les restaurer d’ici là.
     </p>
+    <p role="status" class="sr-only">{{ message }}</p>
 
     <ul
       v-if="elements.length"
@@ -54,11 +94,11 @@ const elements = computed(() =>
               Dans le portfolio « {{ element.origine }} »
             </p>
             <p class="mt-1 text-xs text-muted">
-              Supprimé le
+              Suppression le
               <time :datetime="element.dateSuppression">
                 {{ formatDate(element.dateSuppression) }}
               </time>
-              · effacé définitivement le
+              · effacement définitif le
               <time :datetime="dateExpiration(element.dateSuppression)">
                 {{ formatDate(dateExpiration(element.dateSuppression)) }}
               </time>
@@ -82,6 +122,7 @@ const elements = computed(() =>
             variant="ghost"
             size="sm"
             :aria-label="`Supprimer définitivement « ${element.titre} »`"
+            @click="askErase(element)"
           >
             Supprimer définitivement
           </UButton>
@@ -96,5 +137,15 @@ const elements = computed(() =>
         {{ CORBEILLE_DUREE_JOURS }} jours.
       </p>
     </div>
+
+    <CommunConfirmationSuppression
+      v-model:open="isEraseOpen"
+      :title="`Supprimer définitivement « ${eraseLabel} » ?`"
+      description="L’élément sera effacé tout de suite, sans attendre la fin du délai. Cette action est irréversible."
+      confirm-label="Supprimer définitivement"
+      :return-focus="eraseReturnFocus"
+      @confirm="confirmErase"
+      @cancel="elementToErase = null"
+    />
   </div>
 </template>

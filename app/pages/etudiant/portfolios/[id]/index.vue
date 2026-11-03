@@ -19,15 +19,16 @@ if (!found) {
 }
 const portfolio = found
 
-useSeoMeta({ title: `Modifier « ${portfolio.intitule} »` })
-
-const breadcrumb = [
-  { label: 'Mes portfolios', to: '/etudiant/portfolios' },
-  { label: portfolio.intitule },
-]
-
 // --- Informations (intitulé, introduction, bannière, visibilité) ---
 const intitule = ref(portfolio.intitule)
+
+// Le titre de l'onglet et le fil d'Ariane suivent l'intitulé enregistré
+useSeoMeta({ title: () => `Modifier « ${intitule.value} »` })
+const breadcrumb = computed(() => [
+  { label: 'Mes portfolios', to: '/etudiant/portfolios' },
+  { label: intitule.value },
+])
+
 const visibilite = ref(portfolio.visibilite)
 const formMessage = ref('')
 function onSubmit(values: DemoPortfolioForm) {
@@ -38,20 +39,40 @@ function onSubmit(values: DemoPortfolioForm) {
 }
 
 // --- Publication (E-PF-05) et lien public (E-PF-06) ---
+// À faire trancher par le PO : visibilité (public/privé) et publication sont deux réglages
+// distincts ; un portfolio privé peut-il être « publié » (visible de l'équipe enseignante
+// seulement) ou la publication suppose-t-elle un portfolio public ? En attendant, on interdit de
+// publier un portfolio privé, sans changer le modèle.
 const publie = ref(portfolio.publie)
 const publicationMessage = ref('')
 const isPublic = computed(() =>
   isPubliclyVisible({ visibilite: visibilite.value, publie: publie.value }),
 )
+const isPrivate = computed(() => visibilite.value === 'privee')
+/** « Publier » reste focalisable mais inactif quand le portfolio est privé. */
+const isPublishBlocked = computed(() => !publie.value && isPrivate.value)
 const requestUrl = useRequestURL()
 const publicUrl = `${requestUrl.origin}${publicPath(portfolio)}`
 const publicLinkId = useId()
+const publicationHintId = useId()
+const statusSummary = computed(
+  () => `${publie.value ? 'publié' : 'non publié'}, ${isPrivate.value ? 'privé' : 'public'}`,
+)
 
 function togglePublication() {
+  if (isPublishBlocked.value) {
+    publicationMessage.value =
+      'Publication impossible : choisissez d’abord « Public » dans les informations.'
+    return
+  }
+  // Le lien public ne « cesse de fonctionner » que s'il fonctionnait avant
+  const hadPublicLink = isPublic.value
   publie.value = !publie.value
-  publicationMessage.value = publie.value
-    ? 'Portfolio publié.'
-    : 'Portfolio dépublié : son lien public ne fonctionne plus.'
+  if (publie.value) publicationMessage.value = 'Portfolio publié.'
+  else
+    publicationMessage.value = hadPublicLink
+      ? 'Portfolio dépublié : son lien public ne fonctionne plus.'
+      : 'Portfolio dépublié.'
 }
 
 async function copyLink() {
@@ -108,38 +129,28 @@ function addPage() {
   cancelAdd()
 }
 
-// Suppression : confirmation obligatoire (action destructive)
+// Suppression : confirmation obligatoire (action destructive, C-08)
 const pageToDelete = ref<EditablePage | null>(null)
 // Gardé après la fermeture : le titre de la fenêtre ne se vide pas pendant son animation
 const deleteLabel = ref('')
+const isDeleteOpen = ref(false)
 function askDelete(page: EditablePage) {
   deleteLabel.value = page.intitule
   pageToDelete.value = page
+  isDeleteOpen.value = true
 }
-const isDeleteOpen = computed({
-  get: () => pageToDelete.value !== null,
-  set: (open: boolean) => {
-    if (!open) pageToDelete.value = null
-  },
-})
-const justDeleted = ref(false)
 
 function confirmDelete() {
   const page = pageToDelete.value
   if (!page) return
   pages.value = pages.value.filter((p) => p.id !== page.id)
   pagesMessage.value = `Page « ${page.intitule} » supprimée.`
-  justDeleted.value = true
   pageToDelete.value = null
 }
 
-/** Le bouton qui a ouvert la confirmation n'existe plus : le focus va au titre de la section. */
-function onCloseAutoFocus(event: Event) {
-  if (!justDeleted.value) return
-  event.preventDefault()
-  justDeleted.value = false
-  pagesHeading.value?.focus()
-}
+/** Après suppression, le bouton qui a ouvert la confirmation n'existe plus : focus au titre. */
+const deleteReturnFocus = (reason: 'confirm' | 'cancel') =>
+  reason === 'confirm' ? pagesHeading.value : undefined
 
 const traceCount = (page: EditablePage) =>
   page.traceIds.length === 0
@@ -157,6 +168,16 @@ const traceCount = (page: EditablePage) =>
         <p class="mt-2 text-muted">
           {{ intitule }} · année {{ portfolio.annee }} · modifié le
           {{ formatDate(portfolio.dateModification) }}
+        </p>
+        <!-- Mobile et tablette : le panneau de publication suit le contenu, son état est rappelé ici -->
+        <p class="mt-2 text-sm text-default lg:hidden">
+          Portfolio {{ statusSummary }} ·
+          <a
+            href="#publication-panneau"
+            class="font-medium text-primary underline underline-offset-4"
+          >
+            Gérer la publication
+          </a>
         </p>
       </div>
       <UButton
@@ -289,6 +310,7 @@ const traceCount = (page: EditablePage) =>
       </div>
 
       <aside
+        id="publication-panneau"
         aria-labelledby="publication"
         class="space-y-4 rounded-panneau bg-muted p-5 lg:sticky lg:top-6 lg:self-start"
       >
@@ -313,8 +335,12 @@ const traceCount = (page: EditablePage) =>
           </span>
         </div>
 
-        <p class="text-sm text-muted">
-          <template v-if="visibilite === 'privee'">
+        <p :id="publicationHintId" class="text-sm text-muted">
+          <template v-if="isPublishBlocked">
+            Portfolio privé : il ne peut pas être publié et n’a pas de lien public. Choisissez «
+            Public » dans les informations pour le publier.
+          </template>
+          <template v-else-if="isPrivate">
             Portfolio privé : même publié, il n’a pas de lien public. Choisissez « Public » dans les
             informations pour le partager.
           </template>
@@ -331,6 +357,8 @@ const traceCount = (page: EditablePage) =>
           :color="publie ? 'neutral' : 'primary'"
           :variant="publie ? 'outline' : 'solid'"
           :icon="publie ? 'i-lucide-eye-off' : 'i-lucide-send'"
+          :aria-disabled="isPublishBlocked || undefined"
+          :aria-describedby="isPublishBlocked ? publicationHintId : undefined"
           @click="togglePublication"
         >
           {{ publie ? 'Dépublier' : 'Publier' }}
@@ -370,20 +398,14 @@ const traceCount = (page: EditablePage) =>
       </aside>
     </div>
 
-    <UModal
+    <CommunConfirmationSuppression
       v-model:open="isDeleteOpen"
       :title="`Supprimer la page « ${deleteLabel} » ?`"
       description="La page et son ordre de traces seront supprimés. Les traces elles-mêmes restent dans votre bibliothèque."
-      :content="{ onCloseAutoFocus }"
-    >
-      <template #footer="{ close }">
-        <div class="flex w-full flex-wrap justify-end gap-2">
-          <UButton color="neutral" variant="outline" @click="close">Annuler</UButton>
-          <UButton color="error" icon="i-lucide-trash-2" @click="confirmDelete">
-            Supprimer la page
-          </UButton>
-        </div>
-      </template>
-    </UModal>
+      confirm-label="Supprimer la page"
+      :return-focus="deleteReturnFocus"
+      @confirm="confirmDelete"
+      @cancel="pageToDelete = null"
+    />
   </div>
 </template>
