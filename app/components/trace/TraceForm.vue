@@ -109,8 +109,21 @@ function onSubmit() {
 }
 
 const form = useTemplateRef('form')
-/** Erreur du formulaire pour le fichier (validation, serveur), affichée par le champ fichier. */
-const fichierError = computed(() => form.value?.getErrors('fichier')[0]?.message ?? null)
+/**
+ * Erreur du fichier (validation, serveur), affichée par le champ fichier. Le champ fichier n'est
+ * pas un `UFormField` (accessibilité) : `UForm.setErrors` ignorerait une erreur du serveur à son
+ * nom, elle est donc gardée ici.
+ */
+const serverFichierError = ref<string | null>(null)
+const fichierError = computed(
+  () => serverFichierError.value ?? form.value?.getErrors('fichier')[0]?.message ?? null,
+)
+// Un fichier vient d'être déposé : l'erreur « fichier manquant » n'a plus lieu d'être
+watch(currentFile, (file) => {
+  if (!file) return
+  serverFichierError.value = null
+  form.value?.clear('fichier')
+})
 // NB : `submit()` de UForm appelle `reportValidity()` du navigateur, qui ignore `novalidate`.
 // Aucun champ ne porte donc de contrainte native (type="url", max…) : les règles en français
 // de `validateTrace` s'appliquent seules, sans bulle native ni envoi bloqué.
@@ -143,6 +156,8 @@ function submitAs(value: TraceStatut) {
 function setServerErrors(violations: Violation[]): Violation[] {
   const shown = violations.filter((v) => visibleFields.value.has(fieldOf(v.propertyPath)))
   form.value?.setErrors(toFormErrors(shown))
+  serverFichierError.value =
+    shown.find((v) => fieldOf(v.propertyPath) === 'fichier')?.message ?? null
   const first = shown[0]
   if (first) nextTick(() => focusField(undefined, fieldOf(first.propertyPath)))
   return violations.filter((v) => !shown.includes(v))

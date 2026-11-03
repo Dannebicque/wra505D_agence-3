@@ -38,7 +38,7 @@ describe('éditeur de trace', () => {
     )
     await editor.get('input[name="adresse"]').setValue('https://bm.example')
 
-    await vi.waitFor(() => expect(save).toHaveBeenCalled(), { timeout: 4000 })
+    await vi.waitFor(() => expect(save).toHaveBeenCalled(), { timeout: 8000 })
     expect(save.mock.calls.at(-1)?.[1]).toMatchObject({
       statut: 'brouillon',
       contenu: ['https://bm.example'],
@@ -49,7 +49,7 @@ describe('éditeur de trace', () => {
     const save = vi
       .spyOn(useTraceStore(), 'save')
       .mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve({ ...TRACE }), 50)),
+        () => new Promise((resolve) => setTimeout(() => resolve({ ...TRACE }), 300)),
       )
     const editor = await mountSuspended(TraceEditor, {
       props: { trace: { ...TRACE, contenu: ['https://bm.example'] } },
@@ -60,7 +60,7 @@ describe('éditeur de trace', () => {
     await finaliser.trigger('click')
 
     await vi.waitFor(() => expect(save).toHaveBeenCalled())
-    await new Promise((resolve) => setTimeout(resolve, 200))
+    await new Promise((resolve) => setTimeout(resolve, 800))
     expect(save).toHaveBeenCalledTimes(1)
   })
 
@@ -86,7 +86,7 @@ describe('éditeur de trace', () => {
 
     await editor.get('input[name="titre"]').setValue('Business model, v2')
 
-    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(2), { timeout: 4000 })
+    await vi.waitFor(() => expect(save).toHaveBeenCalledTimes(2), { timeout: 8000 })
     expect(save.mock.calls[1]?.[1]).toMatchObject({
       statut: 'brouillon',
       titre: 'Business model, v2',

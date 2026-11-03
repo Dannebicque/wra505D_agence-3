@@ -59,6 +59,12 @@ const describedBy = computed(() =>
     .join(' '),
 )
 
+/** Vide puis remplit la zone vivante : un message identique au précédent est relu. */
+function announce(text: string) {
+  announcement.value = ''
+  nextTick(() => (announcement.value = text))
+}
+
 async function handle(file: File) {
   localError.value = null
   try {
@@ -66,19 +72,19 @@ async function handle(file: File) {
     const problem = checkFile(props.type, { size: file.size, kind: detectFileKind(head) })
     if (problem) {
       localError.value = problem
-      announcement.value = problem
+      announce(problem)
       return
     }
     uploading.value = true
-    announcement.value = `Envoi de ${file.name}…`
+    announce(`Envoi de ${file.name}…`)
     const saved = await uploadFichier(file, props.type)
     uploadedName.value = saved.nom
-    announcement.value = `${saved.nom} déposé.`
+    announce(`${saved.nom} déposé.`)
     emit('update:modelValue', saved['@id'])
   } catch (err) {
     const apiError = toApiError(err)
     localError.value = apiError.violations[0]?.message ?? apiError.message
-    announcement.value = localError.value
+    announce(localError.value)
   } finally {
     uploading.value = false
   }
@@ -133,12 +139,13 @@ function onDrop(event: DragEvent) {
             name="fichier"
             color="neutral"
             variant="outline"
-            icon="i-lucide-upload"
-            :loading="uploading"
+            :icon="uploading ? 'i-lucide-loader-circle' : 'i-lucide-upload'"
+            :ui="{ leadingIcon: uploading ? 'animate-spin motion-reduce:animate-none' : '' }"
+            :aria-disabled="uploading ? 'true' : undefined"
             :aria-labelledby="`${ids.label} ${ids.action}`"
             :aria-describedby="describedBy"
             :aria-invalid="error ? 'true' : undefined"
-            @click="open()"
+            @click="uploading || open()"
           >
             <span :id="ids.action">
               {{ currentName ? 'Remplacer le fichier' : 'Choisir un fichier' }}

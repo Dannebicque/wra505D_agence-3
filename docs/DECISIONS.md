@@ -84,6 +84,7 @@ Format : date, décision, alternatives écartées, raison.
 
 - **Décision** : `hookTimeout: 60_000` dans le projet Vitest `nuxt`.
 - **Alternatives écartées** : délai passé à chaque fichier de test (à répéter partout) ; garder 10 s (un test sans import lourd échoue systématiquement).
+- **Complément (2026-11-03)** : `testTimeout: 20_000` dans le même projet : le premier montage d'un formulaire complet et les attentes de la sauvegarde automatique (délai de 1,5 s) dépassaient la limite par défaut de 5 s quand toute la suite tourne en parallèle.
 - **Raison** : sous Windows, le démarrage de l'environnement Nuxt (`beforeAll` de `@nuxt/test-utils`) prend 12 à 15 s. Même un test vide échouait ; `index.test.ts` ne passait que parce que l'import de la page laissait à Nuxt le temps de démarrer. Le délai ne concerne que ce démarrage : un test bloqué échoue toujours.
 
 ## 2026-11-02 — Thème du style A (éditorial) et polices servies par l'application
@@ -130,5 +131,5 @@ Format : date, décision, alternatives écartées, raison.
   - Une trace image ou PDF référence son fichier par son adresse ; le serveur vérifie que ce fichier appartient au visiteur et correspond au type (un fichier de l'ancienne version reste accepté s'il n'est pas modifié).
   - Une **légende est obligatoire pour finaliser une image** : elle sert de texte alternatif (accessibilité). Choix de l'équipe, à confirmer par le PO.
 - **Alternatives écartées** : se fier à l'extension ou au type MIME envoyé (falsifiables) ; accepter le SVG (risque XSS) ; fichiers sur disque (`.data/`, première version : orphelins après redémarrage et disque saturable) ; plusieurs fichiers par trace (E-TR-03, retirée) ; le champ de dépôt de Nuxt UI tel quel (son libellé, ses formats et ses erreurs visent un élément caché aux lecteurs d'écran : le champ utilise un vrai bouton nommé et décrit).
-- **Limite connue** : l'accès réservé au visiteur qui a déposé le fichier ne conviendra pas à l'enseignant évaluateur ni au portfolio public ; les droits d'accès seront définis avec ApiPlatform et l'authentification.
+- **Limites connues** : un script sans cookie peut, par envois répétés, faire oublier les fichiers de démonstration de tous les visiteurs (plafond global), et le nombre d'envois traités en même temps n'est pas plafonné ; acceptable pour des données factices, à revoir avec ApiPlatform. L'accès réservé au visiteur qui a déposé le fichier ne conviendra pas à l'enseignant évaluateur ni au portfolio public ; les droits d'accès seront définis avec ApiPlatform et l'authentification.
 - **Raison** : sécurité et accessibilité exigées par le client ; tout ce provisoire disparaît avec le téléversement d'ApiPlatform (Sprint 4), le front ne dépendant que du contrat (`Fichier`, adresse du fichier dans `contenu`).

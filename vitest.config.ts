@@ -26,6 +26,9 @@ export default defineConfig({
           // Le démarrage de l'environnement Nuxt (hook beforeAll de @nuxt/test-utils) dépasse
           // parfois les 10 s par défaut sous Windows (voir docs/DECISIONS.md)
           hookTimeout: 60_000,
+          // Premier montage d'un formulaire complet et attentes de la sauvegarde automatique
+          // (délai de 1,5 s) : la limite par défaut de 5 s coupe ces tests sous charge
+          testTimeout: 20_000,
         },
       }),
     ],

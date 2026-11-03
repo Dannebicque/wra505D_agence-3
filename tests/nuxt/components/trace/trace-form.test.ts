@@ -148,4 +148,31 @@ describe('formulaire de trace', () => {
     )
     expect(form.text()).not.toContain('affiche.jpg')
   })
+
+  it('efface l’erreur du fichier dès qu’un fichier est déposé', async () => {
+    const form = await mountSuspended(TraceForm, {
+      props: {
+        initial: {
+          titre: 'Affiche',
+          description: null,
+          contexte: null,
+          legende: 'Affiche orange',
+          type: 'image',
+          contenu: [],
+          statut: 'brouillon',
+          conceptionIa: 'aucun',
+          realisationIa: 'aucun',
+          dateRealisation: null,
+        },
+      },
+    })
+    form.vm.setServerErrors([{ propertyPath: 'contenu', message: 'Fichier manquant.' }])
+    await vi.waitFor(() => expect(form.text()).toContain('Fichier manquant.'))
+
+    form
+      .findComponent({ name: 'TraceFileField' })
+      .vm.$emit('update:modelValue', '/api/fichiers/0b7c1f0e-3a1d-4c55-9a52-2f0e8a9d1c11')
+
+    await vi.waitFor(() => expect(form.text()).not.toContain('Fichier manquant.'))
+  })
 })

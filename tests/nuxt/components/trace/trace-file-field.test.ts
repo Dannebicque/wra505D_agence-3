@@ -114,7 +114,9 @@ describe('champ fichier d’une trace', () => {
 
       await vi.waitFor(() => expect(describedBy(field)).toContain('Choisissez un fichier PDF.'))
       expect(field.get('button[name="fichier"]').attributes('aria-invalid')).toBe('true')
-      expect(field.get('[role="status"]').text()).toContain('Choisissez un fichier PDF.')
+      await vi.waitFor(() =>
+        expect(field.get('[role="status"]').text()).toContain('Choisissez un fichier PDF.'),
+      )
     })
 
     it('annonce le fichier déposé', async () => {
