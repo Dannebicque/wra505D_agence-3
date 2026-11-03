@@ -6,8 +6,8 @@
  * Provisoire, comme `base.ts` : la recherche passera par un service quand l'API existera ; les textes
  * d'aide, une fois relus par le PO, rejoindront `app/utils/`.
  */
-import type { TraceType } from '../../shared/types/trace'
 import { NAVIGATION, type Espace } from '../utils/navigation'
+import { TRACE_TYPE_ICONS } from '../utils/trace-icons'
 import { COMPETENCES, ETUDIANT_COURANT_ID, ETUDIANTS, TRACES, etudiantById } from './base'
 
 // ─── Recherche globale ──────────────────────────────────────────────────────────
@@ -23,13 +23,6 @@ export interface SearchGroup {
   id: 'pages' | 'traces' | 'competences' | 'etudiants'
   label: string
   items: SearchItem[]
-}
-
-export const TRACE_TYPE_ICONS: Record<TraceType, string> = {
-  image: 'i-lucide-image',
-  pdf: 'i-lucide-file-text',
-  video: 'i-lucide-video',
-  lien: 'i-lucide-link',
 }
 
 /**
@@ -179,6 +172,26 @@ export const AIDES: Record<string, Aide> = {
       'Ouvrez un retour pour revoir la trace concernée et l’améliorer si besoin.',
     ],
   },
+  '/etudiant/cv': {
+    titre: 'Rédiger votre CV',
+    intro:
+      'Votre CV rassemble vos expériences, formations, langues et compétences. Il accompagne votre portfolio pour une candidature.',
+    etapes: [
+      'Choisissez la version du CV (stage, alternance…) à adapter.',
+      'Complétez chaque rubrique : l’aperçu se met à jour au fil de la saisie.',
+      'Sur mobile, passez de la saisie à l’aperçu avec les onglets.',
+    ],
+  },
+  '/etudiant/corbeille': {
+    titre: 'Retrouver un élément supprimé',
+    intro:
+      'Les traces, pages et portfolios supprimés passent par la corbeille avant d’être effacés définitivement.',
+    etapes: [
+      'Restaurez un élément pour le remettre à sa place d’origine.',
+      'La date d’effacement définitif est indiquée sous chaque élément.',
+      '« Supprimer définitivement » efface l’élément tout de suite, sans retour possible.',
+    ],
+  },
   '/enseignant': {
     titre: 'Votre espace enseignant',
     intro:
@@ -205,6 +218,17 @@ export const AIDES: Record<string, Aide> = {
     etapes: [
       'Filtrez la liste par groupe ou par parcours.',
       'Le nombre de traces en attente indique les évaluations à faire.',
+    ],
+  },
+  '/enseignant/bilans': {
+    titre: 'Consulter les bilans',
+    intro:
+      'Les bilans synthétisent les évaluations d’une promotion ou d’un groupe, compétence par compétence.',
+    etapes: [
+      'Choisissez une année et un groupe : la synthèse et la liste se mettent à jour.',
+      'Chaque barre montre la part des évaluations acquises, en cours ou non acquises.',
+      'Ouvrez le bilan individuel d’un étudiant pour le détail de ses traces.',
+      'Exportez la sélection en CSV ou en PDF pour un jury.',
     ],
   },
   '/admin': {

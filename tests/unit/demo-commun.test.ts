@@ -24,6 +24,12 @@ describe('aideForPath', () => {
     },
   )
 
+  it('donne à chaque page de la navigation une aide qui lui est propre', () => {
+    const paths = Object.values(NAVIGATION).flatMap((items) => items.map((item) => item.to))
+    const missing = paths.filter((path) => !(path in AIDES))
+    expect(missing).toEqual([])
+  })
+
   it('donne à chaque aide un titre, une introduction et au moins une étape', () => {
     for (const aide of [AIDE_GENERIQUE, ...Object.values(AIDES)]) {
       expect(aide.titre.trim()).not.toBe('')
