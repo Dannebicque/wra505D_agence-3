@@ -50,16 +50,27 @@ const items = computed(() =>
       class="bg-default lg:my-2 lg:mr-2 lg:min-h-0 lg:rounded-feuille lg:border lg:border-default"
     >
       <template #header>
-        <UDashboardNavbar class="bg-cadre lg:hidden" :ui="{ root: 'border-none' }">
+        <!--
+          Barre d'outils de l'espace, à toutes les tailles : recherche, notifications, aide.
+          Sur téléphone et tablette, elle porte aussi le logo et le bouton du menu ; sur ordinateur,
+          elle est transparente en haut de la feuille (le logo est dans la barre latérale).
+          Chaque outil n'existe qu'une fois : un seul raccourci Ctrl + K, une seule fenêtre.
+        -->
+        <UDashboardNavbar class="bg-cadre lg:bg-transparent" :ui="{ root: 'border-none' }">
           <template #left>
-            <LayoutAppLogo :to="homePath" />
+            <LayoutAppLogo :to="homePath" class="lg:hidden" />
+          </template>
+          <template #right>
+            <CommunRechercheGlobale />
+            <CommunNotificationsLien v-if="espace === 'etudiant'" />
+            <CommunAideContextuelle />
           </template>
         </UDashboardNavbar>
       </template>
 
       <template #body>
         <!-- tabindex="0" : la zone qui défile doit être atteignable au clavier (axe, scrollable-region-focusable) -->
-        <main id="contenu" tabindex="0" class="mx-auto w-full max-w-5xl pt-4 lg:pt-10">
+        <main id="contenu" tabindex="0" class="mx-auto w-full max-w-5xl pt-4 lg:pt-2">
           <slot />
         </main>
       </template>
