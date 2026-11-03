@@ -10,6 +10,9 @@ const PAGES = [
   '/portfolio/lea-martin-2026',
   '/etudiant/portfolios',
   '/etudiant/portfolios/nouveau',
+  // Création possible (aucun portfolio cette année) : le formulaire s'affiche
+  '/etudiant/portfolios/nouveau?etat=vide',
+  '/etudiant/portfolios/2',
   '/etudiant/portfolios/1',
   '/etudiant/portfolios/1/pages/1',
   '/etudiant/portfolios/1/apercu',
