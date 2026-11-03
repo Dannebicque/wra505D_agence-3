@@ -46,7 +46,7 @@ Référence visuelle : maquette `A` (tableau de bord de Léa, ordinateur et tél
 | Action (couleur primaire) | sarcelle `#1b6e66`, texte blanc | sarcelle éclairci (de l'ordre de `#5fb8ad`), texte foncé |
 | Élément actif de la navigation | pastille neutre `#e1e5ea` | `#262b30` |
 
-- **Polices** : Instrument Sans (400, 500, 600) pour tout le texte ; Instrument Serif (400) **uniquement** pour le grand titre d'accueil (classe ou composant dédié). Chargées par `@nuxt/fonts` (déjà fourni par Nuxt UI) et servies par l'application : aucune requête vers Google en production.
+- **Polices** : Instrument Sans (400, 500, 600) pour tout le texte ; titres en Instrument Sans 600 (utilitaire `font-titre`). *Révisé le 2026-11-02 : Instrument Serif abandonnée pour les titres.* Chargées par `@nuxt/fonts` (déjà fourni par Nuxt UI) et servies par l'application : aucune requête vers Google en production.
 - **Formes** : boutons en pilule (rayon complet), panneaux en aplat sans ombre, une seule couleur d'action.
 - **Chiffres** : `font-variant-numeric: tabular-nums` dans les tableaux et les compteurs.
 - Le contraste AA (4,5:1 pour le texte, 3:1 pour les composants) est obligatoire dans les deux modes ; les valeurs « proposées » du mode sombre sont à ajuster si elles n'y arrivent pas.

@@ -68,4 +68,14 @@ describe('toApiError', () => {
       'La requête n’a pas pu aboutir.',
     )
   })
+
+  it('transmet les erreurs de chaque champ, au format ApiPlatform comme au format Nitro', () => {
+    const violations = [{ propertyPath: 'titre', message: 'Le titre est obligatoire.' }]
+
+    expect(toApiError({ statusCode: 422, data: { violations } }).violations).toEqual(violations)
+    expect(toApiError({ statusCode: 422, data: { data: { violations } } }).violations).toEqual(
+      violations,
+    )
+    expect(toApiError({ statusCode: 500 }).violations).toEqual([])
+  })
 })

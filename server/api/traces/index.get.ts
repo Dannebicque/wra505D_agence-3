@@ -1,11 +1,7 @@
-import { TRACES } from '../../data/traces'
+import { traceRepository } from '../../data/trace-repository'
 
-// Provisoire : renvoie les traces de l'étudiante de démo, hors corbeille.
+// Provisoire : traces du visiteur (cookie de démo), hors corbeille.
 // Avec l'authentification, le back filtrera sur la bibliothèque de l'utilisateur connecté.
 export default defineEventHandler((event) =>
-  toCollection(
-    '/api/traces',
-    TRACES.filter((trace) => trace.dateSuppression === null),
-    getQuery(event),
-  ),
+  toCollection('/api/traces', traceRepository.list(event.context.demoSession), getQuery(event)),
 )

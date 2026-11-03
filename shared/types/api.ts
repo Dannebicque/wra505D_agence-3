@@ -29,3 +29,9 @@ export interface HydraCollection<T> {
   member: T[]
   view?: HydraView
 }
+
+/** Erreur de validation d'un champ, au format ApiPlatform (`ConstraintViolationList`). */
+export interface Violation {
+  propertyPath: string
+  message: string
+}

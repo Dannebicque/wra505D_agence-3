@@ -7,8 +7,6 @@
  */
 @theme static {
   --font-sans: 'Instrument Sans', system-ui, sans-serif;
-  /* Réservée au grand titre d'accueil */
-  --font-serif: 'Instrument Serif', Georgia, serif;
 
   /* Couleur d'action : sarcelle (ancre : 700 = #1b6e66) */
   --color-sarcelle-50: #effaf8;
@@ -35,6 +33,13 @@
   --uf-cadre: #eef1f4;
   /* 700 : texte blanc lisible (contraste AA) sur les boutons */
   --ui-primary: var(--ui-color-primary-700);
+  /*
+   * Couleurs d'état assez foncées pour un texte AA sur leur fond teinté (pastilles « Brouillon »,
+   * « Finalisée ») : en 500 (défaut Nuxt UI), le jaune tombait à 1,7:1 ; en 700, le vert à 4,0:1.
+   */
+  --ui-success: var(--ui-color-success-800);
+  --ui-warning: var(--ui-color-warning-800);
+  --ui-error: var(--ui-color-error-700);
   --ui-bg: #ffffff;
   --ui-bg-muted: #f6f7f8;
   --ui-bg-elevated: #e1e5ea;
@@ -48,6 +53,10 @@
   --uf-cadre: #0f1214;
   /* 400 : sarcelle éclairci, texte foncé sur les boutons */
   --ui-primary: var(--ui-color-primary-400);
+  /* États clairs sur fond sombre (les valeurs du mode clair ne s'appliquent pas ici) */
+  --ui-success: var(--ui-color-success-400);
+  --ui-warning: var(--ui-color-warning-400);
+  --ui-error: var(--ui-color-error-400);
   --ui-bg: #16191c;
   --ui-bg-muted: #1e2226;
   --ui-bg-elevated: #262b30;
@@ -59,6 +68,13 @@
 
 body {
   font-variant-numeric: tabular-nums;
+}
+
+/* Titres (h1 des pages, accueil) : Instrument Sans en gras, un seul endroit pour les ajuster */
+@utility font-titre {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 /*

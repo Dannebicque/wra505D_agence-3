@@ -97,3 +97,19 @@ Format : date, décision, alternatives écartées, raison.
 - **Décision** : deux mises en page, `espace` (barre latérale, menu plein écran sur téléphone, composants `UDashboard*` de Nuxt UI) et `default` (publique). Les règles de route (`routeRules` avec `appLayout` dans `nuxt.config.ts`) attribuent la mise en page `espace` aux préfixes `/etudiant`, `/enseignant` et `/admin`, au rendu serveur comme côté client ; une page peut toujours imposer la sienne avec `definePageMeta({ layout })`, qui reste prioritaire. La navigation de chaque espace vient d'une configuration unique (`app/utils/navigation.ts`) qui ne liste que des pages existantes ; un test le vérifie. La zone « compte » (`app/components/layout/AccountMenu.vue`) est le seul point à modifier pour afficher l'utilisateur connecté.
 - **Alternatives écartées** : `definePageMeta({ layout })` dans chaque page (facile à oublier sur une nouvelle page) ; un middleware global qui appelle `setPageLayout` (première version, écartée à la relecture : il écrasait la mise en page déclarée par une page et dépendait de l'ordre des middlewares, dont la future garde d'authentification) ; navigation dépendant du rôle de l'utilisateur connecté (la charpente aurait attendu l'authentification ; c'est la garde de route qui décide qui entre dans un espace) ; barre latérale et menu mobile écrits à la main (focus piégé, Échap, retour du focus déjà fournis et testés par Nuxt UI).
 - **Raison** : aucune page n'a à se soucier de sa mise en page, pas de saut visuel au chargement, et l'authentification se branche sans toucher aux mises en page.
+
+## 2026-11-02 — Éditeur de trace : validation partagée et données de démo par visiteur
+
+- **Décision** :
+  - Les règles de validation d'une trace vivent une seule fois dans `shared/utils/trace-validation.ts`, utilisées par le formulaire (erreurs sous chaque champ) et par les routes Nitro (erreur 422 au format `ConstraintViolationList` d'ApiPlatform, que `ApiError.violations` sait lire).
+  - Routes Nitro provisoires `GET` / `POST` / `PATCH` des traces : chaque visiteur reçoit un cookie de démonstration (`uf_demo`) et sa propre copie des traces en mémoire (`server/utils/trace-repository.ts`, 500 visiteurs au plus).
+  - Pendant le rendu serveur, les appels transmettent le cookie du visiteur (`useApiRequestOptions`) : indispensable aussi pour l'authentification réelle.
+  - Couleurs d'état (succès, alerte, erreur) en nuance 800 / 700 en mode clair et 400 en sombre : le défaut de Nuxt UI (500) ne donne pas un texte AA sur les pastilles teintées.
+- **Alternatives écartées** : validation dupliquée côté client et côté serveur (divergence assurée) ; un seul jeu de données partagé par tous les visiteurs (les tests E2E en parallèle et les démonstrations du QA se marcheraient dessus) ; route de réinitialisation réservée aux tests (accès à protéger, tests dépendants de l'ordre d'exécution).
+- **Raison** : un seul endroit pour les règles métier de saisie, des tests indépendants, et une couche services déjà prête à transmettre l'identité de l'utilisateur. Le dépôt en mémoire disparaît à la bascule vers ApiPlatform.
+
+## 2026-11-02 — Titres en Instrument Sans (au lieu d'Instrument Serif)
+
+- **Décision** : les titres passent en Instrument Sans graisse 600, interlettrage -0,02 em, via l'utilitaire `font-titre` de `app/assets/css/main.css` (seul endroit à modifier pour changer les titres). Instrument Serif n'est plus chargée.
+- **Alternatives écartées** : garder Instrument Serif (choix initial de la maquette A, trop fine à l'écran selon l'équipe) ; Fraunces, Space Grotesk, Playfair Display (présentées sur maquette).
+- **Raison** : choix de l'équipe (Enzo) sur comparaison visuelle ; une seule famille de polices, donc une requête de moins et un rendu plus net d'« application ».

@@ -22,7 +22,10 @@ export const ESPACE_LABELS: Record<Espace, string> = {
  * chaque fonctionnalité ajoute sa ligne en même temps que sa page (un test le vérifie).
  */
 export const NAVIGATION: Record<Espace, readonly NavItem[]> = {
-  etudiant: [{ label: 'Tableau de bord', to: '/etudiant', icon: 'i-lucide-layout-dashboard' }],
+  etudiant: [
+    { label: 'Tableau de bord', to: '/etudiant', icon: 'i-lucide-layout-dashboard' },
+    { label: 'Mes traces', to: '/etudiant/traces', icon: 'i-lucide-files' },
+  ],
   enseignant: [{ label: 'Tableau de bord', to: '/enseignant', icon: 'i-lucide-layout-dashboard' }],
   admin: [{ label: 'Tableau de bord', to: '/admin', icon: 'i-lucide-layout-dashboard' }],
 }
