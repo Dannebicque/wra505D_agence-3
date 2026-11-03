@@ -179,7 +179,7 @@ export const AIDES: Record<string, Aide> = {
     etapes: [
       'Choisissez la version du CV (stage, alternance…) à adapter.',
       'Complétez chaque rubrique : l’aperçu se met à jour au fil de la saisie.',
-      'Sur mobile, passez de la saisie à l’aperçu avec les onglets.',
+      'Sur mobile, passez de la saisie à l’aperçu avec les boutons « Modifier » et « Aperçu ».',
     ],
   },
   '/etudiant/corbeille': {

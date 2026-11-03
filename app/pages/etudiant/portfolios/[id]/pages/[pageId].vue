@@ -16,7 +16,12 @@ const route = useRoute()
 const portfolio = portfolioById(numericParam(route.params.id))
 const found = portfolio ? pageProjetById(portfolio, numericParam(route.params.pageId)) : undefined
 if (!portfolio || !found) {
-  throw createError({ statusCode: 404, statusMessage: 'Page introuvable', fatal: true })
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Not Found',
+    message: 'Page introuvable',
+    fatal: true,
+  })
 }
 const page = found
 

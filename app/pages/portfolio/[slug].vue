@@ -8,7 +8,12 @@ const route = useRoute()
 const slug = String(route.params.slug ?? '')
 const found = portfolioBySlug(slug)
 if (!found || !isPubliclyVisible(found)) {
-  throw createError({ statusCode: 404, statusMessage: 'Portfolio introuvable', fatal: true })
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Not Found',
+    message: 'Portfolio introuvable',
+    fatal: true,
+  })
 }
 const portfolio = found
 

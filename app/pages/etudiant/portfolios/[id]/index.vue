@@ -15,7 +15,12 @@ import {
 const route = useRoute()
 const found = portfolioById(numericParam(route.params.id))
 if (!found) {
-  throw createError({ statusCode: 404, statusMessage: 'Portfolio introuvable', fatal: true })
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Not Found',
+    message: 'Portfolio introuvable',
+    fatal: true,
+  })
 }
 const portfolio = found
 
@@ -62,7 +67,7 @@ const statusSummary = computed(
 function togglePublication() {
   if (isPublishBlocked.value) {
     publicationMessage.value =
-      'Publication impossible : choisissez d’abord « Public » dans les informations.'
+      'Publication impossible : choisissez d’abord « Public » dans les informations, puis enregistrez.'
     return
   }
   // Le lien public ne « cesse de fonctionner » que s'il fonctionnait avant
@@ -338,11 +343,11 @@ const traceCount = (page: EditablePage) =>
         <p :id="publicationHintId" class="text-sm text-muted">
           <template v-if="isPublishBlocked">
             Portfolio privé : il ne peut pas être publié et n’a pas de lien public. Choisissez «
-            Public » dans les informations pour le publier.
+            Public » dans les informations, puis enregistrez, pour le publier.
           </template>
           <template v-else-if="isPrivate">
             Portfolio privé : même publié, il n’a pas de lien public. Choisissez « Public » dans les
-            informations pour le partager.
+            informations, puis enregistrez, pour le partager.
           </template>
           <template v-else-if="publie">
             Toute personne disposant du lien peut consulter votre portfolio.

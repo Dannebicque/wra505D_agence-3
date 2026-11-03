@@ -12,7 +12,12 @@ const found = PORTFOLIOS_ETUDIANTS.find(
   (p) => p.id === Number(route.params.portfolioId) && p.etudiantId === etudiant?.id,
 )
 if (!etudiant || !found) {
-  throw createError({ statusCode: 404, statusMessage: 'Portfolio introuvable', fatal: true })
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Not Found',
+    message: 'Portfolio introuvable',
+    fatal: true,
+  })
 }
 const portfolio: DemoPortfolio = found
 const nom = `${etudiant.prenom} ${etudiant.nom}`

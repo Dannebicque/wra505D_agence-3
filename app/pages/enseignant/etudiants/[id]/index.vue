@@ -12,7 +12,12 @@ const route = useRoute()
 
 const found = etudiantById(Number(route.params.id))
 if (!found) {
-  throw createError({ statusCode: 404, statusMessage: 'Étudiant introuvable', fatal: true })
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Not Found',
+    message: 'Étudiant introuvable',
+    fatal: true,
+  })
 }
 const etudiant: DemoEtudiant = found
 const nom = `${etudiant.prenom} ${etudiant.nom}`

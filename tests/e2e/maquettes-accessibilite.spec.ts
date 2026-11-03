@@ -45,3 +45,35 @@ for (const path of PAGES) {
 test('un portfolio inconnu renvoie une erreur 404', async ({ request }) => {
   expect((await request.get('/portfolio/inconnu')).status()).toBe(404)
 })
+
+test('une page introuvable s’explique en français et passe axe', async ({ page }) => {
+  await gotoHydrated(page, '/etudiant/portfolios/999')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Page introuvable')
+  await expect(page.getByText('Portfolio introuvable.')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Revenir à l’espace étudiant' })).toBeVisible()
+
+  const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+  expect(results.violations).toEqual([])
+})
+
+test('E-PF-10 : la création est bloquée quand le portfolio de l’année existe', async ({ page }) => {
+  await gotoHydrated(page, '/etudiant/portfolios/nouveau')
+  await expect(page.getByRole('button', { name: 'Créer le portfolio' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Léa Martin, développeuse web' })).toHaveAttribute(
+    'href',
+    '/etudiant/portfolios/1',
+  )
+})
+
+test('un portfolio privé ne peut pas être visible par les recruteurs', async ({ page }) => {
+  await gotoHydrated(page, '/etudiant/portfolios/2')
+  const recruteurs = page.getByRole('switch', { name: 'Visible par les recruteurs' })
+  await expect(recruteurs).toBeDisabled()
+  await expect(recruteurs).toHaveAttribute('aria-checked', 'false')
+})
+
+test('une adresse inconnue affiche la page d’erreur en français', async ({ page }) => {
+  await gotoHydrated(page, '/etudiant/adresse-inconnue')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Page introuvable')
+  await expect(page.getByText('Cette adresse ne correspond à aucune page.')).toBeVisible()
+})

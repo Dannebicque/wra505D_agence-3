@@ -16,6 +16,13 @@ const currentYearPortfolio = computed(() =>
   portfolios.value.find((p) => p.annee === ANNEE_COURANTE),
 )
 const limitId = useId()
+
+// Maquette : en état vide, la création garde `?etat=vide` (sinon le portfolio de démo la bloque)
+const newPortfolioLink = computed(() =>
+  route.query.etat === 'vide'
+    ? { path: '/etudiant/portfolios/nouveau', query: { etat: 'vide' } }
+    : '/etudiant/portfolios/nouveau',
+)
 </script>
 
 <template>
@@ -26,7 +33,7 @@ const limitId = useId()
         <p class="mt-2 text-muted">Un portfolio par année universitaire.</p>
       </div>
       <UButton
-        to="/etudiant/portfolios/nouveau"
+        :to="newPortfolioLink"
         icon="i-lucide-plus"
         :disabled="Boolean(currentYearPortfolio)"
         :aria-describedby="currentYearPortfolio ? limitId : undefined"

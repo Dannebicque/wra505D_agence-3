@@ -16,7 +16,12 @@ const route = useRoute()
 
 const found = traceSoumiseById(Number(route.params.id))
 if (!found) {
-  throw createError({ statusCode: 404, statusMessage: 'Trace introuvable', fatal: true })
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Not Found',
+    message: 'Trace introuvable',
+    fatal: true,
+  })
 }
 const trace: DemoTrace = found
 const detail = traceDetail(trace)

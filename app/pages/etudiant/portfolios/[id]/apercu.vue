@@ -6,7 +6,12 @@ import { numericParam, portfolioById } from '~/demo/portfolio'
 const route = useRoute()
 const found = portfolioById(numericParam(route.params.id))
 if (!found) {
-  throw createError({ statusCode: 404, statusMessage: 'Portfolio introuvable', fatal: true })
+  throw createError({
+    statusCode: 404,
+    statusMessage: 'Not Found',
+    message: 'Portfolio introuvable',
+    fatal: true,
+  })
 }
 const portfolio = found
 
