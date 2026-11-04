@@ -189,9 +189,72 @@ test.describe('sauvegarde automatique', () => {
   })
 })
 
+test.describe('rechercher et filtrer mes traces', () => {
+  const liste = (page: import('@playwright/test').Page) =>
+    page.getByRole('list', { name: 'Traces' }).getByRole('listitem')
+
+  test('trouve une trace par son titre, sans les accents, et annonce le résultat', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/etudiant/traces')
+    await expect(liste(page)).toHaveCount(8)
+
+    await page.getByRole('searchbox', { name: 'Rechercher' }).fill('etude ux')
+
+    await expect(liste(page)).toHaveCount(1)
+    await expect(liste(page)).toContainText('Étude UX de l’appli Fil Bleu')
+    await expect(page.getByRole('status').filter({ hasText: /^1 trace$/ })).toBeVisible()
+  })
+
+  test('filtre par statut et compétence, retrouve les filtres au retour d’une trace', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/etudiant/traces')
+
+    await page.getByRole('combobox', { name: 'Statut' }).click()
+    await page.getByRole('option', { name: 'Brouillons' }).click()
+    await expect(liste(page)).toHaveCount(2)
+
+    await page.getByRole('combobox', { name: 'Compétence' }).click()
+    await page.getByRole('option', { name: 'Entreprendre' }).click()
+    await expect(liste(page)).toHaveCount(1)
+    await expect(liste(page)).toContainText('Business model d’une appli de covoiturage')
+    await expect(page).toHaveURL(/statut=brouillon/)
+
+    await liste(page).getByRole('link').click()
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Modifier la trace')
+    await page.goBack()
+
+    await expect(liste(page)).toHaveCount(1)
+    await expect(page.getByRole('combobox', { name: 'Statut' })).toHaveText(/Brouillons/)
+  })
+
+  test('explique l’absence de résultat et réinitialise les filtres', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant/traces?recherche=introuvable')
+
+    await expect(page.getByText('Aucune trace ne correspond à ces critères.')).toBeVisible()
+    await expect(page.getByRole('list', { name: 'Traces' })).toHaveCount(0)
+
+    await page.getByRole('button', { name: 'Réinitialiser les filtres' }).click()
+
+    await expect(liste(page)).toHaveCount(8)
+    await expect(page).toHaveURL(/\/etudiant\/traces$/)
+  })
+
+  test('ignore une compétence inconnue dans l’adresse', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant/traces?competence=999')
+
+    await expect(liste(page)).toHaveCount(8)
+    await expect(page.getByRole('combobox', { name: 'Compétence' })).toHaveText(
+      /Toutes les compétences/,
+    )
+  })
+})
+
 // /etudiant/traces/1 : trace lien ; /etudiant/traces/2 : trace image (fichier conservé)
 for (const path of [
   '/etudiant/traces',
+  '/etudiant/traces?recherche=introuvable',
   '/etudiant/traces/nouvelle',
   '/etudiant/traces/1',
   '/etudiant/traces/2',
