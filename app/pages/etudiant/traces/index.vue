@@ -26,9 +26,8 @@ const selectedCompetence = computed({
   },
 })
 
-const hasFilters = computed(
-  () => Object.keys(bibliothequeCriteriaToQuery(activeCriteria.value)).length > 0,
-)
+const activeQuery = computed(() => bibliothequeCriteriaToQuery(activeCriteria.value))
+const hasFilters = computed(() => Object.keys(activeQuery.value).length > 0)
 
 function resetFilters() {
   if (!hasFilters.value) return
@@ -115,7 +114,7 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
           >
             <div class="min-w-0">
               <NuxtLink
-                :to="`/etudiant/traces/${idFromIri(trace['@id'])}`"
+                :to="{ path: `/etudiant/traces/${idFromIri(trace['@id'])}`, query: activeQuery }"
                 class="font-medium text-highlighted underline-offset-4 hover:underline"
               >
                 {{ trace.titre }}

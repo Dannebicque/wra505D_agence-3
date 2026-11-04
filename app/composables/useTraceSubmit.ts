@@ -19,6 +19,7 @@ export function useTraceSubmit(
 ) {
   const store = useTraceStore()
   const toast = useToast()
+  const route = useRoute()
   const submitting = ref(false)
 
   /** Renvoie `true` si la trace a été enregistrée, `false` sinon (erreur déjà montrée). */
@@ -31,7 +32,8 @@ export function useTraceSubmit(
         title: input.statut === 'brouillon' ? 'Brouillon enregistré' : 'Trace finalisée',
         color: 'success',
       })
-      await navigateTo('/etudiant/traces')
+      // La liste transmet ses filtres à la trace ouverte : on les lui rend au retour
+      await navigateTo({ path: '/etudiant/traces', query: route.query })
       return true
     } catch (error) {
       const apiError = toApiError(error)

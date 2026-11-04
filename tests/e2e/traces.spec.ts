@@ -229,6 +229,17 @@ test.describe('rechercher et filtrer mes traces', () => {
     await expect(page.getByRole('combobox', { name: 'Statut' })).toHaveText(/Brouillons/)
   })
 
+  test('retrouve la liste filtrée après avoir enregistré une trace', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant/traces?statut=brouillon')
+
+    await page.getByRole('link', { name: /^Podcast/ }).click()
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Modifier la trace')
+    await page.getByRole('button', { name: 'Enregistrer le brouillon' }).click()
+
+    await expect(page).toHaveURL(/\/etudiant\/traces\?statut=brouillon$/)
+    await expect(liste(page)).toHaveCount(2)
+  })
+
   test('explique l’absence de résultat et réinitialise les filtres', async ({ page }) => {
     await gotoHydrated(page, '/etudiant/traces?recherche=introuvable')
 
