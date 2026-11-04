@@ -17,6 +17,15 @@ describe('normalize', () => {
   it('ignore la casse, les accents et les espaces autour', () => {
     expect(normalize('  Léa ÉTÉ ')).toBe('lea ete')
   })
+
+  // Le clavier donne une apostrophe droite ; les titres saisis ou collés ont souvent la typographique
+  it('confond les apostrophes droite et typographique', () => {
+    expect(normalize('l’appli')).toBe(normalize("l'appli"))
+  })
+
+  it('développe les ligatures', () => {
+    expect(normalize('Cœur et Æther')).toBe('coeur et aether')
+  })
 })
 
 describe('criteriaFromQuery', () => {

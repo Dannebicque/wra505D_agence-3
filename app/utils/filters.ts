@@ -7,12 +7,18 @@ export const ALL = 'tous'
 /** Requête d'URL telle que la donne le routeur : valeur seule, tableau (paramètre répété) ou absente. */
 export type RawQuery = Record<string, unknown>
 
-/** Texte comparable sans casse ni accents (« lea » trouve « Léa »). */
+/**
+ * Texte comparable sans casse ni accents (« lea » trouve « Léa »), quelle que soit l'apostrophe
+ * (« l'appli » trouve « l’appli ») et sans ligature (« coeur » trouve « cœur »).
+ */
 export function normalize(text: string): string {
   return text
     .normalize('NFD')
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase()
+    .replace(/[’‘]/g, "'")
+    .replace(/œ/g, 'oe')
+    .replace(/æ/g, 'ae')
     .trim()
 }
 
