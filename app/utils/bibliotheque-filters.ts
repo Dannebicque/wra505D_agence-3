@@ -34,7 +34,10 @@ export function bibliothequeCriteriaFromQuery(query: RawQuery): BibliothequeCrit
 export function bibliothequeCriteriaToQuery(
   criteria: BibliothequeCriteria,
 ): Record<string, string> {
-  return criteriaDiff(criteria, { ...DEFAULT_BIBLIOTHEQUE_CRITERIA })
+  return criteriaDiff(
+    { ...criteria, recherche: criteria.recherche.trim() },
+    { ...DEFAULT_BIBLIOTHEQUE_CRITERIA },
+  )
 }
 
 /** Une compétence absente du référentiel (lien ancien ou modifié à la main) compte comme « toutes ». */

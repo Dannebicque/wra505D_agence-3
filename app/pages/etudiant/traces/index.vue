@@ -65,8 +65,8 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
     >
       <section aria-labelledby="filtres" class="rounded-panneau bg-muted p-5 lg:p-6">
         <h2 id="filtres" class="sr-only">Filtres</h2>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-[2fr_1fr_1fr_auto]">
-          <UFormField label="Rechercher" class="sm:col-span-2 lg:col-span-1">
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_auto]">
+          <UFormField label="Rechercher" class="sm:col-span-2 xl:col-span-1">
             <UInput
               v-model="criteria.recherche"
               type="search"
@@ -115,7 +115,7 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
             <div class="min-w-0">
               <NuxtLink
                 :to="{ path: `/etudiant/traces/${idFromIri(trace['@id'])}`, query: activeQuery }"
-                class="font-medium text-highlighted underline-offset-4 hover:underline"
+                class="font-medium break-words text-highlighted underline-offset-4 hover:underline"
               >
                 {{ trace.titre }}
               </NuxtLink>

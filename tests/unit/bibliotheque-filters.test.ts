@@ -147,6 +147,12 @@ describe('critères dans l’URL', () => {
       bibliothequeCriteriaToQuery({ recherche: '', statut: 'finalisee', competence: 'tous' }),
     ).toEqual({ statut: 'finalisee' })
   })
+
+  it('ne compte pas comme un filtre une recherche faite d’espaces', () => {
+    expect(
+      bibliothequeCriteriaToQuery({ recherche: '   ', statut: 'tous', competence: 'tous' }),
+    ).toEqual({})
+  })
 })
 
 describe('withKnownCompetence', () => {

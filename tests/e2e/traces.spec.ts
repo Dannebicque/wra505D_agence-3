@@ -252,6 +252,32 @@ test.describe('rechercher et filtrer mes traces', () => {
     await expect(page).toHaveURL(/\/etudiant\/traces$/)
   })
 
+  test('garde l’espace saisi entre deux mots pendant la frappe', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant/traces')
+    const recherche = page.getByRole('searchbox', { name: 'Rechercher' })
+
+    await recherche.pressSequentially('fil bleu', { delay: 50 })
+
+    await expect(recherche).toHaveValue('fil bleu')
+    await expect(page).toHaveURL(/recherche=fil(\+|%20)bleu/)
+    await expect(liste(page)).toHaveCount(1)
+  })
+
+  test('garde un titre très long sans espace dans la largeur de l’écran', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant/traces/nouvelle')
+    const titre = 'a'.repeat(100)
+    await page.getByRole('textbox', { name: /Titre/ }).fill(titre)
+    await expect(page.getByTestId('etat-sauvegarde')).toContainText('Enregistré à', {
+      timeout: 10_000,
+    })
+
+    await gotoHydrated(page, '/etudiant/traces')
+
+    const box = await page.getByRole('link', { name: titre }).boundingBox()
+    const width = page.viewportSize()?.width ?? 0
+    expect((box?.x ?? Infinity) + (box?.width ?? 0)).toBeLessThanOrEqual(width)
+  })
+
   test('ignore une compétence inconnue dans l’adresse', async ({ page }) => {
     await gotoHydrated(page, '/etudiant/traces?competence=999')
 
