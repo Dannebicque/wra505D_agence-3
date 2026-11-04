@@ -27,14 +27,16 @@ export function toCollection<T>(
 
   if (items.length > ITEMS_PER_PAGE) {
     const lastPage = Math.ceil(items.length / ITEMS_PER_PAGE)
+    // Le chemin peut déjà porter un filtre (`?portfolio=…`), à garder d'une page à l'autre
+    const pageLink = (n: number) => `${path}${path.includes('?') ? '&' : '?'}page=${n}`
     const view: HydraView = {
-      '@id': `${path}?page=${page}`,
+      '@id': pageLink(page),
       '@type': 'PartialCollectionView',
-      first: `${path}?page=1`,
-      last: `${path}?page=${lastPage}`,
+      first: pageLink(1),
+      last: pageLink(lastPage),
     }
-    if (page > 1) view.previous = `${path}?page=${page - 1}`
-    if (page < lastPage) view.next = `${path}?page=${page + 1}`
+    if (page > 1) view.previous = pageLink(page - 1)
+    if (page < lastPage) view.next = pageLink(page + 1)
     collection.view = view
   }
 

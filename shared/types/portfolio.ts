@@ -30,3 +30,6 @@ export interface Page extends JsonLdResource {
   /** Renseignée quand la page est dans la corbeille. */
   dateSuppression: DateIso | null
 }
+
+/** Informations d'une page saisies par l'étudiant. */
+export type PageInfo = Pick<Page, 'intitule' | 'description'>

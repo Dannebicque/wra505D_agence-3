@@ -33,6 +33,13 @@ describe('toCollection', () => {
     })
   })
 
+  it('garde le filtre du chemin dans les liens de pagination', () => {
+    const collection = toCollection('/api/tests?portfolio=1', elements(65), {})
+
+    expect(collection.view?.next).toBe('/api/tests?portfolio=1&page=2')
+    expect(collection.view?.last).toBe('/api/tests?portfolio=1&page=3')
+  })
+
   it('renvoie la dernière page, partielle, avec un lien vers la précédente', () => {
     const collection = toCollection(PATH, elements(65), { page: '3' })
 
