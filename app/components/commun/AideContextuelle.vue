@@ -52,7 +52,7 @@ const DETAILS_UI = { content: 'data-[state=open]:animate-none data-[state=closed
             >
               <span class="centre-optique">{{ index + 1 }}</span>
             </span>
-            <span class="text-default">{{ etape }}</span>
+            <span class="leading-corps text-default">{{ etape }}</span>
           </li>
         </ol>
       </section>
