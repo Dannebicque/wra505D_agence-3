@@ -80,7 +80,7 @@ Toutes exigent d'être connecté (401 sinon). Collections paginées par 30 (`?pa
 
 Règles à connaître côté front :
 
-- **Cloisonnement** : la trace, le fichier ou la validation d'un autre étudiant répond 404 (son existence ne se devine pas). Enseignants et admins reçoivent 403 sur ces ressources jusqu'au Sprint 3 (évaluation).
+- **Cloisonnement** : la trace, le fichier ou la validation d'un autre étudiant répond 404 (son existence ne se devine pas). Les admins reçoivent 403 ; les enseignants lisent selon les règles du Sprint 3 ci-dessous.
 - **Erreurs de saisie** : 422 avec `violations[]` (`propertyPath`, `message`), mêmes règles, même ordre et mêmes messages que `shared/utils/trace-validation.ts` et `shared/utils/fichier.ts`. Une valeur du mauvais type JSON (`titre: 12`, `statut: null`) donne un 422 sur le bon champ mais avec un message générique.
 - **Écart voulu avec le front** : une adresse web doit avoir un schéma http(s), un hôte et aucun espace ; `new URL()` accepte `https:exemple.fr` ou un espace dans le chemin, le serveur les refuse.
 - **Champs du serveur** : `bibliotheque`, `dateCreation`, `dateModification`, `dateSuppression` d'une trace, `etat` et `enseignant` d'une validation sont fixés par le serveur ; envoyés, ils sont ignorés.
@@ -106,6 +106,25 @@ Règles à connaître côté front :
 - **Lien public** : seules les traces finalisées s'affichent ; leurs fichiers se lisent sans connexion, tout autre fichier répond 404 au visiteur.
 - **Images** : JPEG, PNG et WebP sont réencodés à l'envoi (métadonnées et position GPS retirées, photo remise dans le bon sens) ; au-delà de 16 mégapixels, l'image est refusée. La taille renvoyée est celle du fichier réencodé.
 - **Limites proposées** (à valider avec Solène) : intitulé d'un portfolio obligatoire, 100 caractères ; description 2 000 caractères.
+
+#### Évaluation, commentaires et notifications (Sprint 3)
+
+Comptes de démo en plus : `enseignant2` (département CJ, ne voit aucun étudiant des fixtures).
+
+| Ressource | Opérations | Accès |
+|---|---|---|
+| Lecture enseignant | `GET` sur `/api/etudiants`, `/api/traces`, `/api/validations`, `/api/bibliotheques/{id}`, `/api/portfolios`, `/api/pages`, `/api/fichiers/{id}` | enseignant : étudiants de **ses départements**, traces **finalisées**, portfolios **publics** (choix du PO) ; le reste répond 404 |
+| `/api/validations/{id}` | `PATCH {etat: 1, 2 ou 3}` (merge-patch) ; filtres `?etat=0`, `?trace=` | enseignant du département |
+| `/api/commentaires` | `GET` (`?trace=`, `?portfolio=`), `POST {trace ou portfolio, contenu, visibleEtudiant}`, `PATCH {contenu, visibleEtudiant}`, `DELETE` | enseignant (auteur seul pour modifier ou supprimer) ; étudiant : lecture de ses commentaires visibles |
+| `/api/notifications` | `GET` (plus récentes d'abord), `PATCH {lu}` | étudiant, les siennes |
+
+Règles à connaître côté front :
+
+- **Évaluer** : seul `etat` change ; l'enseignant et `dateModification` sont fixés par le serveur. Chaque niveau s'évalue à part (point ouvert n° 16 : évaluation partielle permise). 422 « Choisissez un niveau d’acquisition… » hors de 1 à 3. L'étudiant reçoit une notification `evaluation` à chaque évaluation.
+- **Commentaire** : une trace finalisée **ou** un portfolio public, jamais les deux (422 « Commentez une trace ou un portfolio. ») ; 2 000 caractères au plus. Non visible, c'est une note entre enseignants ; l'étudiant est notifié la première fois qu'il lui devient visible.
+- **Notification** : `destinataire` est l'IRI de l'étudiant ; `trace` est la trace à ouvrir (E-EV-07), celle de l'évaluation ou du commentaire (null pour un commentaire de portfolio).
+- **Filtres** : une valeur inconnue ou mal formée donne une liste vide. Les autres filtres enseignant (groupe, année, étudiants ayant des travaux en attente) se calculent dans le navigateur à partir de ces collections.
+- `/api/etudiants` est désormais limité au département de l'enseignant ; la fiche d'un autre étudiant répond 404 (au lieu de 403).
 
 Le front autorisé à appeler l'API est fixé par `CORS_ALLOW_ORIGIN` (`.env`, par défaut `http://localhost:3000`).
 
