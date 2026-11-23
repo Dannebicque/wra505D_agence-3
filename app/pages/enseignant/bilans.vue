@@ -65,32 +65,34 @@ const resultLabel = computed(() =>
         </UButton>
       </div>
     </div>
-    <p class="mt-3 text-muted">
+    <p class="mt-2 max-w-mesure text-muted">
       Synthèse collective des évaluations d’une promotion ou d’un groupe, et accès aux bilans
       individuels.
     </p>
 
-    <section aria-labelledby="selection" class="mt-8 rounded-panneau bg-muted p-5 lg:p-6">
+    <section aria-labelledby="selection" class="mt-8 rounded-panneau bg-muted p-4 sm:p-6">
       <h2 id="selection" class="sr-only">Sélection</h2>
-      <div class="grid gap-4 sm:grid-cols-2">
+      <div class="grid gap-6 sm:grid-cols-2">
         <UFormField label="Année">
           <USelect v-model="annee" :items="anneeItems" class="w-full" />
         </UFormField>
+        <!-- Groupe : liste avec recherche (un département compte de nombreux groupes) -->
         <UFormField label="Groupe">
-          <USelect v-model="groupe" :items="groupeItems" class="w-full" />
+          <USelectMenu v-model="groupe" :items="groupeItems" value-key="value" class="w-full" />
         </UFormField>
       </div>
       <p role="status" class="mt-4 text-sm text-muted">{{ resultLabel }}</p>
     </section>
 
-    <section aria-labelledby="synthese" class="mt-3 rounded-panneau bg-muted p-5 lg:mt-4 lg:p-6">
+    <!-- Mosaïque de panneaux : même écart que sur le tableau de bord (3, puis 4 sur grand écran) -->
+    <section aria-labelledby="synthese" class="mt-3 rounded-panneau bg-muted p-4 sm:p-6 lg:mt-4">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h2 id="synthese" class="text-sm font-semibold text-highlighted">
           Synthèse collective par compétence
         </h2>
         <TableauDeBordProgressionLegend />
       </div>
-      <p class="mt-1 text-xs text-muted">
+      <p class="mt-1 max-w-mesure text-xs text-muted">
         Répartition des évaluations des traces déposées par les étudiants de la sélection.
       </p>
       <EnseignantCompetenceRepartition
@@ -102,23 +104,25 @@ const resultLabel = computed(() =>
       <p v-else class="mt-4 text-muted">Aucune évaluation à synthétiser.</p>
     </section>
 
-    <section aria-labelledby="individuels" class="mt-3 rounded-panneau bg-muted p-5 lg:mt-4 lg:p-6">
+    <section aria-labelledby="individuels" class="mt-3 rounded-panneau bg-muted p-4 sm:p-6 lg:mt-4">
       <h2 id="individuels" class="text-sm font-semibold text-highlighted">Bilans individuels</h2>
       <ul v-if="etudiants.length" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <!-- Toute la carte mène au bilan (lien étendu) : le chevron n'est pas trompeur -->
+        <!-- Toute la carte mène au bilan (lien étendu) : survol et focus la font ressortir -->
         <li
           v-for="etudiant in etudiants"
           :key="etudiant.id"
-          class="relative flex items-center justify-between gap-3 rounded-feuille bg-default p-4 hover:bg-elevated"
+          class="relative flex items-center justify-between gap-3 rounded-feuille bg-default p-4 transition-colors hover:bg-elevated has-focus-visible:bg-elevated"
         >
           <div class="min-w-0">
+            <!-- Élément partagé avec le titre de la fiche de l'étudiant (transition de vue) -->
             <NuxtLink
               :to="`/enseignant/etudiants/${etudiant.id}`"
-              class="font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille hover:underline"
+              class="inline-block leading-titre font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille hover:underline"
+              :style="{ viewTransitionName: `etudiant-${etudiant.id}` }"
             >
               {{ etudiant.prenom }} {{ etudiant.nom }}
             </NuxtLink>
-            <p class="text-xs text-muted">
+            <p class="mt-1 text-xs text-muted tabular-nums">
               {{ etudiant.groupe }} · {{ acquiredSummary(studentCounters(etudiant.id)) }}
             </p>
           </div>

@@ -84,7 +84,13 @@ async function saveAndNext() {
 
     <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
       <div class="min-w-0">
-        <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">{{ trace.titre }}</h1>
+        <!-- Élément partagé avec le titre de la carte d'où l'on vient (transition de vue) -->
+        <h1
+          class="font-titre text-2xl text-highlighted sm:text-3xl"
+          :style="{ viewTransitionName: `trace-${trace.id}` }"
+        >
+          {{ trace.titre }}
+        </h1>
         <p class="mt-2 text-muted">
           <NuxtLink
             :to="`/enseignant/etudiants/${trace.etudiantId}`"
@@ -106,7 +112,7 @@ async function saveAndNext() {
           icon="i-lucide-chevron-left"
           aria-label="Trace précédente"
         />
-        <p class="min-w-16 text-center text-sm text-muted">
+        <p class="min-w-16 text-center text-sm text-muted tabular-nums">
           {{ position + 1 }} sur {{ queue.length }}
           <span class="sr-only">{{
             inFiltered ? 'dans la liste filtrée' : 'parmi les traces déposées'
@@ -126,7 +132,7 @@ async function saveAndNext() {
     <div class="mt-8 grid gap-3 lg:grid-cols-[3fr_2fr] lg:items-start lg:gap-4">
       <!-- Contenu de la trace (P-EV-01) -->
       <div class="space-y-3 lg:space-y-4">
-        <section aria-labelledby="piece-jointe" class="rounded-panneau bg-muted p-5 lg:p-6">
+        <section aria-labelledby="piece-jointe" class="rounded-panneau bg-muted p-4 sm:p-6">
           <h2 id="piece-jointe" class="text-sm font-semibold text-highlighted">Pièce jointe</h2>
           <EvaluationTraceApercu
             :type="trace.type"
@@ -137,22 +143,17 @@ async function saveAndNext() {
           />
         </section>
 
-        <section aria-labelledby="description" class="rounded-panneau bg-muted p-5 lg:p-6">
+        <!-- La date de dépôt est déjà sous le titre de la page : pas de doublon ici -->
+        <section aria-labelledby="description" class="rounded-panneau bg-muted p-4 sm:p-6">
           <h2 id="description" class="text-sm font-semibold text-highlighted">Description</h2>
-          <p class="mt-3">{{ trace.description }}</p>
-          <dl class="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
-            <div>
-              <dt class="text-muted">Contexte</dt>
-              <dd class="text-highlighted">{{ detail.contexte }}</dd>
-            </div>
-            <div>
-              <dt class="text-muted">Date de dépôt</dt>
-              <dd class="text-highlighted">{{ formatDate(trace.date) }}</dd>
-            </div>
+          <p class="mt-4 max-w-mesure">{{ trace.description }}</p>
+          <dl class="mt-4 text-sm">
+            <dt class="text-muted">Contexte</dt>
+            <dd class="max-w-mesure text-highlighted">{{ detail.contexte }}</dd>
           </dl>
         </section>
 
-        <section aria-labelledby="usage-ia" class="rounded-panneau bg-muted p-5 lg:p-6">
+        <section aria-labelledby="usage-ia" class="rounded-panneau bg-muted p-4 sm:p-6">
           <h2 id="usage-ia" class="text-sm font-semibold text-highlighted">
             Usage de l’intelligence artificielle
           </h2>
@@ -172,7 +173,7 @@ async function saveAndNext() {
       </div>
 
       <!-- Évaluation (P-EV-02, P-EV-03, P-EV-04, P-CO-01) -->
-      <section aria-labelledby="evaluation" class="rounded-panneau bg-muted p-5 lg:p-6">
+      <section aria-labelledby="evaluation" class="rounded-panneau bg-muted p-4 sm:p-6">
         <h2 id="evaluation" class="text-sm font-semibold text-highlighted">Évaluation</h2>
 
         <UAlert
@@ -185,7 +186,8 @@ async function saveAndNext() {
           description="Vous pouvez modifier les niveaux et le commentaire, puis enregistrer."
         />
 
-        <form class="mt-5 space-y-6" @submit.prevent="save">
+        <!-- Titre → contenu : 4 ; après l'alerte, comme entre deux champs : 6 -->
+        <form class="space-y-6" :class="detail.evaluation ? 'mt-6' : 'mt-4'" @submit.prevent="save">
           <URadioGroup
             v-for="c in competences"
             :key="c.competenceId"
@@ -197,11 +199,11 @@ async function saveAndNext() {
             :ui="{ item: 'grow p-3 bg-default', legend: 'mb-3' }"
           >
             <template #legend>
-              <span class="block font-semibold text-highlighted">
+              <span class="block leading-titre font-semibold text-highlighted">
                 {{ c.competence?.nomCourt ?? 'Compétence' }}
                 <span class="font-normal text-muted"> · niveau {{ c.competence?.niveau }}</span>
               </span>
-              <span class="mt-0.5 block text-sm font-normal text-muted">
+              <span class="mt-1 block max-w-mesure text-sm font-normal text-muted">
                 {{ c.competence?.niveauLibelle }}
               </span>
             </template>

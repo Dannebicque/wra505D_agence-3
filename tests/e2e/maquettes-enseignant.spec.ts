@@ -92,7 +92,9 @@ test('« Réinitialiser les filtres » garde le focus et vide l’URL', async ({
   await gotoHydrated(page, '/enseignant/evaluations?statut=tous&etudiant=999')
 
   // Étudiant inconnu : retombe sur « tous », seul le statut reste un filtre actif
-  await expect(page.getByRole('combobox', { name: 'Étudiant' })).toContainText('Tous les étudiants')
+  await expect(page.getByRole('button', { name: 'Étudiant', exact: true })).toContainText(
+    'Tous les étudiants',
+  )
 
   const reset = page.getByRole('button', { name: 'Réinitialiser les filtres' })
   await expect(reset).not.toHaveAttribute('aria-disabled', 'true')
@@ -101,6 +103,59 @@ test('« Réinitialiser les filtres » garde le focus et vide l’URL', async ({
   await expect(page).toHaveURL(/\/enseignant\/evaluations$/)
   await expect(reset).toBeFocused()
   await expect(reset).toHaveAttribute('aria-disabled', 'true')
+})
+
+// Transition d'élément partagé : le titre d'une carte porte le même `view-transition-name` que le
+// h1 de l'écran de détail, et chaque nom est unique dans sa page (sinon le navigateur annule la
+// transition)
+const VIEW_TRANSITIONS = [
+  { list: '/enseignant', detail: '/enseignant/evaluations/21', name: 'trace-21' },
+  { list: '/enseignant/evaluations', detail: '/enseignant/evaluations/2', name: 'trace-2' },
+  { list: '/enseignant/etudiants', detail: '/enseignant/etudiants/1', name: 'etudiant-1' },
+  { list: '/enseignant/bilans', detail: '/enseignant/etudiants/1', name: 'etudiant-1' },
+  {
+    list: '/enseignant/etudiants/1',
+    detail: '/enseignant/etudiants/1/portfolios/1',
+    name: 'portfolio-1',
+  },
+]
+
+async function viewTransitionNames(page: Page) {
+  return page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('body *')]
+      .map((el) => getComputedStyle(el).viewTransitionName)
+      .filter((name) => name && name !== 'none'),
+  )
+}
+
+for (const { list, detail, name } of VIEW_TRANSITIONS) {
+  test(`${list} → ${detail} : le titre « ${name} » est partagé`, async ({ page }) => {
+    await gotoHydrated(page, list)
+    const names = await viewTransitionNames(page)
+    expect(names).toContain(name)
+    expect(new Set(names).size).toBe(names.length)
+
+    await gotoHydrated(page, detail)
+    const h1 = page.getByRole('heading', { level: 1 })
+    expect(await h1.evaluate((el) => getComputedStyle(el).viewTransitionName)).toBe(name)
+    const detailNames = await viewTransitionNames(page)
+    expect(new Set(detailNames).size).toBe(detailNames.length)
+  })
+}
+
+test('le filtre « Étudiant » se cherche au clavier et reste dans l’URL', async ({ page }) => {
+  await gotoHydrated(page, '/enseignant/evaluations?statut=tous')
+
+  const etudiant = page.getByRole('button', { name: 'Étudiant', exact: true })
+  await etudiant.click()
+  await page.keyboard.type('moreau')
+  await expect(page.getByRole('option')).toHaveCount(1)
+  await page.keyboard.press('Enter')
+
+  await expect(page).toHaveURL(/etudiant=3/)
+  await expect(etudiant).toContainText('Moreau Inès')
+  await expect(etudiant).toBeFocused()
+  await expect(page.getByRole('main').getByRole('status')).toHaveText(/^\d+ traces?$/)
 })
 
 test('la file ouverte depuis une fiche étudiant reste sur ses traces', async ({ page }) => {

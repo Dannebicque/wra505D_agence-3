@@ -64,7 +64,7 @@ const columns: TableColumn<EtudiantRow>[] = [
     accessorFn: (row) => row.counters.traces,
     header: 'Traces',
     // Nombres alignés à droite, chiffre sous chiffre
-    meta: { class: { th: 'text-right', td: 'text-right' } },
+    meta: { class: { th: 'text-right', td: 'text-right tabular-nums' } },
   },
 ]
 
@@ -78,14 +78,14 @@ const resultLabel = computed(() =>
 <template>
   <div>
     <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Étudiants</h1>
-    <p class="mt-3 text-muted">
+    <p class="mt-2 max-w-mesure text-muted">
       Les étudiants dont des traces attendent une évaluation sont signalés dans la colonne « Travaux
       en attente ».
     </p>
 
-    <section aria-labelledby="filtres" class="mt-8 rounded-panneau bg-muted p-5 lg:p-6">
+    <section aria-labelledby="filtres" class="mt-8 rounded-panneau bg-muted p-4 sm:p-6">
       <h2 id="filtres" class="sr-only">Filtres</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <UFormField label="Rechercher par nom" class="sm:col-span-2 lg:col-span-1">
           <UInput
             v-model="criteria.recherche"
@@ -95,8 +95,14 @@ const resultLabel = computed(() =>
             class="w-full"
           />
         </UFormField>
+        <!-- Groupe : liste avec recherche (un département compte de nombreux groupes) -->
         <UFormField label="Groupe">
-          <USelect v-model="criteria.groupe" :items="groupeItems" class="w-full" />
+          <USelectMenu
+            v-model="criteria.groupe"
+            :items="groupeItems"
+            value-key="value"
+            class="w-full"
+          />
         </UFormField>
         <UFormField label="Année">
           <USelect v-model="criteria.annee" :items="anneeItems" class="w-full" />
@@ -108,7 +114,7 @@ const resultLabel = computed(() =>
       <UCheckbox
         v-model="criteria.enAttente"
         label="Seulement les étudiants ayant des travaux en attente"
-        class="mt-4"
+        class="mt-6"
       />
     </section>
 
@@ -116,7 +122,10 @@ const resultLabel = computed(() =>
       <h2 id="resultats" class="sr-only">Résultats</h2>
       <p role="status" class="text-sm text-muted">{{ resultLabel }}</p>
 
-      <!-- Sur téléphone, les cellules passent à la ligne : le tableau tient sans défilement -->
+      <!--
+        Sur téléphone, les cellules passent à la ligne : le tableau tient sans défilement.
+        Toute la ligne mène à la fiche (lien étendu du nom) : survol et focus la font ressortir.
+      -->
       <UTable
         v-if="rows.length"
         :data="rows"
@@ -125,25 +134,29 @@ const resultLabel = computed(() =>
         class="mt-3 rounded-panneau border border-default"
         :ui="{
           caption: 'sr-only',
+          tbody:
+            '[&>tr]:relative [&>tr]:transition-colors [&>tr]:hover:bg-elevated/50 [&>tr]:has-focus-visible:bg-elevated/50',
           th: 'px-2 sm:px-4',
           td: 'px-2 align-top max-sm:whitespace-normal sm:px-4',
         }"
       >
         <template #etudiant-cell="{ row }">
+          <!-- Élément partagé avec le titre de la fiche de l'étudiant (transition de vue) -->
           <NuxtLink
             :to="`/enseignant/etudiants/${row.original.etudiant.id}`"
-            class="font-medium text-highlighted underline-offset-4 hover:underline"
+            class="inline-block font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 hover:underline"
+            :style="{ viewTransitionName: `etudiant-${row.original.etudiant.id}` }"
           >
             {{ row.original.etudiant.nom }} {{ row.original.etudiant.prenom }}
           </NuxtLink>
-          <p class="text-xs whitespace-normal text-muted md:hidden">
+          <p class="mt-1 text-xs whitespace-normal text-muted md:hidden">
             {{ row.original.etudiant.annee }} · {{ row.original.etudiant.parcours }}
           </p>
         </template>
         <template #enAttente-cell="{ row }">
           <span
             v-if="row.original.counters.pendingTraces > 0"
-            class="inline-flex items-center gap-1.5 font-semibold text-warning"
+            class="inline-flex items-center gap-1 font-semibold text-warning tabular-nums"
           >
             <UIcon :name="ETATS[0].icon" class="size-4 shrink-0" aria-hidden="true" />
             {{ row.original.counters.pendingTraces }} à évaluer
