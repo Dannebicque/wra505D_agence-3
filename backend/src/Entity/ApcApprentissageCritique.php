@@ -10,7 +10,16 @@ namespace App\Entity;
 use App\Repository\ApcApprentissageCritiqueRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use Symfony\Component\Serializer\Attribute\Groups;
 
+#[ApiResource(
+    shortName: 'ApprentissageCritique',
+    operations: [new Get(uriTemplate: '/apprentissages_critiques/{id}')],
+    normalizationContext: ['groups' => ['referentiel:read']],
+    security: "is_granted('ROLE_USER')",
+)]
 #[ORM\Entity(repositoryClass: ApcApprentissageCritiqueRepository::class)]
 class ApcApprentissageCritique
 {
@@ -39,6 +48,7 @@ class ApcApprentissageCritique
         return $this->id;
     }
 
+    #[Groups(['referentiel:read'])]
     public function getLibelle(): ?string
     {
         return $this->libelle;
@@ -51,6 +61,7 @@ class ApcApprentissageCritique
         return $this;
     }
 
+    #[Groups(['referentiel:read'])]
     public function getCode(): ?string
     {
         return $this->code;

@@ -83,15 +83,47 @@ class ContratTest extends ApiTestCase
         self::assertSame('/api/groupes?page=2', $groupes['view']['next']);
     }
 
-    public function testReferentielPasEncoreExpose(): void
+    public function testReferentielEmbarqueToutLArbre(): void
     {
-        // Sprint 0 : seules ses IRI existent (exposition au Sprint 1)
-        $this->connecter('admin');
-        $referentiel = $this->lire('/api/parcours')['member'][0]['referentiel'];
-        self::assertStringStartsWith('/api/referentiels/', $referentiel);
+        $this->connecter('etudiant');
 
-        $this->lire($referentiel);
+        $referentiel = $this->lire('/api/referentiels')['member'][0];
 
-        self::assertResponseStatusCodeSame(404);
+        self::assertResponseIsSuccessful();
+        self::assertCles('Referentiel', ['libelle', 'departement', 'competences'], $referentiel);
+        self::assertStringStartsWith('/api/departements/', $referentiel['departement']);
+        $competence = $referentiel['competences'][0];
+        self::assertCles('Competence', ['libelle', 'nomCourt', 'couleur', 'niveaux'], $competence);
+        self::assertMatchesRegularExpression('/^c[1-5]$/', $competence['couleur']);
+        self::assertSame([1, 2, 3], array_column($competence['niveaux'], 'ordre'), 'Niveaux dans l’ordre');
+        $niveau = $competence['niveaux'][0];
+        self::assertCles('Niveau', ['libelle', 'ordre', 'annee', 'parcours', 'apprentissagesCritiques'], $niveau);
+        self::assertStringStartsWith('/api/niveaux/', $niveau['@id']);
+        self::assertIsArray($niveau['parcours']);
+        self::assertCles('ApprentissageCritique', ['code', 'libelle'], $niveau['apprentissagesCritiques'][0]);
+    }
+
+    public function testReferentielLisibleParIri(): void
+    {
+        $this->connecter('enseignant');
+        $iri = $this->lire('/api/parcours')['member'][0]['referentiel'];
+
+        $referentiel = $this->lire($iri);
+
+        self::assertResponseIsSuccessful();
+        self::assertSame($iri, $referentiel['@id']);
+        $niveau = $referentiel['competences'][0]['niveaux'][0]['@id'];
+        self::assertSame('Niveau', $this->lire($niveau)['@type']);
+    }
+
+    /** Mêmes clés que le type du front, ni plus ni moins. */
+    private static function assertCles(string $type, array $champs, array $element): void
+    {
+        self::assertSame($type, $element['@type']);
+        $attendu = ['@id', '@type', ...$champs];
+        sort($attendu);
+        $obtenu = array_keys($element);
+        sort($obtenu);
+        self::assertSame($attendu, $obtenu, $type);
     }
 }

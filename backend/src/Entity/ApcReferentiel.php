@@ -13,11 +13,16 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\NotExposed;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use Symfony\Component\Serializer\Attribute\Groups;
 
 #[ApiResource(
     shortName: 'Referentiel',
-    operations: [new NotExposed(uriTemplate: '/referentiels/{id}')],
+    operations: [new Get(), new GetCollection()],
+    // L'arbre complet (compétences, niveaux, apprentissages critiques) est embarqué : le front le lit d'un bloc
+    normalizationContext: ['groups' => ['referentiel:read']],
+    security: "is_granted('ROLE_USER')",
 )]
 #[ORM\Entity(repositoryClass: ApcReferentielRepository::class)]
 class ApcReferentiel
@@ -41,6 +46,7 @@ class ApcReferentiel
     private ?Departement $departement = null;
 
     #[ORM\OneToMany(mappedBy: 'referentiel', targetEntity: Competence::class)]
+    #[ORM\OrderBy(['id' => \SortDirection::Ascending])]
     private Collection $competences;
 
     #[ORM\OneToMany(mappedBy: 'ApcReferentiel', targetEntity: ApcParcours::class, cascade: ['persist', 'remove'])]
@@ -69,6 +75,7 @@ class ApcReferentiel
         return $this->id;
     }
 
+    #[Groups(['referentiel:read'])]
     public function getLibelle(): ?string
     {
         return $this->libelle;
@@ -105,6 +112,7 @@ class ApcReferentiel
         return $this;
     }
 
+    #[Groups(['referentiel:read'])]
     public function getDepartement(): ?Departement
     {
         return $this->departement;
@@ -120,6 +128,7 @@ class ApcReferentiel
     /**
      * @return Collection<int, Competence>
      */
+    #[Groups(['referentiel:read'])]
     public function getCompetences(): Collection
     {
         return $this->competences;

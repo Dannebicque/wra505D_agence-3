@@ -11,7 +11,16 @@ use App\Repository\CompetenceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
+#[ApiResource(
+    operations: [new Get()],
+    normalizationContext: ['groups' => ['referentiel:read']],
+    security: "is_granted('ROLE_USER')",
+)]
 #[ORM\Entity(repositoryClass: CompetenceRepository::class)]
 class Competence
 {
@@ -39,6 +48,7 @@ class Competence
     private ?ApcReferentiel $referentiel = null;
 
     #[ORM\OneToMany(mappedBy: 'competences', targetEntity: ApcNiveau::class, cascade: ['persist'])]
+    #[ORM\OrderBy(['ordre' => \SortDirection::Ascending])]
     private Collection $apcNiveaux;
 
     public function __construct()
@@ -62,6 +72,7 @@ class Competence
         return $this->id;
     }
 
+    #[Groups(['referentiel:read'])]
     public function getLibelle(): ?string
     {
         return $this->libelle;
@@ -74,6 +85,7 @@ class Competence
         return $this;
     }
 
+    #[Groups(['referentiel:read'])]
     public function getNomCourt(): ?string
     {
         return $this->nom_court;
@@ -86,6 +98,7 @@ class Competence
         return $this;
     }
 
+    #[Groups(['referentiel:read'])]
     public function getCouleur(): ?string
     {
         return $this->couleur;
@@ -137,6 +150,8 @@ class Competence
     /**
      * @return Collection<int, ApcNiveau>
      */
+    #[Groups(['referentiel:read'])]
+    #[SerializedName('niveaux')]
     public function getApcNiveaux(): Collection
     {
         return $this->apcNiveaux;

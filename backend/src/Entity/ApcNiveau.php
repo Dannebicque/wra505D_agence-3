@@ -11,7 +11,17 @@ use App\Repository\ApcNiveauRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
+#[ApiResource(
+    shortName: 'Niveau',
+    operations: [new Get(uriTemplate: '/niveaux/{id}')],
+    normalizationContext: ['groups' => ['referentiel:read']],
+    security: "is_granted('ROLE_USER')",
+)]
 #[ORM\Entity(repositoryClass: ApcNiveauRepository::class)]
 class ApcNiveau
 {
@@ -30,6 +40,7 @@ class ApcNiveau
     private ?Competence $competences = null;
 
     #[ORM\OneToMany(mappedBy: 'niveaux', targetEntity: ApcApprentissageCritique::class)]
+    #[ORM\OrderBy(['code' => \SortDirection::Ascending])]
     private Collection $apcApprentissageCritiques;
 
     #[ORM\ManyToOne(inversedBy: 'apcNiveaux')]
@@ -64,6 +75,7 @@ class ApcNiveau
         return $this->id;
     }
 
+    #[Groups(['referentiel:read'])]
     public function getLibelle(): ?string
     {
         return $this->libelle;
@@ -76,6 +88,7 @@ class ApcNiveau
         return $this;
     }
 
+    #[Groups(['referentiel:read'])]
     public function getOrdre(): ?int
     {
         return $this->ordre;
@@ -103,6 +116,8 @@ class ApcNiveau
     /**
      * @return Collection<int, ApcApprentissageCritique>
      */
+    #[Groups(['referentiel:read'])]
+    #[SerializedName('apprentissagesCritiques')]
     public function getApcApprentissageCritiques(): Collection
     {
         return $this->apcApprentissageCritiques;
@@ -130,6 +145,8 @@ class ApcNiveau
         return $this;
     }
 
+    #[Groups(['referentiel:read'])]
+    #[SerializedName('annee')]
     public function getAnnees(): ?Annee
     {
         return $this->annees;
@@ -175,6 +192,8 @@ class ApcNiveau
     /**
      * @return Collection<int, ApcParcours>
      */
+    #[Groups(['referentiel:read'])]
+    #[SerializedName('parcours')]
     public function getApcParcours(): Collection
     {
         return $this->apcParcours;
