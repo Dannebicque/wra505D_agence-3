@@ -20,8 +20,12 @@ const label =
     color="neutral"
     variant="ghost"
     :aria-label="label"
-    class="relative"
+    class="relative pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center"
   >
+    <!--
+      Bouton icône, mais la pastille occupe son contenu : Nuxt UI ne lui applique pas la variante
+      `square` du thème. Même zone tactile (44 × 44 px sur écran tactile), posée ici.
+    -->
     <!--
       Pastille : seul emploi de l'or hors du socle, sous un texte prune 950 (9,6:1). Le nombre est
       dans le nom du lien ; la pastille, masquée aux lecteurs d'écran, ne fait que le montrer.
