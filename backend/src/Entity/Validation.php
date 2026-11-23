@@ -12,8 +12,43 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use App\State\ValidationProcessor;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
+use Symfony\Component\Serializer\Attribute\Context;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
+use Symfony\Component\Serializer\Normalizer\DateTimeNormalizer;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
+/**
+ * Évaluation d'une trace pour un niveau de compétence, au format de shared/types/evaluation.ts.
+ * L'étudiant associe un niveau à sa trace (validation en attente, E-CP-02) et peut la retirer tant qu'elle
+ * n'est pas évaluée ; l'évaluation par l'enseignant viendra au Sprint 3. Il ne voit que les validations
+ * de ses traces hors corbeille (App\Doctrine\ProprietaireExtension).
+ */
+#[ApiResource(
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(processor: ValidationProcessor::class),
+        new Delete(processor: ValidationProcessor::class),
+    ],
+    normalizationContext: ['groups' => ['validation:read']],
+    denormalizationContext: ['groups' => ['validation:write']],
+    order: ['id' => 'ASC'],
+    security: "is_granted('ROLE_ETUDIANT')",
+    // IRI d'une trace d'autrui, de la corbeille ou inexistante : 422 sur le champ, comme les autres erreurs de saisie
+    collectDenormalizationErrors: true,
+)]
+#[UniqueEntity(fields: ['trace', 'apcNiveau'], message: 'Ce niveau de compétence est déjà associé à la trace.', errorPath: 'niveau')]
 #[ORM\Entity(repositoryClass: ValidationRepository::class)]
+#[ORM\UniqueConstraint(fields: ['trace', 'apcNiveau'])]
 class Validation
 {
     #[ORM\Id]
@@ -21,7 +56,7 @@ class Validation
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\ManyToOne(inversedBy: 'validations', cascade: ['persist', 'remove'])]
+    #[ORM\ManyToOne(inversedBy: 'validations')]
     private ?Trace $trace = null;
 
     #[ORM\ManyToOne(inversedBy: 'validations')]
@@ -47,16 +82,36 @@ class Validation
         $this->notifications = new ArrayCollection();
     }
 
+    #[Assert\Callback]
+    public function valider(ExecutionContextInterface $context): void
+    {
+        if (null === $this->trace) {
+            $context->buildViolation('Choisissez une trace.')->atPath('trace')->addViolation();
+        }
+        if (null === $this->apcNiveau) {
+            $context->buildViolation('Choisissez un niveau de compétence.')->atPath('niveau')->addViolation();
+
+            return;
+        }
+        // Le niveau doit venir du référentiel du département de l'étudiant
+        $departement = $this->trace?->getBibliotheque()?->getEtudiant()?->getSemestre()?->getAnnee()?->getDiplome()?->getDepartement();
+        if (null !== $departement && $this->apcNiveau->getCompetences()?->getReferentiel()?->getDepartement() !== $departement) {
+            $context->buildViolation('Ce niveau ne fait pas partie du référentiel de votre formation.')->atPath('niveau')->addViolation();
+        }
+    }
+
     public function getId(): ?int
     {
         return $this->id;
     }
 
+    #[Groups(['validation:read', 'validation:write'])]
     public function getTrace(): ?Trace
     {
         return $this->trace;
     }
 
+    #[Groups(['validation:write'])]
     public function setTrace(?Trace $trace): self
     {
         $this->trace = $trace;
@@ -64,6 +119,7 @@ class Validation
         return $this;
     }
 
+    #[Groups(['validation:read'])]
     public function getEnseignant(): ?Enseignant
     {
         return $this->enseignant;
@@ -76,6 +132,7 @@ class Validation
         return $this;
     }
 
+    #[Groups(['validation:read'])]
     public function isEtat(): ?int
     {
         return $this->etat;
@@ -88,11 +145,15 @@ class Validation
         return $this;
     }
 
+    #[Groups(['validation:read', 'validation:write'])]
+    #[SerializedName('niveau')]
     public function getApcNiveau(): ?ApcNiveau
     {
         return $this->apcNiveau;
     }
 
+    #[Groups(['validation:write'])]
+    #[SerializedName('niveau')]
     public function setApcNiveau(?ApcNiveau $apcNiveau): static
     {
         $this->apcNiveau = $apcNiveau;
@@ -100,6 +161,8 @@ class Validation
         return $this;
     }
 
+    #[Groups(['validation:read'])]
+    #[Context(normalizationContext: [DateTimeNormalizer::FORMAT_KEY => 'Y-m-d'])]
     public function getDateCreation(): ?\DateTimeInterface
     {
         return $this->dateCreation;
@@ -112,6 +175,8 @@ class Validation
         return $this;
     }
 
+    #[Groups(['validation:read'])]
+    #[Context(normalizationContext: [DateTimeNormalizer::FORMAT_KEY => 'Y-m-d'])]
     public function getDateModification(): ?\DateTimeInterface
     {
         return $this->dateModification;

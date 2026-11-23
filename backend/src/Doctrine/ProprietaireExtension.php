@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\Operation;
 use App\Entity\Bibliotheque;
 use App\Entity\Trace;
 use App\Entity\Users;
+use App\Entity\Validation;
 use Doctrine\ORM\QueryBuilder;
 use Symfony\Bundle\SecurityBundle\Security;
 
@@ -35,7 +36,7 @@ final class ProprietaireExtension implements QueryCollectionExtensionInterface, 
 
     private function restreindre(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $noms, string $resourceClass): void
     {
-        if (!\in_array($resourceClass, [Trace::class, Bibliotheque::class], true)) {
+        if (!\in_array($resourceClass, [Trace::class, Bibliotheque::class, Validation::class], true)) {
             return;
         }
         $racine = $queryBuilder->getRootAliases()[0];
@@ -54,11 +55,17 @@ final class ProprietaireExtension implements QueryCollectionExtensionInterface, 
 
             return;
         }
+        // Validation : rattachée à l'étudiant par sa trace
+        $trace = $racine;
+        if (Validation::class === $resourceClass) {
+            $trace = $noms->generateJoinAlias('trace');
+            $queryBuilder->join(sprintf('%s.trace', $racine), $trace);
+        }
         $bibliotheque = $noms->generateJoinAlias('bibliotheque');
         $queryBuilder
-            ->join(sprintf('%s.bibliotheque', $racine), $bibliotheque)
+            ->join(sprintf('%s.bibliotheque', $trace), $bibliotheque)
             ->andWhere(sprintf('%s.etudiant = :%s', $bibliotheque, $parametre))
             // Corbeille : une trace supprimée n'est plus lue ni modifiable (restauration au Sprint 5, C-09)
-            ->andWhere(sprintf('%s.date_suppression IS NULL', $racine));
+            ->andWhere(sprintf('%s.date_suppression IS NULL', $trace));
     }
 }
