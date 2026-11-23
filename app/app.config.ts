@@ -1,10 +1,11 @@
 export default defineAppConfig({
   ui: {
     colors: {
-      // Palette définie dans app/assets/css/main.css
-      primary: 'sarcelle',
-      neutral: 'slate',
-      // Ambre plutôt que jaune : plus lisible en texte (brouillons, alertes)
+      // Palettes définies dans app/assets/css/main.css : prune (violet de l'IUT) pour l'action,
+      // gris très légèrement teinté de prune pour tout le reste
+      primary: 'prune',
+      neutral: 'gris',
+      // Ambre plutôt que jaune : plus lisible en texte (brouillons, alertes) ; distinct de l'accent or
       warning: 'amber',
     },
     button: {

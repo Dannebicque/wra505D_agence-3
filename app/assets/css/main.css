@@ -8,18 +8,47 @@
 @theme static {
   --font-sans: 'Instrument Sans', system-ui, sans-serif;
 
-  /* Couleur d'action : sarcelle (ancre : 700 = #1b6e66) */
-  --color-sarcelle-50: #effaf8;
-  --color-sarcelle-100: #d7f1ed;
-  --color-sarcelle-200: #b0e3db;
-  --color-sarcelle-300: #7fcdc2;
-  --color-sarcelle-400: #4fb0a5;
-  --color-sarcelle-500: #33968b;
-  --color-sarcelle-600: #247f76;
-  --color-sarcelle-700: #1b6e66;
-  --color-sarcelle-800: #185852;
-  --color-sarcelle-900: #164944;
-  --color-sarcelle-950: #072b28;
+  /*
+   * Palettes en OKLCH : teinte constante, clarté régulière, chroma réduite aux extrémités.
+   * Prune (violet de l'IUT, ancre : 700 = #4D3677) : couleur d'action (`primary`).
+   */
+  --color-prune-50: oklch(97% 0.014 297.55);
+  --color-prune-100: oklch(93.5% 0.03 297.55);
+  --color-prune-200: oklch(87% 0.056 297.55);
+  --color-prune-300: oklch(79% 0.085 297.55);
+  --color-prune-400: oklch(69% 0.11 297.55);
+  --color-prune-500: oklch(59% 0.125 297.55);
+  --color-prune-600: oklch(49% 0.125 297.55);
+  --color-prune-700: oklch(39.21% 0.1075 297.55);
+  --color-prune-800: oklch(32.5% 0.09 297.55);
+  --color-prune-900: oklch(26.5% 0.075 297.55);
+  --color-prune-950: oklch(20.5% 0.055 297.55);
+
+  /* Or (jaune de l'IUT, ancre : 400 = #F7B000) : accent décoratif, jamais en texte */
+  --color-or-50: oklch(98.5% 0.0133 79.41);
+  --color-or-100: oklch(96% 0.0359 79.41);
+  --color-or-200: oklch(92.5% 0.0685 79.41);
+  --color-or-300: oklch(87% 0.1222 79.41);
+  --color-or-400: oklch(80.35% 0.1667 79.41);
+  --color-or-500: oklch(72% 0.1494 79.41);
+  --color-or-600: oklch(62% 0.1286 79.41);
+  --color-or-700: oklch(52% 0.1079 79.41);
+  --color-or-800: oklch(44% 0.0913 79.41);
+  --color-or-900: oklch(37% 0.0768 79.41);
+  --color-or-950: oklch(28% 0.0581 79.41);
+
+  /* Gris (`neutral`) : très légèrement teinté vers le prune (chroma ≤ 0,01) */
+  --color-gris-50: oklch(98.4% 0.002 297.55);
+  --color-gris-100: oklch(96.7% 0.003 297.55);
+  --color-gris-200: oklch(92.9% 0.005 297.55);
+  --color-gris-300: oklch(86.9% 0.007 297.55);
+  --color-gris-400: oklch(71.1% 0.009 297.55);
+  --color-gris-500: oklch(55.4% 0.01 297.55);
+  --color-gris-600: oklch(44.6% 0.01 297.55);
+  --color-gris-700: oklch(37.2% 0.009 297.55);
+  --color-gris-800: oklch(27.9% 0.008 297.55);
+  --color-gris-900: oklch(20.8% 0.007 297.55);
+  --color-gris-950: oklch(12.9% 0.005 297.55);
 
   /* Fond du cadre (barre latérale, barre haute) : classe `bg-cadre` */
   --color-cadre: var(--uf-cadre);
@@ -29,9 +58,15 @@
   --radius-panneau: 22px;
 }
 
+/*
+ * Surfaces et textes : mêmes clartés que le thème précédent (contrastes déjà validés par axe),
+ * dans la teinte du gris. Contrastes mesurés : docs/DECISIONS.md, entrée du 2026-11-23.
+ */
 :root {
-  --uf-cadre: #eef1f4;
-  /* 700 : texte blanc lisible (contraste AA) sur les boutons */
+  --uf-cadre: oklch(95.7% 0.005 297.55);
+  /* Fond de la sélection de texte (sous un texte prune-950) */
+  --uf-selection: var(--color-or-200);
+  /* 700 : texte blanc lisible sur les boutons (9,9:1) */
   --ui-primary: var(--ui-color-primary-700);
   /*
    * Couleurs d'état assez foncées pour un texte AA sur leur fond teinté (pastilles « Brouillon »,
@@ -40,30 +75,31 @@
   --ui-success: var(--ui-color-success-800);
   --ui-warning: var(--ui-color-warning-800);
   --ui-error: var(--ui-color-error-700);
-  --ui-bg: #ffffff;
-  --ui-bg-muted: #f6f7f8;
-  --ui-bg-elevated: #e1e5ea;
-  --ui-text: #1f201d;
-  --ui-text-highlighted: #1f201d;
-  --ui-text-muted: #636361;
-  --ui-border: #e3e6ea;
+  --ui-bg: #fff;
+  --ui-bg-muted: oklch(97.6% 0.003 297.55);
+  --ui-bg-elevated: oklch(92.1% 0.007 297.55);
+  --ui-text: oklch(24.1% 0.007 297.55);
+  --ui-text-highlighted: var(--ui-text);
+  --ui-text-muted: oklch(49.9% 0.008 297.55);
+  --ui-border: oklch(92.4% 0.006 297.55);
 }
 
 .dark {
-  --uf-cadre: #0f1214;
-  /* 400 : sarcelle éclairci, texte foncé sur les boutons */
+  --uf-cadre: oklch(18% 0.007 297.55);
+  --uf-selection: var(--color-or-400);
+  /* 400 : prune éclairci, texte foncé (gris-900) sur les boutons (6,2:1) */
   --ui-primary: var(--ui-color-primary-400);
   /* États clairs sur fond sombre (les valeurs du mode clair ne s'appliquent pas ici) */
   --ui-success: var(--ui-color-success-400);
   --ui-warning: var(--ui-color-warning-400);
   --ui-error: var(--ui-color-error-400);
-  --ui-bg: #16191c;
-  --ui-bg-muted: #1e2226;
-  --ui-bg-elevated: #262b30;
-  --ui-text: #e8eaeb;
-  --ui-text-highlighted: #e8eaeb;
-  --ui-text-muted: #a0a6ab;
-  --ui-border: #262a2e;
+  --ui-bg: oklch(21.2% 0.008 297.55);
+  --ui-bg-muted: oklch(25% 0.009 297.55);
+  --ui-bg-elevated: oklch(28.6% 0.01 297.55);
+  --ui-text: oklch(93.6% 0.004 297.55);
+  --ui-text-highlighted: var(--ui-text);
+  --ui-text-muted: oklch(72.2% 0.01 297.55);
+  --ui-border: oklch(28.3% 0.009 297.55);
 }
 
 body {
@@ -86,4 +122,10 @@ body {
 :focus-visible:not([tabindex='-1']) {
   outline: 2px solid var(--ui-primary);
   outline-offset: 2px;
+}
+
+/* Sélection de texte : accent or, sous un texte prune très foncé (14,5:1 en clair, 9,6:1 en sombre) */
+::selection {
+  background-color: var(--uf-selection);
+  color: var(--color-prune-950);
 }

@@ -32,8 +32,9 @@ test.describe('navigation au clavier', () => {
           return { style: style.outlineStyle, width: style.outlineWidth, color: style.outlineColor }
         })
       // Les boutons animent la couleur du contour (transition-colors) : on attend l'état final.
-      // rgb(...) est opaque ; rgba(..., a < 1) ou oklab(... / 0.25) ne le sont pas.
-      await expect.poll(async () => (await readOutline()).color).toMatch(/^rgb\(/)
+      // rgb(...) et oklch(...) sans alpha (palettes OKLCH du thème) sont opaques ;
+      // rgba(..., a < 1) ou oklab(... / 0.25) ne le sont pas.
+      await expect.poll(async () => (await readOutline()).color).toMatch(/^(rgb\(|oklch\([^/]*\)$)/)
       const outline = await readOutline()
       expect(outline.style).not.toBe('none')
       expect(parseFloat(outline.width)).toBeGreaterThanOrEqual(2)
