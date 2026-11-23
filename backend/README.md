@@ -87,6 +87,26 @@ Règles à connaître côté front :
 - **Corbeille** : une trace supprimée (`DELETE`, 204) disparaît de la lecture, de la liste et des validations, mais reste en base (restauration au Sprint 5, C-09).
 - **Fichiers** : format reconnu sur le contenu réel (JPEG, PNG, WebP, GIF jusqu'à 2 Mo, PDF jusqu'à 10 Mo, SVG refusé), nom nettoyé avec l'extension du type réel, 100 fichiers et 200 Mo au plus par étudiant. Ils sont rangés hors de `public/`, dans `var/fichiers/<env>/`. Une trace image ou PDF ne peut référencer que `/api/fichiers/<uuid>` déposé par son étudiant (ou garder un ancien fichier `/fichiers/…` inchangé).
 
+#### Portfolios et pages-projets (Sprint 2)
+
+| Ressource | Opérations | Accès |
+|---|---|---|
+| `/api/portfolios` | `GET`, `POST {intitule, description, visibilite, visibleRecruteurs, banniere}`, `PATCH` (mêmes champs + `pages` : nouvel ordre), `DELETE` (corbeille) | étudiant, ses portfolios |
+| `/api/pages` (`?portfolio=/api/portfolios/1`) | `GET` (dans l'ordre), `POST {portfolio, intitule, description}` (en fin de portfolio), `PATCH {intitule, description, traces}`, `DELETE` (corbeille) | étudiant, ses pages |
+| `/api/portfolios/{id}/public` | `GET` : portfolio, prénom et nom de l'étudiant, pages et traces finalisées embarquées | **sans connexion**, portfolio `publique` hors corbeille (404 sinon) |
+
+Règles à connaître côté front :
+
+- **Un portfolio par année** (E-PF-10) : l'étudiant et l'année (celle de son semestre) sont fixés par le serveur ; un second POST la même année répond 422 « Vous avez déjà un portfolio pour cette année. ». Un portfolio de la corbeille ne compte plus.
+- **Visibilité** : un seul réglage (`publique` / `privee`), `publique` active le lien public (point ouvert n° 14 tranché par le PO).
+- **Bannière** : l'IRI d'une image déposée par l'étudiant (`POST /api/fichiers`, type `image`) ; elle se lit sans connexion tant que le portfolio est public.
+- **Ordre des pages** : `PATCH /api/portfolios/{id}` avec `pages` reprenant exactement les pages actuelles, sinon 422.
+- **Traces d'une page** : `PATCH /api/pages/{id}` avec `traces` dans l'ordre voulu ; une trace ajoutée doit être finalisée et absente des autres pages du portfolio (mêmes messages que `page-rules.ts`). Une trace mise à la corbeille est masquée de `traces` mais garde sa place (elle reviendra si elle est restaurée). Une IRI de trace introuvable est signalée sur `traces[0]`, `traces[1]`…
+- **Corbeille** : une page supprimée disparaît de `pages` et libère ses traces pour d'autres pages ; un portfolio supprimé emporte ses pages.
+- **Lien public** : seules les traces finalisées s'affichent ; leurs fichiers se lisent sans connexion, tout autre fichier répond 404 au visiteur.
+- **Images** : JPEG, PNG et WebP sont réencodés à l'envoi (métadonnées et position GPS retirées, photo remise dans le bon sens) ; au-delà de 40 mégapixels, l'image est refusée. La taille renvoyée est celle du fichier réencodé.
+- **Limites proposées** (à valider avec Solène) : intitulé d'un portfolio obligatoire, 100 caractères ; description 2 000 caractères.
+
 Le front autorisé à appeler l'API est fixé par `CORS_ALLOW_ORIGIN` (`.env`, par défaut `http://localhost:3000`).
 
 ### En production
