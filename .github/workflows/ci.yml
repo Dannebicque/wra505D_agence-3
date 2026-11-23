@@ -18,6 +18,10 @@ jobs:
     name: Lint, typage, tests, build, E2E
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # L'application Nuxt vit dans frontend/ (le back ApiPlatform aura son dossier backend/)
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v7
         with:
@@ -25,8 +29,9 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version-file: .nvmrc
+          node-version-file: frontend/.nvmrc
           cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
       - run: npm ci
       - run: npm run lint
@@ -45,5 +50,5 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
-          path: playwright-report/
+          path: frontend/playwright-report/
           retention-days: 7
