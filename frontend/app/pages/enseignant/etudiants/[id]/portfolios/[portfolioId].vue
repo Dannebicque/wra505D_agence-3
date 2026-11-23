@@ -66,37 +66,38 @@ const pageLink = (id: number) => ({ query: { page: String(id) } })
 
 <template>
   <div>
-    <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
-
-    <div class="mt-4">
-      <!-- Élément partagé avec le lien de la fiche de l'étudiant (transition de vue) -->
-      <h1
-        class="font-titre text-2xl text-highlighted sm:text-3xl"
-        :style="{ viewTransitionName: `portfolio-${portfolio.id}` }"
-      >
-        {{ portfolio.intitule }}
-      </h1>
-      <p class="mt-2 text-muted">
-        Portfolio · {{ nom }} · {{ portfolio.annee }} · modifié le
-        {{ formatDate(portfolio.dateModification) }}
-      </p>
-      <div class="mt-4 flex flex-wrap gap-2">
-        <UBadge
-          color="neutral"
-          variant="subtle"
-          class="rounded-full"
-          :icon="portfolio.visibilite === 'publique' ? 'i-lucide-globe' : 'i-lucide-lock'"
-          :label="portfolio.visibilite === 'publique' ? 'Public' : 'Privé'"
-        />
-        <UBadge
-          color="neutral"
-          variant="subtle"
-          class="rounded-full"
-          :label="portfolio.publie ? 'Publié' : 'Non publié'"
-        />
-      </div>
-      <p class="mt-4 max-w-mesure">{{ portfolio.description }}</p>
+    <UiEnTetePage :titre="portfolio.intitule">
+      <template #avant>
+        <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
+      </template>
+      <template #titre>
+        <!-- Élément partagé avec le lien de la fiche de l'étudiant (transition de vue) -->
+        <span class="block" :style="{ viewTransitionName: `portfolio-${portfolio.id}` }">
+          {{ portfolio.intitule }}
+        </span>
+      </template>
+      <template #chapeau>
+        Portfolio de {{ nom }} · {{ portfolio.annee }} · modifié le
+        {{ formatDate(portfolio.dateModification) }}. {{ portfolio.pages.length }}
+        {{ portfolio.pages.length > 1 ? 'pages' : 'page' }} à parcourir.
+      </template>
+    </UiEnTetePage>
+    <div class="mt-4 flex flex-wrap gap-2">
+      <UBadge
+        color="neutral"
+        variant="subtle"
+        class="rounded-full"
+        :icon="portfolio.visibilite === 'publique' ? 'i-lucide-globe' : 'i-lucide-lock'"
+        :label="portfolio.visibilite === 'publique' ? 'Public' : 'Privé'"
+      />
+      <UBadge
+        color="neutral"
+        variant="subtle"
+        class="rounded-full"
+        :label="portfolio.publie ? 'Publié' : 'Non publié'"
+      />
     </div>
+    <p class="mt-4 max-w-mesure">{{ portfolio.description }}</p>
 
     <div class="mt-8 grid gap-3 lg:grid-cols-[1fr_3fr] lg:items-start lg:gap-4">
       <nav aria-labelledby="pages-titre" class="rounded-panneau bg-muted p-4 sm:p-6">
@@ -133,7 +134,11 @@ const pageLink = (id: number) => ({ query: { page: String(id) } })
         <p class="mt-2 max-w-mesure text-muted">{{ page.description }}</p>
 
         <ul v-if="traces.length" class="mt-6 space-y-3" aria-label="Traces de la page">
-          <li v-for="trace in traces" :key="trace.id" class="rounded-feuille bg-default p-4">
+          <li
+            v-for="trace in traces"
+            :key="trace.id"
+            class="rounded-feuille border border-default bg-default p-4"
+          >
             <div class="flex flex-wrap items-start justify-between gap-3">
               <div class="min-w-0">
                 <!-- Élément partagé avec le titre de l'écran d'évaluation (transition de vue) -->
@@ -151,7 +156,7 @@ const pageLink = (id: number) => ({ query: { page: String(id) } })
                 v-if="isTracePending(trace)"
                 :to="`/enseignant/evaluations/${trace.id}`"
                 color="neutral"
-                variant="outline"
+                variant="ghost"
                 size="sm"
                 trailing-icon="i-lucide-arrow-right"
               >

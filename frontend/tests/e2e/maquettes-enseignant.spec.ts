@@ -165,7 +165,7 @@ test('« Réinitialiser les filtres » garde le focus et vide l’URL', async ({
 })
 
 // Transition d'élément partagé : le titre d'une carte porte le même `view-transition-name` que le
-// h1 de l'écran de détail, et chaque nom est unique dans sa page (sinon le navigateur annule la
+// titre (h1) de l'écran de détail, et chaque nom est unique dans sa page (sinon le navigateur annule la
 // transition)
 const VIEW_TRANSITIONS = [
   { list: '/enseignant', detail: '/enseignant/evaluations/21', name: 'trace-21' },
@@ -195,8 +195,9 @@ for (const { list, detail, name } of VIEW_TRANSITIONS) {
     expect(new Set(names).size).toBe(names.length)
 
     await gotoHydrated(page, detail)
-    const h1 = page.getByRole('heading', { level: 1 })
-    expect(await h1.evaluate((el) => getComputedStyle(el).viewTransitionName)).toBe(name)
+    // Le nom de transition est porté par le texte du titre (bloc dans le h1 de UiEnTetePage)
+    const titre = page.getByRole('heading', { level: 1 }).locator('span').first()
+    expect(await titre.evaluate((el) => getComputedStyle(el).viewTransitionName)).toBe(name)
     const detailNames = await viewTransitionNames(page)
     expect(new Set(detailNames).size).toBe(detailNames.length)
   })

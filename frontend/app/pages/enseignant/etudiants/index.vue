@@ -2,7 +2,7 @@
 // MAQUETTE (P-ET-01, P-ET-02, P-ET-03, P-ET-06) : recherche et filtres gardés dans l'URL,
 // appliqués aux données de démonstration.
 import type { TableColumn } from '@nuxt/ui'
-import { ETATS, type DemoEtudiant } from '~/demo/base'
+import { ETATS, ETUDIANTS, type DemoEtudiant } from '~/demo/base'
 import {
   ANNEES,
   ETUDIANT_FILTER_OPTIONS,
@@ -68,6 +68,10 @@ const columns: TableColumn<EtudiantRow>[] = [
   },
 ]
 
+// Chapeau : le fait du jour, sur tous les étudiants suivis (les filtres n'y changent rien)
+const withPending = ETUDIANTS.filter((e) => studentCounters(e.id).pendingTraces > 0).length
+const chapeau = `${ETUDIANTS.length} étudiants suivis, dont ${withPending} avec des traces qui attendent une évaluation (colonne « Travaux en attente »).`
+
 const resultLabel = computed(() =>
   rows.value.length === 0
     ? 'Aucun étudiant ne correspond à ces critères.'
@@ -77,11 +81,7 @@ const resultLabel = computed(() =>
 
 <template>
   <div>
-    <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Étudiants</h1>
-    <p class="mt-2 max-w-mesure text-muted">
-      Les étudiants dont des traces attendent une évaluation sont signalés dans la colonne « Travaux
-      en attente ».
-    </p>
+    <UiEnTetePage titre="Étudiants" :chapeau="chapeau" />
 
     <section aria-labelledby="filtres" class="mt-8 rounded-panneau bg-muted p-4 sm:p-6">
       <h2 id="filtres" class="sr-only">Filtres</h2>
@@ -133,7 +133,7 @@ const resultLabel = computed(() =>
         :ui="{
           caption: 'sr-only',
           tbody:
-            '[&>tr]:relative [&>tr]:transition-colors [&>tr]:hover:bg-elevated/50 [&>tr]:has-focus-visible:bg-elevated/50',
+            '[&>tr]:relative [&>tr]:transition-colors [&>tr]:hover:bg-muted [&>tr]:has-focus-visible:bg-muted motion-reduce:[&>tr]:transition-none',
           th: 'px-2 sm:px-4',
           td: 'px-2 align-top max-sm:whitespace-normal sm:px-4',
         }"
@@ -142,7 +142,7 @@ const resultLabel = computed(() =>
           <!-- Élément partagé avec le titre de la fiche de l'étudiant (transition de vue) -->
           <NuxtLink
             :to="`/enseignant/etudiants/${row.original.etudiant.id}`"
-            class="inline-block font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 hover:underline"
+            class="inline-block font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 hover:underline focus-visible:underline"
             :style="{ viewTransitionName: `etudiant-${row.original.etudiant.id}` }"
           >
             {{ row.original.etudiant.nom }} {{ row.original.etudiant.prenom }}

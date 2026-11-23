@@ -54,21 +54,18 @@ const resultLabel = computed(() =>
 
 <template>
   <div>
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Bilans</h1>
-      <div class="flex flex-wrap gap-2">
+    <UiEnTetePage
+      titre="Bilans"
+      chapeau="Synthèse collective des évaluations d’une promotion ou d’un groupe, et accès aux bilans individuels."
+    >
+      <!-- Exports à brancher : le PDF (le bilan à remettre) est l'action principale -->
+      <template #actions>
         <UButton color="neutral" variant="outline" icon="i-lucide-file-spreadsheet">
           Exporter en CSV
         </UButton>
-        <UButton color="neutral" variant="outline" icon="i-lucide-file-down">
-          Exporter en PDF
-        </UButton>
-      </div>
-    </div>
-    <p class="mt-2 max-w-mesure text-muted">
-      Synthèse collective des évaluations d’une promotion ou d’un groupe, et accès aux bilans
-      individuels.
-    </p>
+        <UButton icon="i-lucide-file-down">Exporter en PDF</UButton>
+      </template>
+    </UiEnTetePage>
 
     <section aria-labelledby="selection" class="mt-8 rounded-panneau bg-muted p-4 sm:p-6">
       <h2 id="selection" class="sr-only">Sélection</h2>
@@ -114,13 +111,13 @@ const resultLabel = computed(() =>
         <li
           v-for="etudiant in etudiants"
           :key="etudiant.id"
-          class="relative flex items-center justify-between gap-3 rounded-feuille bg-default p-4 transition-colors hover:bg-elevated has-focus-visible:bg-elevated"
+          class="group relative flex items-center justify-between gap-3 rounded-feuille bg-default p-4 transition-colors hover:bg-elevated has-focus-visible:bg-elevated motion-reduce:transition-none"
         >
           <div class="min-w-0">
             <!-- Élément partagé avec le titre de la fiche de l'étudiant (transition de vue) -->
             <NuxtLink
               :to="`/enseignant/etudiants/${etudiant.id}`"
-              class="inline-block leading-titre font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille hover:underline"
+              class="inline-block leading-titre font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille group-hover:underline group-has-focus-visible:underline"
               :style="{ viewTransitionName: `etudiant-${etudiant.id}` }"
             >
               {{ etudiant.prenom }} {{ etudiant.nom }}
@@ -130,8 +127,8 @@ const resultLabel = computed(() =>
             </p>
           </div>
           <UIcon
-            name="i-lucide-chevron-right"
-            class="size-4 shrink-0 text-muted"
+            name="i-lucide-arrow-right"
+            class="size-4 shrink-0 text-muted motion-safe:transition-transform motion-safe:group-hover:translate-x-1"
             aria-hidden="true"
           />
         </li>
