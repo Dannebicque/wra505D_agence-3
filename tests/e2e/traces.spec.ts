@@ -57,6 +57,21 @@ test.describe('déposer une trace', () => {
     await expect(page.getByRole('textbox', { name: /Titre/ })).toBeFocused()
   })
 
+  // Noms accessibles du formulaire : sans « étoile » d'obligation, groupe radio nommé, bouton de
+  // section nommé par son titre et décrit par sa sous-ligne
+  test('donne aux champs du formulaire des noms courts et justes', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant/traces/nouvelle')
+
+    const titre = page.getByRole('textbox', { name: 'Titre', exact: true })
+    await expect(titre).toHaveAttribute('aria-required', 'true')
+    await expect(page.getByRole('group', { name: 'Type de trace' })).toBeVisible()
+    await expect(page.getByRole('radio', { name: 'Vidéo' })).toBeVisible()
+    const details = page.getByRole('button', { name: 'Plus de détails', exact: true })
+    await expect(details).toHaveAccessibleDescription(
+      'Contexte, date de réalisation, usage de l’intelligence artificielle',
+    )
+  })
+
   // Pas de bulle native du navigateur (souvent en anglais) : le message s'affiche sous le champ
   test('explique une adresse invalide sous le champ, en français', async ({ page }) => {
     await gotoHydrated(page, '/etudiant/traces/nouvelle')
