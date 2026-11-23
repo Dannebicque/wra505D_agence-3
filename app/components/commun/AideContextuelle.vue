@@ -26,7 +26,16 @@ const DETAILS_UI = { content: 'data-[state=open]:animate-none data-[state=closed
 
 <template>
   <USlideover :title="aide.titre" :description="aide.intro" :ui="SLIDEOVER_UI">
-    <UButton icon="i-lucide-circle-help" color="neutral" variant="ghost">
+    <!--
+      Sur téléphone, bouton icône (libellé masqué) : 44 × 44 px sur écran tactile, comme les boutons
+      `square` du thème, que Nuxt UI n'applique pas ici à cause du libellé
+    -->
+    <UButton
+      icon="i-lucide-circle-help"
+      color="neutral"
+      variant="ghost"
+      class="pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center"
+    >
       <!-- Libellé visible à partir de la tablette, toujours lu par les lecteurs d'écran -->
       <span class="sr-only md:not-sr-only">Aide</span>
     </UButton>

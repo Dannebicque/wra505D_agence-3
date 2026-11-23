@@ -96,8 +96,12 @@ defineShortcuts({
       color="neutral"
       variant="outline"
       :aria-keyshortcuts="keyShortcut"
-      class="md:min-w-56"
+      class="pointer-coarse:min-h-11 pointer-coarse:min-w-11 pointer-coarse:justify-center md:min-w-56"
     >
+      <!--
+        Sur téléphone, bouton icône (libellé masqué) : 44 × 44 px sur écran tactile, comme les
+        boutons `square` du thème, que Nuxt UI n'applique pas ici à cause du libellé
+      -->
       <!-- Libellé lu par les lecteurs d'écran à toutes les tailles, affiché à partir de la tablette -->
       <span class="sr-only md:not-sr-only md:flex-1 md:text-left md:text-muted">Rechercher…</span>
       <span class="hidden items-center gap-1 md:inline-flex">
