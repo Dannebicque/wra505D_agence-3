@@ -8,6 +8,15 @@ export default defineAppConfig({
       // Ambre plutôt que jaune : plus lisible en texte (brouillons, alertes) ; distinct de l'accent or
       warning: 'amber',
     },
+    // `viewport-fit=cover` (nuxt.config.ts) : les éléments fixés au bord évitent eux-mêmes l'encoche
+    // et la barre d'accueil ; Nuxt UI ne le fait pas
+    slideover: { slots: { content: 'zone-sure' } },
+    toaster: {
+      slots: {
+        viewport:
+          'mt-[env(safe-area-inset-top)] mb-[env(safe-area-inset-bottom)] ms-[env(safe-area-inset-left)] me-[env(safe-area-inset-right)]',
+      },
+    },
     button: {
       // Style éditorial : boutons en pilule
       slots: { base: 'rounded-full' },
