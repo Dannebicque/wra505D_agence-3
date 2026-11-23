@@ -10,7 +10,9 @@ namespace App\Entity;
 use App\Repository\OrdreTraceRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+/** Trace rangée dans une page, à sa place (`ordre`). Une trace figure au plus une fois par page. */
 #[ORM\Entity(repositoryClass: OrdreTraceRepository::class)]
+#[ORM\UniqueConstraint(fields: ['page', 'trace'])]
 class OrdreTrace
 {
     #[ORM\Id]
@@ -18,10 +20,12 @@ class OrdreTrace
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\OneToOne(cascade: ['persist'])]
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Trace $trace = null;
 
     #[ORM\ManyToOne(inversedBy: 'ordreTraces')]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
     private ?Page $page = null;
 
     #[ORM\Column(nullable: true)]
@@ -37,7 +41,7 @@ class OrdreTrace
         return $this->trace;
     }
 
-    public function setTrace(?Trace $trace): static
+    public function setTrace(?Trace $trace): self
     {
         $this->trace = $trace;
 
@@ -49,7 +53,7 @@ class OrdreTrace
         return $this->page;
     }
 
-    public function setPage(?Page $page): static
+    public function setPage(?Page $page): self
     {
         $this->page = $page;
 
@@ -61,7 +65,7 @@ class OrdreTrace
         return $this->ordre;
     }
 
-    public function setOrdre(?int $ordre): static
+    public function setOrdre(?int $ordre): self
     {
         $this->ordre = $ordre;
 

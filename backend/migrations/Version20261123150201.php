@@ -1,0 +1,110 @@
+<?php
+
+declare(strict_types=1);
+
+namespace DoctrineMigrations;
+
+use Doctrine\DBAL\Schema\Schema;
+use Doctrine\Migrations\AbstractMigration;
+
+/**
+ * Sprint 2 : une page appartient à un seul portfolio et porte son ordre ; ordre_trace devient le lien ordonné
+ * page ↔ trace. Les données de l'ancienne version (page_portfolio, ordre_page, page_trace) sont reprises avant
+ * la suppression de ces tables. Corbeille des portfolios et des pages, un portfolio par année.
+ */
+final class Version20261123150201 extends AbstractMigration
+{
+    public function getDescription(): string
+    {
+        return 'Portfolios et pages : modèle simplifié, corbeille, un portfolio par année';
+    }
+
+    public function up(Schema $schema): void
+    {
+        // 1. Page → son portfolio et sa place (le premier portfolio si l'ancienne version en liait plusieurs)
+        $this->addSql('ALTER TABLE page ADD date_suppression TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL');
+        $this->addSql('ALTER TABLE page ADD portfolio_id INT DEFAULT NULL');
+        $this->addSql('ALTER TABLE page ALTER description DROP NOT NULL');
+        $this->addSql('UPDATE page SET portfolio_id = (SELECT MIN(pp.portfolio_id) FROM page_portfolio pp WHERE pp.page_id = page.id)');
+        $this->addSql('UPDATE page SET portfolio_id = COALESCE(page.portfolio_id, op.portfolio_id), ordre = COALESCE(op.ordre, page.ordre) FROM ordre_page op WHERE op.page_id = page.id');
+
+        // 2. Traces des pages : ordre_trace garde les places connues, page_trace complète sans place
+        $this->addSql('DELETE FROM ordre_trace WHERE page_id IS NULL OR trace_id IS NULL');
+        $this->addSql('INSERT INTO ordre_trace (page_id, trace_id, ordre) SELECT pt.page_id, pt.trace_id, NULL FROM page_trace pt WHERE NOT EXISTS (SELECT 1 FROM ordre_trace ot WHERE ot.page_id = pt.page_id AND ot.trace_id = pt.trace_id)');
+        $this->addSql('DELETE FROM ordre_trace a USING ordre_trace b WHERE a.page_id = b.page_id AND a.trace_id = b.trace_id AND a.id > b.id');
+
+        $this->addSql('ALTER TABLE ordre_page DROP CONSTRAINT fk_e5511c54b96b5643');
+        $this->addSql('ALTER TABLE ordre_page DROP CONSTRAINT fk_e5511c54c4663e4');
+        $this->addSql('ALTER TABLE page_portfolio DROP CONSTRAINT fk_9203afadb96b5643');
+        $this->addSql('ALTER TABLE page_portfolio DROP CONSTRAINT fk_9203afadc4663e4');
+        $this->addSql('ALTER TABLE page_trace DROP CONSTRAINT fk_57da2a77c4663e4');
+        $this->addSql('ALTER TABLE page_trace DROP CONSTRAINT fk_57da2a77be0d4b70');
+        $this->addSql('DROP TABLE ordre_page');
+        $this->addSql('DROP TABLE page_portfolio');
+        $this->addSql('DROP TABLE page_trace');
+
+        $this->addSql('ALTER TABLE ordre_trace DROP CONSTRAINT fk_66c23b2ec4663e4');
+        $this->addSql('ALTER TABLE ordre_trace DROP CONSTRAINT fk_66c23b2ebe0d4b70');
+        // Une trace pouvait n'être que dans une page en tout : désormais une fois par page
+        $this->addSql('DROP INDEX uniq_66c23b2ebe0d4b70');
+        $this->addSql('ALTER TABLE ordre_trace ALTER trace_id SET NOT NULL');
+        $this->addSql('ALTER TABLE ordre_trace ALTER page_id SET NOT NULL');
+        $this->addSql('ALTER TABLE ordre_trace ADD CONSTRAINT FK_66C23B2EC4663E4 FOREIGN KEY (page_id) REFERENCES page (id) ON DELETE CASCADE NOT DEFERRABLE');
+        $this->addSql('ALTER TABLE ordre_trace ADD CONSTRAINT FK_66C23B2EBE0D4B70 FOREIGN KEY (trace_id) REFERENCES trace (id) ON DELETE CASCADE NOT DEFERRABLE');
+        $this->addSql('CREATE UNIQUE INDEX UNIQ_66C23B2EC4663E4BE0D4B70 ON ordre_trace (page_id, trace_id)');
+        $this->addSql('CREATE INDEX IDX_66C23B2EBE0D4B70 ON ordre_trace (trace_id)');
+        $this->addSql('ALTER TABLE page ADD CONSTRAINT FK_140AB620B96B5643 FOREIGN KEY (portfolio_id) REFERENCES portfolio (id) ON DELETE CASCADE NOT DEFERRABLE');
+        $this->addSql('CREATE INDEX IDX_140AB620B96B5643 ON page (portfolio_id)');
+
+        // 3. Portfolio : corbeille, bannière par défaut de l'ancienne version retirée, un par année hors corbeille
+        $this->addSql('ALTER TABLE portfolio ADD date_suppression TIMESTAMP(0) WITHOUT TIME ZONE DEFAULT NULL');
+        $this->addSql("UPDATE portfolio SET banniere = NULL WHERE banniere = '/files_directory/banniere.jpg'");
+        // Doublons d'une même année repris de l'ancienne version : seul le plus récent reste actif
+        $this->addSql('UPDATE portfolio p SET date_suppression = NOW() WHERE EXISTS (SELECT 1 FROM portfolio q WHERE q.etudiant_id = p.etudiant_id AND q.annee_id = p.annee_id AND q.id > p.id)');
+        $this->addSql('CREATE UNIQUE INDEX portfolio_unique_par_annee ON portfolio (etudiant_id, annee_id) WHERE (date_suppression IS NULL)');
+    }
+
+    public function down(Schema $schema): void
+    {
+        $this->addSql('DROP INDEX portfolio_unique_par_annee');
+        $this->addSql('ALTER TABLE portfolio DROP date_suppression');
+
+        $this->addSql('CREATE TABLE ordre_page (id INT GENERATED BY DEFAULT AS IDENTITY NOT NULL, ordre INT DEFAULT NULL, page_id INT DEFAULT NULL, portfolio_id INT DEFAULT NULL, PRIMARY KEY (id))');
+        $this->addSql('CREATE INDEX idx_e5511c54b96b5643 ON ordre_page (portfolio_id)');
+        $this->addSql('CREATE UNIQUE INDEX uniq_e5511c54c4663e4 ON ordre_page (page_id)');
+        $this->addSql('CREATE TABLE page_portfolio (page_id INT NOT NULL, portfolio_id INT NOT NULL, PRIMARY KEY (page_id, portfolio_id))');
+        $this->addSql('CREATE INDEX idx_9203afadc4663e4 ON page_portfolio (page_id)');
+        $this->addSql('CREATE INDEX idx_9203afadb96b5643 ON page_portfolio (portfolio_id)');
+        $this->addSql('CREATE TABLE page_trace (page_id INT NOT NULL, trace_id INT NOT NULL, PRIMARY KEY (page_id, trace_id))');
+        $this->addSql('CREATE INDEX idx_57da2a77be0d4b70 ON page_trace (trace_id)');
+        $this->addSql('CREATE INDEX idx_57da2a77c4663e4 ON page_trace (page_id)');
+        $this->addSql('INSERT INTO page_portfolio (page_id, portfolio_id) SELECT id, portfolio_id FROM page WHERE portfolio_id IS NOT NULL');
+        $this->addSql('INSERT INTO ordre_page (page_id, portfolio_id, ordre) SELECT id, portfolio_id, ordre FROM page WHERE portfolio_id IS NOT NULL');
+        $this->addSql('INSERT INTO page_trace (page_id, trace_id) SELECT DISTINCT page_id, trace_id FROM ordre_trace');
+        $this->addSql('ALTER TABLE ordre_page ADD CONSTRAINT fk_e5511c54b96b5643 FOREIGN KEY (portfolio_id) REFERENCES portfolio (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
+        $this->addSql('ALTER TABLE ordre_page ADD CONSTRAINT fk_e5511c54c4663e4 FOREIGN KEY (page_id) REFERENCES page (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
+        $this->addSql('ALTER TABLE page_portfolio ADD CONSTRAINT fk_9203afadb96b5643 FOREIGN KEY (portfolio_id) REFERENCES portfolio (id) ON DELETE CASCADE NOT DEFERRABLE INITIALLY IMMEDIATE');
+        $this->addSql('ALTER TABLE page_portfolio ADD CONSTRAINT fk_9203afadc4663e4 FOREIGN KEY (page_id) REFERENCES page (id) ON DELETE CASCADE NOT DEFERRABLE INITIALLY IMMEDIATE');
+        $this->addSql('ALTER TABLE page_trace ADD CONSTRAINT fk_57da2a77c4663e4 FOREIGN KEY (page_id) REFERENCES page (id) ON DELETE CASCADE NOT DEFERRABLE INITIALLY IMMEDIATE');
+        $this->addSql('ALTER TABLE page_trace ADD CONSTRAINT fk_57da2a77be0d4b70 FOREIGN KEY (trace_id) REFERENCES trace (id) ON DELETE CASCADE NOT DEFERRABLE INITIALLY IMMEDIATE');
+
+        $this->addSql('ALTER TABLE ordre_trace DROP CONSTRAINT FK_66C23B2EBE0D4B70');
+        $this->addSql('ALTER TABLE ordre_trace DROP CONSTRAINT FK_66C23B2EC4663E4');
+        $this->addSql('DROP INDEX UNIQ_66C23B2EC4663E4BE0D4B70');
+        $this->addSql('DROP INDEX IDX_66C23B2EBE0D4B70');
+        // L'ancien modèle n'admet une trace que dans une page : les autres places sont perdues
+        $this->addSql('DELETE FROM ordre_trace a USING ordre_trace b WHERE a.trace_id = b.trace_id AND a.id > b.id');
+        $this->addSql('ALTER TABLE ordre_trace ALTER trace_id DROP NOT NULL');
+        $this->addSql('ALTER TABLE ordre_trace ALTER page_id DROP NOT NULL');
+        $this->addSql('ALTER TABLE ordre_trace ADD CONSTRAINT fk_66c23b2ebe0d4b70 FOREIGN KEY (trace_id) REFERENCES trace (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
+        $this->addSql('ALTER TABLE ordre_trace ADD CONSTRAINT fk_66c23b2ec4663e4 FOREIGN KEY (page_id) REFERENCES page (id) NOT DEFERRABLE INITIALLY IMMEDIATE');
+        $this->addSql('CREATE UNIQUE INDEX uniq_66c23b2ebe0d4b70 ON ordre_trace (trace_id)');
+
+        $this->addSql('ALTER TABLE page DROP CONSTRAINT FK_140AB620B96B5643');
+        $this->addSql('DROP INDEX IDX_140AB620B96B5643');
+        $this->addSql('ALTER TABLE page DROP date_suppression');
+        $this->addSql('ALTER TABLE page DROP portfolio_id');
+        $this->addSql("UPDATE page SET description = '' WHERE description IS NULL");
+        $this->addSql('ALTER TABLE page ALTER description SET NOT NULL');
+    }
+}

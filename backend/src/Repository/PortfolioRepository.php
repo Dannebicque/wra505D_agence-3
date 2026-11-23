@@ -48,8 +48,7 @@ class PortfolioRepository extends ServiceEntityRepository
     private function createFiltersQb($dept, ?Semestre $semestre = null, array $groupes = [], array $etudiants = [], array $competences = [], ?int $etat = null)
     {
         $qb = $this->createQueryBuilder('p')
-            ->innerJoin('p.ordrePages', 'op')
-            ->innerJoin('op.page', 'pa')
+            ->innerJoin('p.pages', 'pa')
             ->innerJoin('pa.ordreTraces', 'ot')
             ->innerJoin('ot.trace', 't')
             ->innerJoin('t.validations', 'v')
@@ -75,8 +74,8 @@ class PortfolioRepository extends ServiceEntityRepository
                         $totalValidations = 0;
                         $totalEval = 0;
 
-                        foreach($portfolio->getOrdrePages() as $op){
-                            foreach($op->getPage()->getOrdreTraces() as $ot){
+                        foreach($portfolio->getPages() as $page){
+                            foreach($page->getOrdreTraces() as $ot){
                                 foreach($ot->getTrace()->getValidations() as $validation){
                                     $totalValidations++;
                                     if($validation->isEtat() != 0){
@@ -175,8 +174,7 @@ class PortfolioRepository extends ServiceEntityRepository
             ->leftJoin('e.groupe', 'g')->addSelect('g')
             ->leftJoin('g.type_groupe', 'tg')->addSelect('tg')
             ->leftJoin('e.semestre', 's')->addSelect('s')
-            ->leftJoin('p.ordrePages', 'op')->addSelect('op')
-            ->leftJoin('op.page', 'pa')->addSelect('pa')
+            ->leftJoin('p.pages', 'pa')->addSelect('pa')
             ->leftJoin('pa.ordreTraces', 'ot')->addSelect('ot')
             ->leftJoin('ot.trace', 't')->addSelect('t')
             ->leftJoin('t.validations', 'v')->addSelect('v')

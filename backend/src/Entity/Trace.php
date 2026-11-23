@@ -73,9 +73,6 @@ class Trace
     #[ORM\OneToMany(mappedBy: 'trace', targetEntity: Validation::class, cascade: ['persist', 'remove'])]
     private Collection $validations;
 
-    #[ORM\ManyToMany(targetEntity: Page::class, mappedBy: 'trace')]
-    private Collection $pages;
-
     #[ORM\OneToMany(mappedBy: 'trace', targetEntity: Commentaire::class, cascade: ['persist', 'remove'])]
     private Collection $commentaires;
 
@@ -124,7 +121,6 @@ class Trace
         $this->date_creation = new \DateTimeImmutable();
         $this->date_modification = null;
         $this->validations = new ArrayCollection();
-        $this->pages = new ArrayCollection();
         $this->commentaires = new ArrayCollection();
     }
 
@@ -218,33 +214,6 @@ class Trace
     }
 
     /**
-     * @return Collection<int, Page>
-     */
-    public function getPages(): Collection
-    {
-        return $this->pages;
-    }
-
-    public function addPage(Page $page): self
-    {
-        if (!$this->pages->contains($page)) {
-            $this->pages->add($page);
-            $page->addTrace($this);
-        }
-
-        return $this;
-    }
-
-    public function removePage(Page $page): self
-    {
-        if ($this->pages->removeElement($page)) {
-            $page->removeTrace($this);
-        }
-
-        return $this;
-    }
-
-    /**
      * @return Collection<int, Commentaire>
      */
     public function getCommentaires(): Collection
@@ -274,7 +243,7 @@ class Trace
         return $this;
     }
 
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     #[SerializedName('type')]
     public function getTypeTrace(): ?string
     {
@@ -291,7 +260,7 @@ class Trace
     }
 
     /** @return string[] */
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     public function getContenu(): array
     {
         return $this->contenu ?? [];
@@ -307,7 +276,7 @@ class Trace
         return $this;
     }
 
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     public function getTitre(): ?string
     {
         return $this->titre;
@@ -321,7 +290,7 @@ class Trace
         return $this;
     }
 
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     public function getDescription(): ?string
     {
         return $this->description;
@@ -347,7 +316,7 @@ class Trace
         return $this;
     }
 
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     public function getLegende(): ?string
     {
         return $this->legende;
@@ -375,7 +344,7 @@ class Trace
     }
 
     /** Jour seul (AAAA-MM-JJ), comme le champ date du formulaire. */
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     #[SerializedName('dateRealisation')]
     public function getDateRealisationJour(): ?string
     {
@@ -402,7 +371,7 @@ class Trace
         return $this->dateRealisationInvalide;
     }
 
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     public function getContexte(): ?string
     {
         return $this->contexte;

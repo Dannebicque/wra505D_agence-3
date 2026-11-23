@@ -19,7 +19,8 @@ use Symfony\Component\Uid\Uuid;
  */
 #[ApiResource(
     operations: [
-        new Get(provider: FichierProvider::class),
+        // Lecture ouverte : FichierProvider sert le propriétaire ou un fichier d'un portfolio public, 404 sinon
+        new Get(provider: FichierProvider::class, security: 'true'),
         new Post(inputFormats: ['multipart' => ['multipart/form-data']], deserialize: false, processor: FichierProcessor::class),
     ],
     normalizationContext: ['groups' => ['fichier:read']],
