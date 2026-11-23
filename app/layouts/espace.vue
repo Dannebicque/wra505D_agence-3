@@ -7,6 +7,9 @@ const homePath = computed(() => (espace.value ? `/${espace.value}` : '/'))
 // (la fermeture automatique de Nuxt UI ne réagit qu'à un changement d'URL)
 const isMenuOpen = ref(false)
 
+const ACTIVE_LINK_CLASS =
+  'font-semibold after:absolute after:inset-y-2 after:start-0 after:w-1 after:rounded-full after:bg-or-400'
+
 // La barre latérale est en rem (unit="rem") : elle garde ses 224 px (14 rem) quelle que soit la fenêtre
 const items = computed(() =>
   (espace.value ? NAVIGATION[espace.value] : []).map((item) => {
@@ -19,8 +22,9 @@ const items = computed(() =>
     return {
       ...item,
       active,
-      // La page courante se repère aussi par la graisse, pas seulement par la couleur (WCAG 1.4.1)
-      class: active ? 'font-semibold' : undefined,
+      // La page courante se repère par la pilule et la graisse, pas seulement par la couleur
+      // (WCAG 1.4.1) ; le trait or (accent de l'IUT) n'est qu'un décor, sans information propre
+      class: active ? ACTIVE_LINK_CLASS : undefined,
       onSelect: () => {
         isMenuOpen.value = false
       },
@@ -48,8 +52,8 @@ const items = computed(() =>
         <LayoutAppLogo :to="homePath" />
       </template>
 
-      <!-- Élément actif : pilule grise et libellé en encre (maquette éditoriale) ; la couleur
-           d'accent reste aux données et à l'action principale de chaque page -->
+      <!-- Élément actif : pilule grise, libellé en encre et trait or (maquette éditoriale) ; la
+           couleur d'action reste aux données et à l'action principale de chaque page -->
       <UNavigationMenu
         :items="items"
         color="neutral"
