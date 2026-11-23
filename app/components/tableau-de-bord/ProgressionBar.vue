@@ -1,27 +1,29 @@
 <script lang="ts">
 /**
- * Segments de la barre, dans l'ordre, partagés avec la légende (`ProgressionLegend`).
- * Chaque couleur contraste à 3:1 au moins avec la piste (`bg-elevated`), en clair et en sombre
- * (WCAG 1.4.11). Mesures segment / piste, clair puis sombre : acquis 7,87 / 4,99 ; en cours
- * (prune 500 / 200) 3,41 / 9,55 ; non acquis 5,11 / 5,18 ; en attente (gris 500 / 400)
- * 3,78 / 5,58. Deux segments voisins ne contrastent pas assez entre eux : l'écart (`gap-1`)
- * laisse voir la piste, qui les sépare. Pas de transparence : la couleur ne dépend pas du
- * panneau sous la barre.
+ * Segments de la barre, dans l'ordre, partagés avec la légende (`ProgressionLegend`) et les
+ * valeurs (`ProgressionValues`). Ordre de force : « acquis » est toujours le segment le plus
+ * marqué (le plus foncé en clair, le plus clair en sombre), « en attente » le plus discret.
+ *
+ * Les segments sont posés sur le panneau (`bg-muted`, ou `bg-default`), séparés par un écart
+ * (`gap-1`) : la piste (`bg-elevated`) ne dessine que le reste de l'échelle. Contraste de chaque
+ * segment avec le panneau (WCAG 1.4.11, 3:1 au moins), clair puis sombre, mesuré sur `bg-muted`
+ * (le plus défavorable) : acquis (prune 700 / prune 200) 9,28 / 10,67 ; non acquis (error 700 /
+ * 400) 5,99 / 5,54 ; en cours (prune 500) 4,02 / 3,72 ; en attente (gris 500) 4,46 / 3,35.
+ * Pas de transparence : la couleur ne dépend pas du panneau sous la barre.
  */
 export const PROGRESSION_SEGMENTS = [
-  { key: 'acquired', label: 'Acquis', class: 'bg-primary' },
-  {
-    key: 'inProgress',
-    label: 'En cours',
-    class: 'bg-(--ui-color-primary-500) dark:bg-(--ui-color-primary-200)',
-  },
+  { key: 'acquired', label: 'Acquis', class: 'bg-primary dark:bg-(--ui-color-primary-200)' },
+  { key: 'inProgress', label: 'En cours', class: 'bg-(--ui-color-primary-500)' },
   { key: 'notAcquired', label: 'Non acquis', class: 'bg-error' },
-  {
-    key: 'pending',
-    label: 'En attente',
-    class: 'bg-(--ui-color-neutral-500) dark:bg-(--ui-color-neutral-400)',
-  },
+  { key: 'pending', label: 'En attente', class: 'bg-(--ui-color-neutral-500)' },
 ] as const
+
+export type ProgressionSegmentKey = (typeof PROGRESSION_SEGMENTS)[number]['key']
+
+/** Classe de couleur d'un segment : pastilles de la légende et des valeurs, par construction. */
+export function segmentClass(key: ProgressionSegmentKey): string {
+  return PROGRESSION_SEGMENTS.find((segment) => segment.key === key)?.class ?? ''
+}
 </script>
 
 <script setup lang="ts">
@@ -42,14 +44,16 @@ const rest = computed(
 </script>
 
 <template>
-  <div class="flex h-2 gap-1 overflow-hidden rounded-full bg-elevated" aria-hidden="true">
+  <!-- Barre épaisse (16 px) : chaque segment est un bloc aux coins de 4 px, lisible d'un coup d'œil -->
+  <div class="flex h-4 gap-1" aria-hidden="true">
     <template v-for="segment in PROGRESSION_SEGMENTS" :key="segment.key">
       <span
         v-if="props[segment.key] > 0"
+        class="rounded-sm"
         :class="segment.class"
         :style="{ flex: props[segment.key] }"
       />
     </template>
-    <span v-if="rest > 0" :style="{ flex: rest }" />
+    <span v-if="rest > 0" class="rounded-sm bg-elevated" :style="{ flex: rest }" />
   </div>
 </template>
