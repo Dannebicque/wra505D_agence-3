@@ -9,7 +9,7 @@ const props = defineProps<{
   /**
    * Forme du squelette de chargement, proche du contenu attendu pour que rien ne saute à
    * l'arrivée des données : `bloc` (titre et paragraphe, par défaut), `liste` (cartes de liste en
-   * `p-4`), `tuiles` (tuiles de statistiques et panneau du tableau de bord), `formulaire`.
+   * `p-4`), `tuiles` (tableau de bord : panneau de progression et colonne de chiffres), `formulaire`.
    */
   skeleton?: 'bloc' | 'liste' | 'tuiles' | 'formulaire'
   /** Nombre de lignes de la liste ou de champs du formulaire (3 par défaut). */
@@ -48,12 +48,17 @@ const errorMessage = computed(() => {
         />
       </div>
 
-      <!-- Tableau de bord : quatre tuiles (deux par ligne sur téléphone), puis un panneau -->
-      <div v-else-if="skeleton === 'tuiles'" class="space-y-3 lg:space-y-4">
-        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-          <USkeleton v-for="n in 4" :key="n" class="h-24 rounded-panneau lg:h-28" />
+      <!--
+        Tableau de bord : panneau de progression (2 colonnes sur 3), puis une colonne avec les
+        chiffres et un panneau de liste. Hauteurs mesurées sur /etudiant : panneau ≈ 490 px, chiffres
+        ≈ 190 à 200 px, liste ≈ 200 à 260 px
+      -->
+      <div v-else-if="skeleton === 'tuiles'" class="grid gap-4 lg:grid-cols-3 lg:gap-6">
+        <USkeleton class="h-120 rounded-panneau lg:col-span-2 lg:row-span-2" />
+        <div class="space-y-3">
+          <USkeleton v-for="n in 3" :key="n" class="h-12 w-full" />
         </div>
-        <USkeleton class="h-48 w-full rounded-panneau" />
+        <USkeleton class="h-52 rounded-panneau lg:h-64" />
       </div>
 
       <!-- Formulaire : libellé puis champ (hauteur d'un UInput), champs espacés de 6 pas -->
