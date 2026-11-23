@@ -14,10 +14,16 @@ test.describe('tableau de bord étudiant', () => {
     )
   })
 
-  test('affiche les compteurs', async ({ page }) => {
+  test('met en avant le taux d’acquisition', async ({ page }) => {
+    // 3 évaluations acquises sur 8 soumises : 38 %
+    await expect(page.getByRole('region', { name: 'Vos compétences' })).toContainText(
+      /38\s*%\s*des évaluations acquises\s*\(3 sur 8\)/,
+    )
+  })
+
+  test('affiche les chiffres secondaires', async ({ page }) => {
     const counters = page.getByRole('region', { name: 'En chiffres' })
     await expect(counters).toContainText(/Traces déposées\s*8/)
-    await expect(counters).toContainText(/Évaluations acquises\s*3\s*sur 8/)
     await expect(counters).toContainText(/En cours d’acquisition\s*2/)
     await expect(counters).toContainText(/En attente d’évaluation\s*2/)
   })
@@ -36,5 +42,28 @@ test.describe('tableau de bord étudiant', () => {
     const drafts = page.getByRole('region', { name: 'À terminer' })
     await expect(drafts.getByRole('listitem')).toHaveCount(2)
     await expect(drafts).toContainText('Business model d’une appli de covoiturage')
+  })
+
+  test('un brouillon pris au clavier se voit sur toute sa carte', async ({ page }) => {
+    const card = page
+      .getByRole('region', { name: 'À terminer' })
+      .getByRole('listitem')
+      .filter({ hasText: 'Business model d’une appli de covoiturage' })
+    const before = await card.evaluate((el) => getComputedStyle(el).backgroundColor)
+    const link = card.getByRole('link')
+    await link.focus()
+    await expect
+      .poll(() => card.evaluate((el) => getComputedStyle(el).backgroundColor))
+      .not.toBe(before)
+    // Comme au survol, le titre se souligne
+    expect(await link.evaluate((el) => getComputedStyle(el).textDecorationLine)).toBe('underline')
+  })
+
+  test('tient en 320 px sans défilement horizontal', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 })
+    const overflow = await page
+      .getByRole('main')
+      .evaluate((main) => main.scrollWidth - main.clientWidth)
+    expect(overflow).toBeLessThanOrEqual(0)
   })
 })

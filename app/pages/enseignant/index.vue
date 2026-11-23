@@ -1,11 +1,13 @@
 <script setup lang="ts">
-// MAQUETTE (P-OR-01, P-OR-06, P-ET-06) : données de démonstration, pas encore de store ni de service.
+// MAQUETTE (P-OR-01, P-OR-06, P-ET-06, P-ST-09) : données de démonstration, pas encore de store ni
+// de service.
 import { ENSEIGNANT_COURANT, ETUDIANTS, formatDate } from '~/demo/base'
 import {
   ECHEANCES_PROVISOIRES,
   TRACES_SOUMISES,
   etudiantName,
   evaluationCounters,
+  progressionByCompetence,
   studentCounters,
 } from '~/demo/enseignant'
 
@@ -22,6 +24,11 @@ const studentsWithPending = ETUDIANTS.map((etudiant) => ({
 }))
   .filter((s) => s.pendingTraces > 0)
   .sort((a, b) => b.pendingTraces - a.pendingTraces)
+const maxPendingTraces = Math.max(1, ...studentsWithPending.map((s) => s.pendingTraces))
+
+// Synthèse collective (P-ST-09), comme sur la page Bilans, pour tous les étudiants suivis
+const repartition = progressionByCompetence(TRACES_SOUMISES)
+const rate = acquisitionRate(counters.acquired, counters.evaluations)
 
 const pendingSentence =
   pending.length === 0
@@ -41,19 +48,15 @@ const today = new Intl.DateTimeFormat('fr-FR', {
 }).format(new Date())
 const todayLabel = today.charAt(0).toUpperCase() + today.slice(1)
 
-const tiles = [
-  { label: 'Traces à évaluer', value: counters.pendingTraces },
+// Le nombre de traces à évaluer est dans le titre, le taux d'acquisition dans le graphique :
+// ne restent ici que les chiffres qui n'apparaissent pas ailleurs
+const figures = [
   {
     label: 'Étudiants concernés',
     value: studentsWithPending.length,
     suffix: `sur ${ETUDIANTS.length}`,
   },
   { label: 'Traces évaluées', value: counters.evaluatedTraces },
-  {
-    label: 'Évaluations acquises',
-    value: counters.acquired,
-    suffix: `sur ${counters.evaluations}`,
-  },
 ]
 
 const firstPending = pending[0]
@@ -61,29 +64,83 @@ const firstPending = pending[0]
 
 <template>
   <div>
-    <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">{{ greeting }}</h1>
-    <p class="mt-2 text-muted">
-      {{ todayLabel }} · <span class="tabular-nums">{{ ETUDIANTS.length }}</span> étudiants suivis
-    </p>
+    <!-- Titre et action principale sur la même ligne : évaluer est à un clic dès l'arrivée -->
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div class="min-w-0">
+        <h1 class="font-titre text-2xl text-highlighted">{{ greeting }}</h1>
+        <p class="mt-2 text-muted">
+          {{ todayLabel }} · <span class="tabular-nums">{{ ETUDIANTS.length }}</span> étudiants
+          suivis
+        </p>
+      </div>
+      <UButton
+        v-if="firstPending"
+        :to="`/enseignant/evaluations/${firstPending.id}`"
+        icon="i-lucide-list-checks"
+      >
+        Évaluer à la suite
+      </UButton>
+    </div>
 
-    <EnseignantStatTiles :tiles="tiles" title="En chiffres" class="mt-8" />
-
-    <!-- Mosaïque de panneaux : même écart que les tuiles (3, puis 4 sur grand écran) -->
-    <div class="mt-3 grid gap-3 lg:mt-4 lg:grid-cols-[3fr_1fr] lg:gap-4">
-      <section aria-labelledby="en-attente" class="rounded-panneau bg-muted p-4 sm:p-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <h2 id="en-attente" class="text-sm font-semibold text-highlighted">
-            Évaluations en attente
+    <!--
+      Hiérarchie : la répartition des évaluations (panneau teinté, deux colonnes sur trois) est lue
+      en premier ; les chiffres secondaires n'ont pas de surface ; les listes de travail sont
+      bordées. Sur téléphone, l'ordre du document fait passer les évaluations en attente avant les
+      échéances (provisoires) ; sur ordinateur, la grille les replace à droite du graphique.
+    -->
+    <div class="mt-8 grid gap-4 lg:grid-cols-3 lg:gap-6">
+      <section
+        aria-labelledby="repartition"
+        class="rounded-panneau bg-muted p-4 sm:p-6 lg:col-span-2 lg:row-span-2 lg:row-start-1"
+      >
+        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 id="repartition" class="text-lg leading-titre font-semibold text-highlighted">
+            Évaluations par compétence
           </h2>
-          <UButton
-            v-if="firstPending"
-            :to="`/enseignant/evaluations/${firstPending.id}`"
-            size="sm"
-            icon="i-lucide-list-checks"
+          <NuxtLink
+            to="/enseignant/bilans"
+            class="text-sm font-medium text-primary underline-offset-4 hover:underline"
           >
-            Évaluer à la suite
-          </UButton>
+            Voir les bilans
+          </NuxtLink>
         </div>
+
+        <!-- Grand nombre seul : chiffres proportionnels (les chiffres tabulaires le desserrent) -->
+        <p v-if="rate !== null" class="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span class="text-4xl font-semibold text-highlighted">{{ rate }}&nbsp;%</span>
+          <span class="text-muted">
+            des évaluations saisies sont acquises
+            <span class="whitespace-nowrap tabular-nums"
+              >({{ counters.acquired }} sur {{ counters.evaluations }})</span
+            >
+          </span>
+        </p>
+        <p v-else class="mt-4 text-muted">Aucune évaluation saisie pour l’instant.</p>
+        <p class="mt-1 max-w-mesure text-sm text-muted">
+          Traces déposées par les étudiants que vous suivez, évaluées ou en attente.
+        </p>
+
+        <TableauDeBordProgressionLegend class="mt-6" />
+        <EnseignantCompetenceRepartition
+          :repartition="repartition"
+          label="Répartition des évaluations par compétence"
+          class="mt-4"
+        />
+      </section>
+
+      <TableauDeBordChiffres
+        :figures="figures"
+        title="En chiffres"
+        class="lg:col-start-3 lg:row-start-1"
+      />
+
+      <section
+        aria-labelledby="en-attente"
+        class="rounded-panneau border border-default p-4 sm:p-6 lg:col-span-2 lg:row-start-3"
+      >
+        <h2 id="en-attente" class="text-sm font-semibold text-highlighted">
+          Évaluations en attente
+        </h2>
         <p class="mt-1 text-xs text-muted">Les plus anciennes d’abord.</p>
 
         <ul
@@ -133,12 +190,66 @@ const firstPending = pending[0]
         </NuxtLink>
       </section>
 
+      <section
+        aria-labelledby="etudiants-a-suivre"
+        class="rounded-panneau border border-default p-4 sm:p-6 lg:col-start-3 lg:row-start-3"
+      >
+        <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h2 id="etudiants-a-suivre" class="text-sm font-semibold text-highlighted">
+            Étudiants ayant des travaux en attente
+          </h2>
+          <NuxtLink
+            to="/enseignant/etudiants"
+            class="text-sm font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Tous les étudiants
+          </NuxtLink>
+        </div>
+        <!--
+          Classement : le plus de traces en attente d'abord, une barre par étudiant à la même
+          échelle (décorative : le nombre est écrit). Gris 500 en clair (comme « en attente »), 400 en sombre
+          (le 500 tomberait à 3,0:1 au survol) : 4,79 / 6,87:1 sur le fond, 3,78 / 5,58:1 au survol.
+        -->
+        <ul v-if="studentsWithPending.length" class="-mx-2 mt-4 space-y-1">
+          <li
+            v-for="{ etudiant, pendingTraces } in studentsWithPending"
+            :key="etudiant.id"
+            class="relative rounded-feuille p-2 hover:bg-elevated has-focus-visible:bg-elevated motion-safe:transition-colors"
+          >
+            <div class="flex flex-wrap items-baseline justify-between gap-x-3">
+              <!-- Élément partagé avec le titre de la fiche de l'étudiant (transition de vue) -->
+              <NuxtLink
+                :to="`/enseignant/etudiants/${etudiant.id}`"
+                class="inline-block leading-titre font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille hover:underline"
+                :style="{ viewTransitionName: `etudiant-${etudiant.id}` }"
+              >
+                {{ etudiant.prenom }} {{ etudiant.nom }}
+              </NuxtLink>
+              <span class="text-sm text-muted">
+                <span class="font-semibold text-highlighted tabular-nums">{{ pendingTraces }}</span>
+                {{ pendingTraces > 1 ? 'traces' : 'trace' }}
+              </span>
+            </div>
+            <p class="mt-1 text-xs text-muted">{{ etudiant.groupe }} · {{ etudiant.parcours }}</p>
+            <div
+              class="mt-2 h-2 rounded-sm bg-(--ui-color-neutral-500) dark:bg-(--ui-color-neutral-400)"
+              :style="{ width: `${(pendingTraces / maxPendingTraces) * 100}%` }"
+              aria-hidden="true"
+            />
+          </li>
+        </ul>
+        <p v-else class="mt-4 text-muted">Aucun étudiant n’a de travail en attente.</p>
+      </section>
+
       <!--
         PROVISOIRE (point ouvert n° 1 de docs/FONCTIONNALITES.md) : l'origine des échéances
         (date saisie par l'enseignant, calendrier fixe…) n'est pas tranchée par le client.
         Ce bloc ne fait que réserver la place de P-OR-06.
       -->
-      <section aria-labelledby="echeances" class="rounded-panneau bg-muted p-4 sm:p-6">
+      <section
+        aria-labelledby="echeances"
+        class="rounded-panneau border border-default p-4 sm:p-6 lg:col-start-3 lg:row-start-2"
+      >
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 id="echeances" class="text-sm font-semibold text-highlighted">
             Prochaines échéances
@@ -159,49 +270,5 @@ const firstPending = pending[0]
         </ul>
       </section>
     </div>
-
-    <section
-      aria-labelledby="etudiants-a-suivre"
-      class="mt-3 rounded-panneau bg-muted p-4 sm:p-6 lg:mt-4"
-    >
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <h2 id="etudiants-a-suivre" class="text-sm font-semibold text-highlighted">
-          Étudiants ayant des travaux en attente
-        </h2>
-        <NuxtLink
-          to="/enseignant/etudiants"
-          class="text-sm font-medium text-primary underline-offset-4 hover:underline"
-        >
-          Tous les étudiants
-        </NuxtLink>
-      </div>
-      <ul v-if="studentsWithPending.length" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <!-- Toute la carte mène à la fiche (lien étendu) : survol et focus la font ressortir -->
-        <li
-          v-for="{ etudiant, pendingTraces } in studentsWithPending"
-          :key="etudiant.id"
-          class="relative flex items-center justify-between gap-3 rounded-feuille bg-default p-4 transition-colors hover:bg-elevated has-focus-visible:bg-elevated"
-        >
-          <div class="min-w-0">
-            <!-- Élément partagé avec le titre de la fiche de l'étudiant (transition de vue) -->
-            <NuxtLink
-              :to="`/enseignant/etudiants/${etudiant.id}`"
-              class="inline-block leading-titre font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille hover:underline"
-              :style="{ viewTransitionName: `etudiant-${etudiant.id}` }"
-            >
-              {{ etudiant.prenom }} {{ etudiant.nom }}
-            </NuxtLink>
-            <p class="mt-1 text-xs text-muted">{{ etudiant.groupe }} · {{ etudiant.parcours }}</p>
-          </div>
-          <span class="shrink-0 text-sm font-semibold text-highlighted tabular-nums">
-            {{ pendingTraces }}
-            <span class="font-normal text-muted">
-              {{ pendingTraces > 1 ? 'traces' : 'trace' }}
-            </span>
-          </span>
-        </li>
-      </ul>
-      <p v-else class="mt-4 text-muted">Aucun étudiant n’a de travail en attente.</p>
-    </section>
   </div>
 </template>

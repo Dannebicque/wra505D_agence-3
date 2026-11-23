@@ -61,6 +61,37 @@ for (const colorScheme of ['light', 'dark'] as const) {
   })
 }
 
+test('le tableau de bord met en avant la répartition des évaluations', async ({ page }) => {
+  await gotoHydrated(page, '/enseignant')
+
+  // Action principale dans la ligne du titre
+  await expect(page.getByRole('link', { name: 'Évaluer à la suite' })).toBeVisible()
+
+  // 16 évaluations acquises sur 26 saisies : 62 %
+  const repartition = page.getByRole('region', { name: 'Évaluations par compétence' })
+  await expect(repartition).toContainText(/62\s*%\s*des évaluations saisies sont acquises/)
+  const rows = repartition
+    .getByRole('list', { name: 'Répartition des évaluations par compétence' })
+    .getByRole('listitem')
+  await expect(rows).toHaveCount(5)
+  await expect(rows.first()).toContainText('3 acquis · 2 en attente')
+
+  // Étudiants classés par nombre de traces en attente, le plus chargé d'abord
+  const etudiants = page
+    .getByRole('region', { name: 'Étudiants ayant des travaux en attente' })
+    .getByRole('listitem')
+  await expect(etudiants.first()).toContainText(/Yanis Richard\s*4\s*traces/)
+})
+
+test('le tableau de bord tient en 320 px sans défilement horizontal', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 })
+  await gotoHydrated(page, '/enseignant')
+  const overflow = await page
+    .getByRole('main')
+    .evaluate((main) => main.scrollWidth - main.clientWidth)
+  expect(overflow).toBeLessThanOrEqual(0)
+})
+
 test('la liste des étudiants tient en 375 px sans défilement horizontal', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await gotoHydrated(page, '/enseignant/etudiants')

@@ -38,17 +38,23 @@ const criteres = computed(() => [
       <span class="text-muted"> · {{ suivi.competence.niveauLibelle }}</span>
     </p>
 
-    <div class="mt-3 grid items-center gap-x-4 gap-y-1 sm:grid-cols-[1fr_13rem]">
-      <TableauDeBordProgressionBar
+    <!-- Barre pleine largeur, valeurs dessous : mêmes repères que le tableau de bord -->
+    <TableauDeBordProgressionBar
+      :acquired="suivi.acquired"
+      :in-progress="suivi.inProgress"
+      :not-acquired="suivi.notAcquired"
+      :pending="suivi.pending"
+      :max="max"
+      class="mt-3"
+    />
+    <div class="mt-2 flex flex-wrap items-baseline gap-x-2">
+      <span class="text-sm text-muted">Évaluations :</span>
+      <TableauDeBordProgressionValues
         :acquired="suivi.acquired"
         :in-progress="suivi.inProgress"
         :not-acquired="suivi.notAcquired"
         :pending="suivi.pending"
-        :max="max"
       />
-      <p class="text-xs text-muted tabular-nums sm:text-right">
-        Évaluations : {{ progressionSummary(suivi) }}
-      </p>
     </div>
 
     <UAccordion
