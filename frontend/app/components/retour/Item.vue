@@ -23,8 +23,8 @@ const trace = computed(() => traceById(props.retour.traceId))
   <article
     class="group relative flex gap-4 border-l-4 p-4 transition-colors motion-reduce:transition-none sm:px-6"
     :class="[
-      retour.lu ? 'border-transparent' : 'border-primary bg-default',
-      { 'hover:bg-elevated has-focus-visible:bg-elevated': trace },
+      retour.lu ? 'border-transparent' : 'border-primary',
+      { 'hover:bg-muted has-focus-visible:bg-muted': trace },
     ]"
   >
     <!-- Icône seule, sans pastille : le type est aussi écrit dans le badge -->
