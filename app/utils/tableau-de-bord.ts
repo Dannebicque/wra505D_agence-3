@@ -106,18 +106,40 @@ export function greetingFact(
   return `${nombre} traces attendent leur évaluation.`
 }
 
-/** Résumé en texte d'une compétence (équivalent de sa barre de progression). */
-export function progressionSummary(
-  p: Pick<CompetenceProgression, 'acquired' | 'inProgress' | 'notAcquired' | 'pending'>,
-): string {
-  const parts: [number, string][] = [
-    [p.acquired, 'acquis'],
-    [p.inProgress, 'en cours'],
-    [p.notAcquired, 'non acquis'],
-    [p.pending, 'en attente'],
+type ProgressionCounts = Pick<
+  CompetenceProgression,
+  'acquired' | 'inProgress' | 'notAcquired' | 'pending'
+>
+
+export interface ProgressionPart {
+  key: keyof ProgressionCounts
+  count: number
+  label: string
+}
+
+/** États présents d'une compétence, dans l'ordre des segments de sa barre de progression. */
+export function progressionParts(p: ProgressionCounts): ProgressionPart[] {
+  const parts: ProgressionPart[] = [
+    { key: 'acquired', count: p.acquired, label: 'acquis' },
+    { key: 'inProgress', count: p.inProgress, label: 'en cours' },
+    { key: 'notAcquired', count: p.notAcquired, label: 'non acquis' },
+    { key: 'pending', count: p.pending, label: 'en attente' },
   ]
-  const present = parts.filter(([count]) => count > 0)
+  return parts.filter((part) => part.count > 0)
+}
+
+/** Résumé en texte d'une compétence (équivalent de sa barre de progression). */
+export function progressionSummary(p: ProgressionCounts): string {
+  const present = progressionParts(p)
   return present.length
-    ? present.map(([count, label]) => `${count} ${label}`).join(' · ')
+    ? present.map(({ count, label }) => `${count} ${label}`).join(' · ')
     : 'aucune trace associée'
+}
+
+/**
+ * Taux d'acquisition, en pourcentage arrondi à l'unité : part des évaluations acquises.
+ * `null` sans évaluation (pas de « 0 % » trompeur).
+ */
+export function acquisitionRate(acquired: number, total: number): number | null {
+  return total > 0 ? Math.round((acquired / total) * 100) : null
 }

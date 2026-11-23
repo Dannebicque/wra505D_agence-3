@@ -4,10 +4,12 @@ import type { ValidationEtat, Validation } from '../../shared/types/evaluation'
 import type { Referentiel } from '../../shared/types/referentiel'
 import type { Trace, TraceStatut } from '../../shared/types/trace'
 import {
+  acquisitionRate,
   computeCounters,
   computeProgression,
   draftTraces,
   greetingFact,
+  progressionParts,
   progressionSummary,
 } from '../../app/utils/tableau-de-bord'
 
@@ -223,5 +225,36 @@ describe('progressionSummary', () => {
     expect(progressionSummary({ acquired: 0, inProgress: 0, notAcquired: 0, pending: 0 })).toBe(
       'aucune trace associée',
     )
+  })
+})
+
+describe('progressionParts', () => {
+  it('donne les états présents, dans l’ordre des segments de la barre', () => {
+    expect(progressionParts({ acquired: 2, inProgress: 0, notAcquired: 1, pending: 3 })).toEqual([
+      { key: 'acquired', count: 2, label: 'acquis' },
+      { key: 'notAcquired', count: 1, label: 'non acquis' },
+      { key: 'pending', count: 3, label: 'en attente' },
+    ])
+  })
+
+  it('ne donne rien pour une compétence sans évaluation', () => {
+    expect(progressionParts({ acquired: 0, inProgress: 0, notAcquired: 0, pending: 0 })).toEqual(
+      [],
+    )
+  })
+})
+
+describe('acquisitionRate', () => {
+  it.each([
+    [3, 8, 38],
+    [16, 26, 62],
+    [0, 4, 0],
+    [5, 5, 100],
+  ])('%i acquises sur %i : %i %%', (acquired, total, rate) => {
+    expect(acquisitionRate(acquired, total)).toBe(rate)
+  })
+
+  it('n’invente pas de taux sans évaluation', () => {
+    expect(acquisitionRate(0, 0)).toBeNull()
   })
 })
