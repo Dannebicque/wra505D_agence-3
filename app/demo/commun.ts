@@ -127,7 +127,7 @@ export const AIDES: Record<string, Aide> = {
       'Le tableau de bord résume votre progression : traces déposées, évaluations reçues et compétences travaillées cette année.',
     etapes: [
       'Les barres montrent, pour chaque compétence, la part acquise, en cours ou en attente.',
-      'La rubrique « À faire » signale les brouillons à terminer.',
+      'La rubrique « À terminer » liste vos brouillons : choisissez-en un pour le reprendre.',
       'Déposez une trace dès qu’un projet est terminé : l’évaluation est plus rapide.',
     ],
   },
