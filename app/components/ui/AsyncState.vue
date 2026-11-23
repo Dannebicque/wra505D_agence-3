@@ -35,9 +35,17 @@ const errorMessage = computed(() => {
     <p role="status" class="sr-only">{{ isLoading ? 'Chargement…' : '' }}</p>
 
     <div v-if="isLoading" aria-hidden="true" :data-skeleton="skeleton ?? 'bloc'">
-      <!-- Cartes de liste : bordure, p-4, un titre et une ligne de détail (≈ 80 px) -->
+      <!--
+        Cartes de liste : bordure, p-4, titre, détail et pastilles ou actions. Hauteurs mesurées
+        (Mes traces, pages d'un portfolio, traces d'une page) : 104 à 120 px sur ordinateur, 111 à
+        179 px sur téléphone, où les actions passent sous le titre
+      -->
       <div v-if="skeleton === 'liste'" class="space-y-3">
-        <USkeleton v-for="n in skeletonCount" :key="n" class="h-20 w-full rounded-feuille" />
+        <USkeleton
+          v-for="n in skeletonCount"
+          :key="n"
+          class="h-36 w-full rounded-feuille sm:h-28"
+        />
       </div>
 
       <!-- Tableau de bord : quatre tuiles (deux par ligne sur téléphone), puis un panneau -->
