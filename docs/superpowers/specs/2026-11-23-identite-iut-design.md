@@ -14,14 +14,14 @@ Toutes les palettes sont écrites en `oklch()` dans `app/assets/css/main.css` (T
 
 | Jeton | Ancre | Rôle | Part de la surface |
 |---|---|---|---|
-| `violet` (= `primary`) | `#4D3677` ≈ nuance 700 | boutons principaux, liens, élément de navigation actif, anneau de focus, cases cochées | faible |
-| `or` (nouvelle couleur, accent) | `#F7B000` ≈ nuance 400 | marqueurs rares : trait de l'élément de navigation actif, pastille du nombre de notifications, `::selection`, détail du logo | très faible (< 5 %) |
+| `prune` (= `primary` ; pas `violet`, déjà pris par Tailwind) | `#4D3677` ≈ nuance 700 | boutons principaux, liens, élément de navigation actif, anneau de focus, cases cochées | faible |
+| `or` (nouvelle couleur, accent ; pas `yellow`, déjà pris) | `#F7B000` ≈ nuance 400 | marqueurs rares : trait de l'élément de navigation actif, pastille du nombre de notifications, `::selection`, détail du logo | très faible (< 5 %) |
 | `neutral` | à choisir : `slate` ou un neutre très légèrement teinté vers le violet (C ≤ 0,01) | fonds, textes, bordures | majoritaire |
 
 Règles de contraste (à vérifier, valeurs mesurées sur les ancres) :
 
-- violet 700 sur blanc ≈ 10:1 → texte et boutons en mode clair. En mode sombre, violet 700 sur le fond ≈ 1,8:1 → utiliser violet 300/400 (texte foncé sur bouton plein).
-- **jaune sur blanc ≈ 1,9:1 → jamais de texte jaune ni d'information portée par le jaune seul sur fond clair.** Le jaune sert de fond sous un texte très foncé (violet 950 ou neutre 900, ≈ 11:1) ou de décor non porteur d'information. Jaune sur violet ≈ 5,3:1 (AA).
+- prune 700 sur blanc ≈ 10:1 → texte et boutons en mode clair. En mode sombre, prune 700 sur le fond ≈ 1,8:1 → utiliser prune 300/400 (texte foncé sur bouton plein).
+- **jaune sur blanc ≈ 1,9:1 → jamais de texte jaune ni d'information portée par le jaune seul sur fond clair.** Le jaune sert de fond sous un texte très foncé (prune 950 ou neutre 900, ≈ 11:1) ou de décor non porteur d'information. Jaune sur violet ≈ 5,3:1 (AA).
 - l'anneau de focus reste violet (clair) / violet clair (sombre), contraste ≥ 3:1 avec le fond.
 - `warning` (ambre) reste distinct de l'accent `or` : l'ambre signale un état, l'or ne signale rien.
 
