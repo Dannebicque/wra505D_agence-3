@@ -50,9 +50,20 @@ test.describe('tableau de bord étudiant', () => {
       .getByRole('listitem')
       .filter({ hasText: 'Business model d’une appli de covoiturage' })
     const before = await card.evaluate((el) => getComputedStyle(el).backgroundColor)
-    await card.getByRole('link').focus()
+    const link = card.getByRole('link')
+    await link.focus()
     await expect
       .poll(() => card.evaluate((el) => getComputedStyle(el).backgroundColor))
       .not.toBe(before)
+    // Comme au survol, le titre se souligne
+    expect(await link.evaluate((el) => getComputedStyle(el).textDecorationLine)).toBe('underline')
+  })
+
+  test('tient en 320 px sans défilement horizontal', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 800 })
+    const overflow = await page
+      .getByRole('main')
+      .evaluate((main) => main.scrollWidth - main.clientWidth)
+    expect(overflow).toBeLessThanOrEqual(0)
   })
 })

@@ -9,7 +9,9 @@
  * segment avec le panneau (WCAG 1.4.11, 3:1 au moins), clair puis sombre, mesuré sur `bg-muted`
  * (le plus défavorable) : acquis (prune 700 / prune 200) 9,28 / 10,67 ; non acquis (error 700 /
  * 400) 5,99 / 5,54 ; en cours (prune 500) 4,02 / 3,72 ; en attente (gris 500) 4,46 / 3,35.
- * Pas de transparence : la couleur ne dépend pas du panneau sous la barre.
+ * Pas de transparence : la couleur ne dépend pas du panneau sous la barre. La piste (≈ 1,2:1 sur
+ * le panneau) est un repère d'échelle décoratif : la longueur des segments porte la comparaison,
+ * et les valeurs sont écrites à côté.
  */
 export const PROGRESSION_SEGMENTS = [
   { key: 'acquired', label: 'Acquis', class: 'bg-primary dark:bg-(--ui-color-primary-200)' },

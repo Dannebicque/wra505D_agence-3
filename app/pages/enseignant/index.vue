@@ -207,8 +207,8 @@ const firstPending = pending[0]
         </div>
         <!--
           Classement : le plus de traces en attente d'abord, une barre par étudiant à la même
-          échelle (décorative : le nombre est écrit). Gris 500 / 400 : la couleur « en attente »,
-          4,79 / 6,87:1 sur le fond et 3,78 / 5,58:1 au survol (bg-elevated), clair / sombre.
+          échelle (décorative : le nombre est écrit). Gris 500 en clair (comme « en attente »), 400 en sombre
+          (le 500 tomberait à 3,0:1 au survol) : 4,79 / 6,87:1 sur le fond, 3,78 / 5,58:1 au survol.
         -->
         <ul v-if="studentsWithPending.length" class="-mx-2 mt-4 space-y-1">
           <li

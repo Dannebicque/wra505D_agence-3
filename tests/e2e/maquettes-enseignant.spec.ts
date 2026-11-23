@@ -74,13 +74,22 @@ test('le tableau de bord met en avant la répartition des évaluations', async (
     .getByRole('list', { name: 'Répartition des évaluations par compétence' })
     .getByRole('listitem')
   await expect(rows).toHaveCount(5)
-  await expect(rows.first()).toContainText(/acquis|en cours|non acquis|en attente/)
+  await expect(rows.first()).toContainText('3 acquis · 2 en attente')
 
   // Étudiants classés par nombre de traces en attente, le plus chargé d'abord
   const etudiants = page
     .getByRole('region', { name: 'Étudiants ayant des travaux en attente' })
     .getByRole('listitem')
   await expect(etudiants.first()).toContainText(/Yanis Richard\s*4\s*traces/)
+})
+
+test('le tableau de bord tient en 320 px sans défilement horizontal', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 })
+  await gotoHydrated(page, '/enseignant')
+  const overflow = await page
+    .getByRole('main')
+    .evaluate((main) => main.scrollWidth - main.clientWidth)
+  expect(overflow).toBeLessThanOrEqual(0)
 })
 
 test('la liste des étudiants tient en 375 px sans défilement horizontal', async ({ page }) => {

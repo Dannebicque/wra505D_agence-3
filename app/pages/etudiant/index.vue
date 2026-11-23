@@ -124,7 +124,7 @@ const dayMonth = new Intl.DateTimeFormat('fr-FR', {
             >
               <NuxtLink
                 :to="`/etudiant/traces/${idFromIri(trace['@id'])}`"
-                class="block font-medium leading-titre break-words text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille group-hover:underline"
+                class="block font-medium leading-titre break-words text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille group-hover:underline group-has-focus-visible:underline"
               >
                 {{ trace.titre }}
               </NuxtLink>
