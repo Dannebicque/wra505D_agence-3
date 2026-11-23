@@ -61,6 +61,8 @@ class TraceTest extends ApiTestCase
         $demain = (new \DateTimeImmutable('tomorrow', new \DateTimeZone('Europe/Paris')))->format('Y-m-d');
 
         yield 'titre vide' => [['titre' => '   '], 'titre', 'Le titre est obligatoire.'];
+        yield 'titre en espaces insécables' => [['titre' => "\u{00A0}\u{2003}"], 'titre', 'Le titre est obligatoire.'];
+        yield 'titre de 51 émojis (102 unités UTF-16)' => [['titre' => str_repeat('😀', 51)], 'titre', 'Le titre ne doit pas dépasser 100 caractères.'];
         yield 'titre trop long' => [['titre' => str_repeat('é', 101)], 'titre', 'Le titre ne doit pas dépasser 100 caractères.'];
         yield 'description trop longue' => [['description' => str_repeat('a', 5001)], 'description', 'La description ne doit pas dépasser 5 000 caractères.'];
         yield 'contexte trop long' => [['contexte' => str_repeat('a', 256)], 'contexte', 'Le contexte ne doit pas dépasser 255 caractères.'];
@@ -75,11 +77,13 @@ class TraceTest extends ApiTestCase
         yield 'vidéo sans hôte' => [['type' => 'video', 'contenu' => ['https://']], 'contenu', 'Saisissez une adresse web valide, commençant par https:// ou http://.'];
         yield 'image hors des fichiers déposés' => [['type' => 'image', 'legende' => 'Un chat', 'contenu' => ['/etc/passwd']], 'contenu', 'Fichier invalide.'];
         yield 'image finalisée sans légende' => [['type' => 'image', 'contenu' => ['/fichiers/ancien.png']], 'legende', 'Ajoutez une légende décrivant l’image avant de finaliser.'];
+        yield 'légende en espace insécable' => [['type' => 'image', 'contenu' => ['/fichiers/ancien.png'], 'legende' => "\u{00A0}"], 'legende', 'Ajoutez une légende décrivant l’image avant de finaliser.'];
         yield 'légende trop longue' => [['legende' => str_repeat('a', 101)], 'legende', 'La légende ne doit pas dépasser 100 caractères.'];
         yield 'conception IA inconnue' => [['conceptionIa' => 'beaucoup'], 'conceptionIa', 'Choisissez une déclaration d’usage de l’IA.'];
         yield 'réalisation IA inconnue' => [['realisationIa' => 'beaucoup'], 'realisationIa', 'Choisissez une déclaration d’usage de l’IA.'];
         yield '30 février' => [['dateRealisation' => '2026-02-30'], 'dateRealisation', 'Saisissez une date valide.'];
         yield 'date au format français' => [['dateRealisation' => '15/01/2026'], 'dateRealisation', 'Saisissez une date valide.'];
+        yield 'an 0' => [['dateRealisation' => '0000-01-01'], 'dateRealisation', 'Saisissez une date valide.'];
         yield 'date future' => [['dateRealisation' => $demain], 'dateRealisation', 'La date de réalisation ne peut pas être dans le futur.'];
     }
 
@@ -94,14 +98,57 @@ class TraceTest extends ApiTestCase
         self::assertSame([[$champ, $message]], array_map(static fn (array $v) => [$v['propertyPath'], $v['message']], $reponse['violations']));
     }
 
-    public function testValeurDuMauvaisTypeEn422(): void
+    public function testPlusieursErreursDansLOrdreDuFormulaire(): void
     {
         $this->connecter('etudiant');
 
-        $reponse = $this->envoyer('POST', '/api/traces', [...self::LIEN, 'titre' => 12]);
+        $reponse = $this->envoyer('POST', '/api/traces', ['titre' => '', 'type' => 'audio', 'statut' => 'finalisee', 'conceptionIa' => 'x', 'dateRealisation' => 'hier']);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSame('titre', $reponse['violations'][0]['propertyPath']);
+        self::assertSame(['titre', 'type', 'contenu', 'conceptionIa', 'dateRealisation'], array_column($reponse['violations'], 'propertyPath'));
+    }
+
+    /** Le front n'envoie jamais ces valeurs : le message est générique, mais le champ fautif est désigné. */
+    public static function typesInattendus(): iterable
+    {
+        yield 'titre nombre' => ['titre', 12];
+        yield 'statut nul' => ['statut', null];
+        yield 'contenu chaîne' => ['contenu', 'https://exemple.fr'];
+    }
+
+    #[DataProvider('typesInattendus')]
+    public function testValeurDuMauvaisTypeEn422(string $champ, mixed $valeur): void
+    {
+        $this->connecter('etudiant');
+
+        $reponse = $this->envoyer('POST', '/api/traces', [...self::LIEN, $champ => $valeur]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame($champ, $reponse['violations'][0]['propertyPath']);
+    }
+
+    public function testCaractereNulRetire(): void
+    {
+        $this->connecter('etudiant');
+
+        self::assertSame('ab', $this->creer(['titre' => "a\u{0000}b"])['titre']);
+    }
+
+    public function testCorpsReduitAUneIriRefuse(): void
+    {
+        $this->connecter('etudiant');
+        $premiere = $this->creer();
+        $seconde = $this->creer(['titre' => 'Seconde']);
+
+        // POST : ne doit pas « recréer » la trace existante
+        $this->client->request('POST', '/api/traces', server: ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/ld+json'], content: json_encode($premiere['@id']));
+        self::assertResponseStatusCodeSame(422);
+        // PATCH : ne doit pas modifier une autre trace que celle de l'URL
+        $this->client->request('PATCH', $premiere['@id'], server: ['CONTENT_TYPE' => 'application/merge-patch+json', 'HTTP_ACCEPT' => 'application/ld+json'], content: json_encode($seconde['@id']));
+        self::assertContains($this->client->getResponse()->getStatusCode(), [400, 422]);
+        self::assertSame('Seconde', $this->lire($seconde['@id'])['titre']);
+
+        self::assertSame($premiere['dateCreation'], $this->lire($premiere['@id'])['dateCreation']);
     }
 
     public function testModifiePartiellementSansToucherAuxChampsDuServeur(): void
@@ -120,6 +167,7 @@ class TraceTest extends ApiTestCase
         self::assertSame('Avant', $modifiee['description']);
         self::assertSame($trace['bibliotheque'], $modifiee['bibliotheque']);
         self::assertSame($trace['dateCreation'], $modifiee['dateCreation']);
+        self::assertGreaterThanOrEqual($trace['dateModification'], $modifiee['dateModification']);
         self::assertNull($modifiee['dateSuppression']);
     }
 
@@ -166,14 +214,31 @@ class TraceTest extends ApiTestCase
         self::assertSame('Mon site', $this->connection->fetchOne('SELECT titre FROM trace WHERE id = ?', [basename($iri)]));
     }
 
-    public function testEnseignantNAccedePasAuxTraces(): void
+    /** Évaluation des traces par les enseignants : Sprint 3. */
+    public static function nonEtudiants(): iterable
     {
-        $this->connecter('enseignant');
+        yield 'enseignant' => ['enseignant'];
+        yield 'admin' => ['admin'];
+    }
+
+    #[DataProvider('nonEtudiants')]
+    public function testSeulLEtudiantAccedeAuxTraces(string $compte): void
+    {
+        $this->connecter('etudiant');
+        $trace = $this->creer()['@id'];
+        $this->connecter($compte);
 
         $this->lire('/api/traces');
         self::assertResponseStatusCodeSame(403);
         $this->envoyer('POST', '/api/traces', self::LIEN);
         self::assertResponseStatusCodeSame(403);
+        foreach (['GET', 'PATCH', 'DELETE'] as $methode) {
+            $this->envoyer($methode, $trace, 'GET' === $methode ? null : ['titre' => 'Pirate']);
+            self::assertContains($this->client->getResponse()->getStatusCode(), [403, 404], $methode);
+        }
+        $this->lire($this->bibliotheque('etudiant'));
+        self::assertContains($this->client->getResponse()->getStatusCode(), [403, 404]);
+        self::assertSame('Mon site', $this->connection->fetchOne('SELECT titre FROM trace WHERE id = ?', [basename($trace)]));
     }
 
     public function testSuppressionDouceDansLaCorbeille(): void
@@ -224,6 +289,9 @@ class TraceTest extends ApiTestCase
         $this->connecter('etudiant2');
         $creee = $this->creer()['bibliotheque'];
         self::assertSame($this->bibliotheque('etudiant2'), $creee);
+        $bibliotheque = $this->lire($creee);
+        self::assertStringStartsWith('/api/annees/', $bibliotheque['annee']);
+        self::assertStringStartsWith('/api/annee_universitaires/', $bibliotheque['anneeUniversitaire']);
     }
 
     private function creer(array $champs = []): array

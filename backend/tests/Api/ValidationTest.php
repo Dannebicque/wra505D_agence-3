@@ -139,6 +139,18 @@ class ValidationTest extends ApiTestCase
         self::assertResponseStatusCodeSame(404);
     }
 
+    public function testCorpsReduitAUneIriNeRemetPasEnAttente(): void
+    {
+        $this->connecter('etudiant');
+        $validation = $this->associer($this->trace(), $this->niveau());
+        $this->connection->executeStatement('UPDATE validation SET etat = 3 WHERE id = ?', [basename($validation)]);
+
+        $this->client->request('POST', '/api/validations', server: ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/ld+json'], content: json_encode($validation));
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame(3, $this->lire($validation)['etat']);
+    }
+
     public function testEnseignantNAccedePasAuxValidationsCeSprint(): void
     {
         $this->connecter('enseignant');

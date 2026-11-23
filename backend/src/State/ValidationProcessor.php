@@ -4,10 +4,12 @@ namespace App\State;
 
 use ApiPlatform\Metadata\DeleteOperationInterface;
 use ApiPlatform\Metadata\Operation;
+use ApiPlatform\Metadata\Post;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Validation;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 
 /**
  * Association d'un niveau à une trace par l'étudiant : la validation part toujours en attente, sans enseignant.
@@ -36,6 +38,10 @@ final class ValidationProcessor implements ProcessorInterface
             return null;
         }
 
+        // Corps réduit à l'IRI d'une validation existante : sans ce refus, une validation évaluée repasserait en attente
+        if ($operation instanceof Post && null !== $data->getId()) {
+            throw new UnprocessableEntityHttpException('Validation invalide.');
+        }
         $data->setEtat(0);
         $data->setEnseignant(null);
         $data->setDateCreation(new \DateTime());

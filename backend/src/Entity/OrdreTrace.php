@@ -18,7 +18,7 @@ class OrdreTrace
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\OneToOne(inversedBy: 'ordreTrace', cascade: ['persist'])]
+    #[ORM\OneToOne(cascade: ['persist'])]
     private ?Trace $trace = null;
 
     #[ORM\ManyToOne(inversedBy: 'ordreTraces')]

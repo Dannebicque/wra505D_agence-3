@@ -95,9 +95,6 @@ class Trace
     #[ORM\Column(nullable: true)]
     private ?int $ordre = null;
 
-    #[ORM\OneToOne(mappedBy: 'trace', targetEntity: OrdreTrace::class, cascade: ['persist', 'remove'], fetch: 'EAGER')]
-    private ?OrdreTrace $ordreTrace = null;
-
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $legende = null;
 
@@ -121,16 +118,6 @@ class Trace
     /** Une valeur de Trace::STATUTS : un brouillon peut être incomplet (E-TR-05). */
     #[ORM\Column(length: 20, options: ['default' => 'brouillon'])]
     private string $statut = 'brouillon';
-
-    public function getOrdreTrace(): ?OrdreTrace
-    {
-        return $this->ordreTrace;
-    }
-
-    public function setOrdreTrace(?OrdreTrace $ordreTrace): void
-    {
-        $this->ordreTrace = $ordreTrace;
-    }
 
     public function __construct()
     {
@@ -314,7 +301,7 @@ class Trace
     #[Groups(['trace:write'])]
     public function setContenu(?array $contenu): self
     {
-        $items = array_map(static fn (mixed $item): string => \is_string($item) ? trim($item) : '', $contenu ?? []);
+        $items = array_map(static fn (mixed $item): string => \is_string($item) ? self::nettoyer($item) : '', $contenu ?? []);
         $this->contenu = array_values(array_filter($items, static fn (string $item): bool => '' !== $item));
 
         return $this;
@@ -329,7 +316,7 @@ class Trace
     #[Groups(['trace:write'])]
     public function setTitre(?string $titre): self
     {
-        $this->titre = null === $titre ? null : trim($titre);
+        $this->titre = null === $titre ? null : self::nettoyer($titre);
 
         return $this;
     }
@@ -402,7 +389,8 @@ class Trace
     {
         $jour = self::texteOptionnel($jour);
         $date = null === $jour ? null : \DateTime::createFromFormat('!Y-m-d', $jour);
-        $valide = null === $jour || (false !== $date && $date->format('Y-m-d') === $jour);
+        // L'an 0 n'existe pas pour PostgreSQL (erreur 500 sinon)
+        $valide = null === $jour || (false !== $date && $date->format('Y-m-d') === $jour && (int) $date->format('Y') >= 1);
         $this->setDateRealisation($valide ? $date : null);
         $this->dateRealisationInvalide = !$valide;
 
@@ -471,8 +459,17 @@ class Trace
     /** Texte facultatif : sans espaces autour, null s'il est vide. */
     private static function texteOptionnel(?string $texte): ?string
     {
-        $texte = null === $texte ? null : trim($texte);
+        $texte = null === $texte ? null : self::nettoyer($texte);
 
         return '' === $texte ? null : $texte;
+    }
+
+    /**
+     * Espaces Unicode retirés autour, comme trim() de JavaScript (espace insécable compris), et caractère NUL
+     * supprimé : PostgreSQL tronquerait le texte en silence.
+     */
+    private static function nettoyer(string $texte): string
+    {
+        return mb_trim(str_replace("\0", '', $texte));
     }
 }

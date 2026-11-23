@@ -39,13 +39,13 @@ final class TraceValideValidator extends ConstraintValidator
         $titre = $trace->getTitre() ?? '';
         if ('' === $titre) {
             $echec('titre', 'Le titre est obligatoire.');
-        } elseif (mb_strlen($titre) > 100) {
+        } elseif (self::longueur($titre) > 100) {
             $echec('titre', 'Le titre ne doit pas dépasser 100 caractères.');
         }
-        if (mb_strlen($trace->getDescription() ?? '') > 5000) {
+        if (self::longueur($trace->getDescription() ?? '') > 5000) {
             $echec('description', 'La description ne doit pas dépasser 5 000 caractères.');
         }
-        if (mb_strlen($trace->getContexte() ?? '') > 255) {
+        if (self::longueur($trace->getContexte() ?? '') > 255) {
             $echec('contexte', 'Le contexte ne doit pas dépasser 255 caractères.');
         }
 
@@ -64,7 +64,7 @@ final class TraceValideValidator extends ConstraintValidator
         } elseif (\count($contenu) > 1) {
             // Plusieurs fichiers ou liens par trace : fonctionnalité E-TR-03 retirée
             $echec('contenu', 'Une seule adresse par trace.');
-        } elseif (array_filter($contenu, static fn (string $item): bool => mb_strlen($item) > 2048)) {
+        } elseif (array_filter($contenu, static fn (string $item): bool => self::longueur($item) > 2048)) {
             $echec('contenu', 'L’adresse ne doit pas dépasser 2 048 caractères.');
         } elseif (\in_array($type, ['lien', 'video'], true) && array_filter($contenu, static fn (string $item): bool => !self::estAdresseWeb($item))) {
             $echec('contenu', 'Saisissez une adresse web valide, commençant par https:// ou http://.');
@@ -74,7 +74,7 @@ final class TraceValideValidator extends ConstraintValidator
 
         // Légende d'une image : son texte alternatif (accessibilité), obligatoire pour finaliser
         $legende = $trace->getLegende();
-        if (mb_strlen($legende ?? '') > 100) {
+        if (self::longueur($legende ?? '') > 100) {
             $echec('legende', 'La légende ne doit pas dépasser 100 caractères.');
         } elseif ('image' === $type && $finalisee && null === $legende) {
             $echec('legende', 'Ajoutez une légende décrivant l’image avant de finaliser.');
@@ -120,7 +120,16 @@ final class TraceValideValidator extends ConstraintValidator
         return null !== $fichier && \in_array($fichier->getMimeType(), Fichier::REGLES[$type]['types'], true);
     }
 
-    /** Comme `new URL()` du navigateur limité à http(s) : un schéma web et un hôte, sans espace. */
+    /** Longueur comptée comme `.length` en JavaScript (unités UTF-16 : un émoji compte 2), pour refuser ce que le front refuse. */
+    private static function longueur(string $texte): int
+    {
+        return intdiv(\strlen((string) mb_convert_encoding($texte, 'UTF-16LE', 'UTF-8')), 2);
+    }
+
+    /**
+     * Adresse web : schéma http(s), un hôte, aucun espace. Plus strict que `new URL()` du navigateur, qui accepte
+     * « https:exemple.fr » ou un espace dans le chemin (choix noté dans backend/README.md).
+     */
     private static function estAdresseWeb(string $adresse): bool
     {
         $parties = parse_url($adresse);

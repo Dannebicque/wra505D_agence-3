@@ -11,6 +11,7 @@ use App\Entity\Users;
 use App\Repository\BibliothequeRepository;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
 use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
@@ -32,6 +33,11 @@ final class TraceProcessor implements ProcessorInterface
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): ?Trace
     {
         $maintenant = new \DateTimeImmutable();
+        // Un corps réduit à l'IRI d'une trace existante ("/api/traces/1") est accepté par le désérialiseur :
+        // il ne doit ni recréer cette trace (POST) ni en modifier une autre que celle de l'URL (PATCH)
+        if (($operation instanceof Post && null !== $data->getId()) || (isset($uriVariables['id']) && $data->getId() !== (int) $uriVariables['id'])) {
+            throw new UnprocessableEntityHttpException('Trace invalide.');
+        }
 
         if ($operation instanceof DeleteOperationInterface) {
             $data->setDateSuppression($maintenant);
