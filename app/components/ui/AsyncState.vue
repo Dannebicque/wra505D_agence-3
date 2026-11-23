@@ -50,15 +50,15 @@ const errorMessage = computed(() => {
 
       <!--
         Tableau de bord : panneau de progression (2 colonnes sur 3), puis une colonne avec les
-        chiffres et un panneau de liste. Hauteurs mesurées sur /etudiant : panneau ≈ 490 px, chiffres
-        ≈ 190 à 200 px, liste ≈ 200 à 260 px
+        chiffres et un panneau de liste. Hauteurs mesurées sur /etudiant : panneau ≈ 490 px sur
+        ordinateur et ≈ 570 px sur téléphone, chiffres ≈ 190 à 200 px, liste ≈ 236 à 264 px
       -->
       <div v-else-if="skeleton === 'tuiles'" class="grid gap-4 lg:grid-cols-3 lg:gap-6">
-        <USkeleton class="h-120 rounded-panneau lg:col-span-2 lg:row-span-2" />
+        <USkeleton class="h-144 rounded-panneau lg:col-span-2 lg:row-span-2 lg:h-120" />
         <div class="space-y-3">
-          <USkeleton v-for="n in 3" :key="n" class="h-12 w-full" />
+          <USkeleton v-for="n in 3" :key="n" class="h-14 w-full" />
         </div>
-        <USkeleton class="h-52 rounded-panneau lg:h-64" />
+        <USkeleton class="h-60 rounded-panneau lg:h-64" />
       </div>
 
       <!-- Formulaire : libellé puis champ (hauteur d'un UInput), champs espacés de 6 pas -->
