@@ -16,6 +16,10 @@ api_platform:
         # Le contrat du front (shared/types) déclare les champs nullables toujours présents
         normalization_context:
             skip_null_values: false
+        # Identifiant entier entre 1 et 2147483647 (entier PostgreSQL) : au-delà, la route ne correspond pas (404)
+        # au lieu d'une erreur 500 « Numeric value out of range » ; vaut aussi pour une IRI dans un corps de requête.
+        requirements:
+            id: '0*(?:[1-9]\d{0,8}|1\d{9}|20\d{8}|21[0-3]\d{7}|214[0-6]\d{6}|2147[0-3]\d{5}|21474[0-7]\d{4}|214748[0-2]\d{3}|2147483[0-5]\d{2}|21474836[0-3]\d|214748364[0-7])'
         cache_headers:
             vary: ['Content-Type', 'Authorization', 'Origin']
 

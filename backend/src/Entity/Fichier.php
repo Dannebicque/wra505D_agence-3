@@ -25,6 +25,8 @@ use Symfony\Component\Uid\Uuid;
     ],
     normalizationContext: ['groups' => ['fichier:read']],
     security: "is_granted('ROLE_ETUDIANT')",
+    // Identifiant UUID (la contrainte par défaut d'api_platform.yaml vise les entiers)
+    requirements: ['id' => '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'],
 )]
 #[ORM\Entity(repositoryClass: FichierRepository::class)]
 class Fichier
