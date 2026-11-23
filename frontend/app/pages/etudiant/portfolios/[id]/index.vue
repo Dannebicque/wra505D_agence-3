@@ -207,23 +207,25 @@ const traceCount = (page: PageItem) =>
 
 <template>
   <div>
-    <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
-
-    <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0">
+    <!--
+      Action principale de l'écran : « Publier », dans le panneau de publication (qui dit ce
+      qu'elle fait). L'enregistrement des informations est une action secondaire de sa section.
+    -->
+    <UiEnTetePage titre="Modifier le portfolio">
+      <template #avant>
+        <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
+      </template>
+      <template #titre>
         <!-- Le titre de la carte de « Mes portfolios » s'y transforme (même nom de transition) -->
-        <h1
-          class="font-titre text-2xl text-highlighted sm:text-3xl"
-          :style="{ viewTransitionName: `portfolio-${portfolio.id}-titre` }"
-        >
+        <span class="block" :style="{ viewTransitionName: `portfolio-${portfolio.id}-titre` }">
           Modifier le portfolio
-        </h1>
-        <p class="mt-2 max-w-mesure text-muted">
-          {{ intitule }} · année {{ portfolio.annee }} · modifié le
-          {{ formatDate(portfolio.dateModification) }}
-        </p>
+        </span>
+      </template>
+      <template #chapeau>
+        {{ intitule }} · année {{ portfolio.annee }} · modifié le
+        {{ formatDate(portfolio.dateModification) }}
         <!-- Mobile et tablette : le panneau de publication suit le contenu, son état est rappelé ici -->
-        <p class="mt-2 text-sm text-default lg:hidden">
+        <span class="mt-2 block text-sm text-default lg:hidden">
           Portfolio {{ statusSummary }} ·
           <a
             href="#publication-panneau"
@@ -231,17 +233,19 @@ const traceCount = (page: PageItem) =>
           >
             Gérer la publication
           </a>
-        </p>
-      </div>
-      <UButton
-        :to="`/etudiant/portfolios/${portfolio.id}/apercu`"
-        icon="i-lucide-eye"
-        color="neutral"
-        variant="outline"
-      >
-        Prévisualiser
-      </UButton>
-    </div>
+        </span>
+      </template>
+      <template #actions>
+        <UButton
+          :to="`/etudiant/portfolios/${portfolio.id}/apercu`"
+          icon="i-lucide-eye"
+          color="neutral"
+          variant="outline"
+        >
+          Prévisualiser
+        </UButton>
+      </template>
+    </UiEnTetePage>
 
     <div class="mt-8 grid gap-6 lg:grid-cols-[1fr_18rem] lg:gap-8">
       <div class="min-w-0 space-y-12">
@@ -256,6 +260,8 @@ const traceCount = (page: PageItem) =>
               visibleRecruteurs: false,
             }"
             submit-label="Enregistrer les informations"
+            submit-icon="i-lucide-save"
+            secondary-submit
             @submit="onSubmit"
           />
           <p role="status" class="mt-3 text-sm text-muted" :class="{ 'sr-only': !formMessage }">
@@ -318,7 +324,7 @@ const traceCount = (page: PageItem) =>
                 Annuler
               </UButton>
               <UButton type="submit" icon="i-lucide-plus" :loading="isCreating">
-                Ajouter la page
+                {{ isCreating ? 'Ajout…' : 'Ajouter la page' }}
               </UButton>
             </div>
           </form>
@@ -339,7 +345,8 @@ const traceCount = (page: PageItem) =>
             :status="pagesStatus"
             :error="pagesLoadError"
             :empty="pages.length === 0"
-            empty-message="Aucune page pour l’instant. Ajoutez une page pour chacun de vos projets."
+            empty-title="Aucune page pour l’instant"
+            empty-message="Une page par projet : ajoutez-en une avec « Ajouter une page », puis rangez-y les traces du projet."
             skeleton="liste"
             class="mt-4"
             @retry="refreshPages()"

@@ -40,6 +40,20 @@ const resultLabel = computed(() =>
     : `${filtered.value.length} ${filtered.value.length > 1 ? 'traces' : 'trace'}`,
 )
 
+// Chapeau : le fait du jour (« 8 traces, dont 2 brouillons à terminer »), une fois la liste chargée
+const chapeau = computed(() => {
+  const total = items.value.length
+  if (status.value !== 'success' || total === 0) {
+    return 'Vos productions, à relier aux compétences puis à ranger dans vos portfolios.'
+  }
+  const drafts = items.value.filter(({ trace }) => trace.statut === 'brouillon').length
+  const count = `${total} ${total > 1 ? 'traces' : 'trace'}`
+  if (drafts === 0) return `${count}, ${total > 1 ? 'toutes finalisées' : 'finalisée'}.`
+  return `${count}, dont ${drafts} ${drafts > 1 ? 'brouillons' : 'brouillon'} à terminer.`
+})
+/** Liste vide : l'état vide porte l'action principale, l'en-tête n'en répète pas une seconde. */
+const isEmpty = computed(() => status.value === 'success' && items.value.length === 0)
+
 const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
   day: 'numeric',
   month: 'long',
@@ -50,20 +64,28 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
 
 <template>
   <div>
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mes traces</h1>
-      <UButton to="/etudiant/traces/nouvelle" icon="i-lucide-plus">Nouvelle trace</UButton>
-    </div>
+    <UiEnTetePage titre="Mes traces" :chapeau="chapeau">
+      <template v-if="!isEmpty" #actions>
+        <UButton to="/etudiant/traces/nouvelle" icon="i-lucide-plus">Nouvelle trace</UButton>
+      </template>
+    </UiEnTetePage>
 
     <UiAsyncState
       :status="status"
       :error="error"
       :empty="items.length === 0"
-      empty-message="Vous n’avez encore déposé aucune trace. Commencez par « Nouvelle trace »."
+      empty-title="Aucune trace pour l’instant"
+      empty-message="Vous n’avez encore déposé aucune trace. Une trace est une production (lien, vidéo, image ou PDF) qui montre ce que vous savez faire."
       skeleton="liste"
       class="mt-8"
       @retry="refresh()"
     >
+      <template #empty-action>
+        <UButton to="/etudiant/traces/nouvelle" icon="i-lucide-plus">
+          Déposer ma première trace
+        </UButton>
+      </template>
+
       <section aria-labelledby="filtres" class="rounded-panneau bg-muted p-4 sm:p-6">
         <h2 id="filtres" class="sr-only">Filtres</h2>
         <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_auto]">

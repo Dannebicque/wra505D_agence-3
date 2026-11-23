@@ -175,7 +175,8 @@ test.describe('liste des portfolios', () => {
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
 
     await expect(page).toHaveURL(/\/etudiant\/portfolios\/1$/)
-    await expect(page.getByRole('heading', { level: 1 })).toHaveCSS(
+    // Le nom de transition est porté par le texte du titre (bloc dans le h1 de UiEnTetePage)
+    await expect(page.getByRole('heading', { level: 1 }).locator('span').first()).toHaveCSS(
       'view-transition-name',
       'portfolio-1-titre',
     )

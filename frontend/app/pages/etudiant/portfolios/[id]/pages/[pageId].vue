@@ -50,6 +50,15 @@ const breadcrumb = computed(() => [
   { label: info.value.intitule || 'Page' },
 ])
 
+// Chapeau : à quel portfolio appartient la page, et ce qu'elle contient
+const chapeau = computed(() => {
+  if (!portfolio.value) return undefined
+  const count = traces.value.length
+  const content =
+    count === 0 ? 'aucune trace pour l’instant' : `${count} ${count > 1 ? 'traces' : 'trace'}`
+  return `Page-projet du portfolio « ${portfolio.value.intitule} » : ${content}.`
+})
+
 // --- Informations de la page ---
 const state = reactive({ intitule: '', description: '' })
 watch(
@@ -191,11 +200,11 @@ const formatDay = (date: string) => dayMonthYear.format(new Date(date))
 
 <template>
   <div>
-    <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
-    <h1 class="mt-4 font-titre text-2xl text-highlighted sm:text-3xl">Modifier la page</h1>
-    <p v-if="portfolio" class="mt-2 max-w-mesure text-muted">
-      Page-projet du portfolio « {{ portfolio.intitule }} ».
-    </p>
+    <UiEnTetePage titre="Modifier la page" :chapeau="chapeau">
+      <template #avant>
+        <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
+      </template>
+    </UiEnTetePage>
 
     <UiAsyncState
       :status="status"
@@ -250,11 +259,16 @@ const formatDay = (date: string) => dayMonthYear.format(new Date(date))
                   class="w-full"
                 />
               </UFormField>
-              <div class="flex flex-wrap justify-end gap-3">
-                <UButton :to="editPath" color="neutral" variant="outline">
+              <!-- Actions en bas : le retour (tertiaire) puis l'enregistrement, action principale -->
+              <div
+                class="flex flex-col gap-2 border-t border-default pt-6 max-sm:*:justify-center sm:flex-row sm:flex-wrap sm:justify-end"
+              >
+                <UButton :to="editPath" color="neutral" variant="ghost" icon="i-lucide-arrow-left">
                   Retour au portfolio
                 </UButton>
-                <UButton type="submit" :loading="isSavingInfo">Enregistrer la page</UButton>
+                <UButton type="submit" icon="i-lucide-save" :loading="isSavingInfo">
+                  {{ isSavingInfo ? 'Enregistrement…' : 'Enregistrer la page' }}
+                </UButton>
               </div>
             </UForm>
             <div role="alert" class="mt-3 empty:hidden">
@@ -296,12 +310,15 @@ const formatDay = (date: string) => dayMonthYear.format(new Date(date))
               />
             </div>
 
-            <p
-              v-if="traces.length === 0"
-              class="mt-4 rounded-panneau bg-muted p-4 text-muted sm:p-6"
-            >
-              Cette page ne contient encore aucune trace. Ajoutez-en depuis votre bibliothèque.
-            </p>
+            <!-- État vide : ce qui manque, et où se trouve l'étape suivante -->
+            <div v-if="traces.length === 0" class="mt-4 rounded-panneau border border-default p-6">
+              <p class="leading-titre font-semibold text-highlighted">
+                Aucune trace dans cette page
+              </p>
+              <p class="mt-1 max-w-mesure text-muted">
+                Cochez vos traces finalisées dans « Ajouter des traces », puis ajoutez la sélection.
+              </p>
+            </div>
             <PortfolioOrderedList
               v-else
               v-model="tracesOrder"
@@ -369,8 +386,19 @@ const formatDay = (date: string) => dayMonthYear.format(new Date(date))
                 @update:model-value="onSelectionChange"
               />
             </UFormField>
-            <UButton type="submit" icon="i-lucide-plus" block :loading="isAddingTraces">
-              Ajouter la sélection<template v-if="selectedCount"> ({{ selectedCount }})</template>
+            <!-- Secondaire : l'action principale de l'écran est l'enregistrement de la page -->
+            <UButton
+              type="submit"
+              icon="i-lucide-plus"
+              color="neutral"
+              variant="outline"
+              block
+              :loading="isAddingTraces"
+            >
+              <template v-if="isAddingTraces">Ajout…</template>
+              <template v-else>
+                Ajouter la sélection<template v-if="selectedCount"> ({{ selectedCount }})</template>
+              </template>
             </UButton>
           </form>
           <p v-else class="text-sm text-muted">
@@ -390,8 +418,9 @@ const formatDay = (date: string) => dayMonthYear.format(new Date(date))
             to="/etudiant/traces/nouvelle"
             icon="i-lucide-file-plus"
             color="neutral"
-            variant="link"
-            class="px-0"
+            variant="ghost"
+            block
+            class="justify-start"
           >
             Déposer une nouvelle trace
           </UButton>

@@ -170,6 +170,7 @@ describe('écran d’une page-projet', () => {
       ),
     )
     expect(w.get('[role="checkbox"]').attributes('aria-checked')).toBe('true')
-    expect(button(w, 'Ajouter la sélection (1)')).toBeDefined()
+    // Fin de l'envoi : le libellé « Ajout… » redevient celui de l'action, avec la sélection
+    await vi.waitFor(() => expect(button(w, 'Ajouter la sélection (1)')).toBeDefined())
   })
 })

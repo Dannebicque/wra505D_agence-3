@@ -349,26 +349,34 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
       </template>
     </UCollapsible>
 
-    <div class="flex flex-wrap justify-end gap-3">
+    <!--
+      Actions en bas du formulaire : la secondaire puis la principale (à droite ; sur téléphone,
+      l'une sous l'autre, la principale en bas). Pendant l'envoi, le libellé dit ce qui se passe.
+    -->
+    <div
+      class="flex flex-col gap-2 border-t border-default pt-6 max-sm:*:justify-center sm:flex-row sm:flex-wrap sm:justify-end"
+    >
       <UButton
         type="button"
         data-action="brouillon"
         color="neutral"
         variant="outline"
+        icon="i-lucide-save"
         :loading="submitting && statut === 'brouillon'"
         :disabled="submitting"
         @click="submitAs('brouillon')"
       >
-        Enregistrer le brouillon
+        {{ submitting && statut === 'brouillon' ? 'Enregistrement…' : 'Enregistrer le brouillon' }}
       </UButton>
       <UButton
         type="button"
         data-action="finaliser"
+        icon="i-lucide-send"
         :loading="submitting && statut === 'finalisee'"
         :disabled="submitting"
         @click="submitAs('finalisee')"
       >
-        Finaliser la trace
+        {{ submitting && statut === 'finalisee' ? 'Finalisation…' : 'Finaliser la trace' }}
       </UButton>
     </div>
   </UForm>
