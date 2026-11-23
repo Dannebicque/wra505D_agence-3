@@ -35,13 +35,14 @@ useSeoMeta({ title })
   <UApp :locale="fr" :scroll-body="false">
     <LayoutSkipLink />
     <NuxtLayout name="default">
-      <div class="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-16 sm:py-24">
+      <!-- Échelle d'espacement : code ↔ titre 1, titre → texte 4, texte → action 8 -->
+      <div class="mx-auto max-w-2xl px-4 py-12">
         <p class="text-sm text-muted">Erreur {{ error.statusCode }}</p>
-        <h1 class="font-titre text-4xl text-highlighted">{{ title }}</h1>
-        <p class="text-lg text-muted">{{ description }}</p>
-        <div>
-          <UButton size="lg" @click="clearError({ redirect: homePath })">{{ homeLabel }}</UButton>
-        </div>
+        <h1 class="mt-1 font-titre text-4xl text-highlighted">{{ title }}</h1>
+        <p class="mt-4 max-w-mesure text-lg text-muted">{{ description }}</p>
+        <UButton class="mt-8" size="lg" @click="clearError({ redirect: homePath })">
+          {{ homeLabel }}
+        </UButton>
       </div>
     </NuxtLayout>
   </UApp>
