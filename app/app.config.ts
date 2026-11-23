@@ -39,6 +39,15 @@ export default defineAppConfig({
     radioGroup: { slots: { base: 'ring-contour' } },
     // Interrupteur éteint : piste en contour (le curseur, bg-default, s'y détache à 3,7:1 au moins)
     switch: { slots: { base: 'data-[state=unchecked]:bg-contour' } },
+    // Fil d'Ariane sous `sm` : les libellés passent à la ligne au lieu d'être tronqués (à 320 px,
+    // « Mes portfolios › Portfolio… › … » ne laissait plus rien lire, WCAG 1.4.10)
+    breadcrumb: {
+      slots: {
+        list: 'max-sm:flex-wrap',
+        link: 'max-sm:items-start',
+        linkLabel: 'max-sm:whitespace-normal max-sm:wrap-break-word',
+      },
+    },
     button: {
       // Style éditorial : boutons en pilule
       slots: { base: 'rounded-full' },
