@@ -18,6 +18,8 @@ class IdentifiantsHorsBornesTest extends ApiTestCase
         }
         yield 'très grand' => ['/api/traces/99999999999999999999'];
         yield 'zéro' => ['/api/traces/0'];
+        yield 'zéro de tête' => ['/api/portfolios/01/public'];
+        yield 'chiffre non latin' => ['/api/portfolios/1%D9%A3/public'];
         yield 'lien public' => ['/api/portfolios/2147483648/public'];
     }
 
