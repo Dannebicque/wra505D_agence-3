@@ -14,6 +14,17 @@ describe('AsyncState', () => {
     expect(wrapper.text()).not.toContain('Contenu chargé')
   })
 
+  it('dessine un squelette à la forme du contenu attendu, caché aux lecteurs d’écran', async () => {
+    const wrapper = await mountSuspended(AsyncState, {
+      props: { status: 'pending', skeleton: 'liste', skeletonCount: 4 },
+      slots,
+    })
+
+    const skeleton = wrapper.get('[data-skeleton="liste"]')
+    expect(skeleton.attributes('aria-hidden')).toBe('true')
+    expect(skeleton.findAll('[aria-busy="true"]')).toHaveLength(4)
+  })
+
   it('affiche le message de l’erreur et propose de réessayer', async () => {
     const wrapper = await mountSuspended(AsyncState, {
       props: { status: 'error', error: new ApiError(0, 'Impossible de joindre le serveur.') },
