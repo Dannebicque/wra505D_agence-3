@@ -30,9 +30,10 @@ const auteur = etudiant ? `${etudiant.prenom} ${etudiant.nom}, ${etudiant.annee}
 
 <template>
   <div class="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-12">
+    <!-- Échelle d'espacement : marges 8, puis 12 sur grand écran ; 12 entre le portfolio et le pied -->
     <PortfolioRendu :portfolio="portfolio" :auteur="auteur" />
-    <footer class="mt-16 border-t border-default pt-6 text-sm text-muted">
-      Portfolio de compétences publié avec UniFolio.
+    <footer class="mt-12 border-t border-default pt-6 text-sm text-muted">
+      <p>Portfolio de compétences publié avec UniFolio.</p>
     </footer>
   </div>
 </template>
