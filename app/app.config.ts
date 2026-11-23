@@ -48,6 +48,9 @@ export default defineAppConfig({
         linkLabel: 'max-sm:whitespace-normal max-sm:wrap-break-word',
       },
     },
+    // Astérisque des champs requis : visuel seulement (texte de remplacement vide, `content: '*' /
+    // ''`), sinon il est lu « étoile » dans le nom du champ. Le champ porte `aria-required`.
+    formField: { variants: { required: { true: { label: "after:content-['*'_/_'']" } } } },
     button: {
       // Style éditorial : boutons en pilule
       slots: { base: 'rounded-full' },
