@@ -26,6 +26,12 @@ function validate(): FormError[] {
 
 const { onError } = useFocusFirstError()
 
+// Écran tactile : le bouton « afficher le mot de passe » passe à 44 px (bouton icône, app.config.ts).
+// Les deux champs grandissent d'autant (ils gardent la même hauteur), et le texte saisi s'arrête
+// avant le bouton au lieu de passer dessous.
+const INPUT_UI = { base: 'pointer-coarse:min-h-11' }
+const PASSWORD_UI = { base: 'pointer-coarse:min-h-11 pointer-coarse:pe-12', trailing: 'pe-1' }
+
 // Maquette : aucun appel, on signale seulement que la connexion n'est pas encore branchée
 function onSubmit() {
   hasSubmitted.value = true
@@ -54,21 +60,23 @@ const DEMO_ACCESS = [
 </script>
 
 <template>
-  <div class="mx-auto flex w-full max-w-md flex-col gap-8 px-4 py-12 sm:py-20">
-    <div>
-      <h1 class="font-titre text-4xl text-highlighted">Connexion</h1>
-      <p class="mt-3 text-muted">
-        La connexion passe par votre compte de l’IUT : utilisez l’identifiant et le mot de passe de
-        votre environnement numérique de travail (ENT).
-      </p>
-    </div>
+  <div class="mx-auto w-full max-w-md px-4 py-12">
+    <!--
+      Échelle d'espacement : titre → texte 4, chapeau → formulaire 8, champs 6, entre sections 12
+      (puis 8 sous le filet, qui rattache la section à son titre)
+    -->
+    <h1 class="font-titre text-4xl text-highlighted">Connexion</h1>
+    <p class="mt-4 max-w-mesure text-muted">
+      La connexion passe par votre compte de l’IUT : utilisez l’identifiant et le mot de passe de
+      votre environnement numérique de travail (ENT).
+    </p>
 
     <UForm
       :state="state"
       :validate="validate"
       :validate-on="['blur']"
       novalidate
-      class="flex flex-col gap-5"
+      class="mt-8 flex flex-col gap-6"
       @submit="onSubmit"
       @error="onError"
     >
@@ -80,6 +88,7 @@ const DEMO_ACCESS = [
           spellcheck="false"
           size="lg"
           class="w-full"
+          :ui="INPUT_UI"
         />
       </UFormField>
 
@@ -91,7 +100,7 @@ const DEMO_ACCESS = [
           autocomplete="current-password"
           size="lg"
           class="w-full"
-          :ui="{ trailing: 'pe-1' }"
+          :ui="PASSWORD_UI"
         >
           <template #trailing>
             <UButton
@@ -108,35 +117,40 @@ const DEMO_ACCESS = [
         </UInput>
       </UFormField>
 
-      <!-- Zone annoncée présente dès le départ : son contenu est lu quand il apparaît -->
-      <div role="status">
-        <UAlert
-          v-if="hasSubmitted"
-          color="neutral"
-          variant="subtle"
-          icon="i-lucide-info"
-          title="La connexion n’est pas encore disponible"
-          description="Le lien avec les comptes de l’IUT arrive bientôt. Utilisez l’accès de démonstration ci-dessous."
-        />
+      <div>
+        <UButton type="submit" size="lg" block>Se connecter</UButton>
+        <!--
+          Zone annoncée présente dès le départ : son contenu est lu quand il apparaît. Sous le
+          bouton, elle ne le déplace pas sous le doigt ou le pointeur en apparaissant.
+        -->
+        <div role="status">
+          <UAlert
+            v-if="hasSubmitted"
+            color="neutral"
+            variant="subtle"
+            icon="i-lucide-info"
+            title="La connexion n’est pas encore disponible"
+            description="Le lien avec les comptes de l’IUT arrive bientôt. Utilisez l’accès de démonstration ci-dessous."
+            class="mt-4"
+          />
+        </div>
       </div>
-
-      <UButton type="submit" size="lg" block>Se connecter</UButton>
 
       <p class="text-sm text-muted">
         Mot de passe oublié ? Il se réinitialise depuis l’ENT de l’IUT : UniFolio ne le connaît pas.
       </p>
     </UForm>
 
-    <section aria-labelledby="acces-demo" class="flex flex-col gap-3 border-t border-default pt-8">
+    <section aria-labelledby="acces-demo" class="mt-12 border-t border-default pt-8">
       <h2 id="acces-demo" class="font-semibold text-highlighted">Accès de démonstration</h2>
-      <p class="text-sm text-muted">
+      <p class="mt-1 text-sm text-muted">
         En attendant la connexion, entrez directement dans l’un des trois espaces.
       </p>
-      <ul class="flex flex-col gap-2">
+      <ul class="mt-4 flex flex-col gap-3">
         <li v-for="access in DEMO_ACCESS" :key="access.to">
           <NuxtLink
             :to="access.to"
-            class="flex items-center gap-3 rounded-feuille border border-default px-4 py-3 transition-colors hover:bg-muted"
+            class="flex items-center gap-3 rounded-feuille border border-default p-4 transition-colors hover:bg-muted"
           >
             <UIcon :name="access.icon" class="size-5 shrink-0 text-primary" />
             <span class="flex min-w-0 flex-1 flex-col">
