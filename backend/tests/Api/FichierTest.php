@@ -108,6 +108,45 @@ class FichierTest extends ApiTestCase
         self::assertSame('Vous avez atteint l’espace maximal de fichiers.', $reponse['violations'][0]['message']);
     }
 
+    public function testRefuseAuDelaDuNombreMaximal(): void
+    {
+        $this->connecter('etudiant');
+        $proprietaire = $this->connection->fetchOne("SELECT id FROM users WHERE username = 'etudiant'");
+        for ($i = 0; $i < 100; ++$i) {
+            $this->connection->insert('fichier', ['id' => sprintf('00000000-0000-4000-8000-%012d', $i), 'date_creation' => '2026-01-01', 'nom' => 'x.png', 'mime_type' => 'image/png', 'taille' => 1, 'proprietaire_id' => $proprietaire]);
+        }
+
+        $reponse = $this->deposer('image', base64_decode(self::PNG));
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('Vous avez atteint l’espace maximal de fichiers.', $reponse['violations'][0]['message']);
+    }
+
+    public function testNomNormaliseEtExtensionDuTypeReel(): void
+    {
+        $this->connecter('etudiant');
+
+        self::assertSame('page.png', $this->deposer('image', base64_decode(self::PNG), 'page.html')['nom']);
+        // « café » en forme décomposée (noms de fichiers macOS)
+        self::assertSame('Photo café.png', $this->deposer('image', base64_decode(self::PNG), "Photo cafe\u{0301}.png")['nom']);
+        $fichier = $this->deposer('image', base64_decode(self::PNG), 'Été.png');
+        $this->client->request('GET', $fichier['@id']);
+        self::assertSame("inline; filename=_t_.png; filename*=utf-8''%C3%89t%C3%A9.png", $this->client->getInternalResponse()->getHeader('Content-Disposition'));
+    }
+
+    public function testFichierTropGrosPourPhp(): void
+    {
+        $this->connecter('etudiant');
+        $chemin = tempnam(sys_get_temp_dir(), 'envoi');
+
+        $this->client->request('POST', '/api/fichiers', ['type' => 'pdf'], ['fichier' => new UploadedFile($chemin, 'gros.pdf', null, \UPLOAD_ERR_INI_SIZE, true)], ['HTTP_ACCEPT' => 'application/ld+json']);
+        self::assertResponseStatusCodeSame(422);
+        self::assertStringContainsString('10 Mo', $this->client->getResponse()->getContent());
+
+        $this->client->request('POST', '/api/fichiers', ['type' => 'pdf'], [], ['HTTP_ACCEPT' => 'application/ld+json', 'HTTP_CONTENT_LENGTH' => (string) (11 * 1024 * 1024)]);
+        self::assertResponseStatusCodeSame(413);
+    }
+
     public function testEnseignantNeDeposePas(): void
     {
         $this->connecter('enseignant');
@@ -134,6 +173,21 @@ class FichierTest extends ApiTestCase
             self::assertResponseStatusCodeSame(422, $cas);
             self::assertSame('Déposez un fichier du bon format avant de l’associer.', $reponse['violations'][0]['message'], $cas);
         }
+    }
+
+    public function testPatchNeGlissePasLeFichierDUnAutre(): void
+    {
+        $this->connecter('etudiant2');
+        $autre = $this->deposer('image', base64_decode(self::PNG))['@id'];
+        $this->connecter('etudiant');
+        $image = $this->deposer('image', base64_decode(self::PNG))['@id'];
+        $trace = $this->envoyer('POST', '/api/traces', $this->traceImage($image))['@id'];
+
+        $this->envoyer('PATCH', $trace, ['contenu' => [$autre]]);
+        self::assertResponseStatusCodeSame(422);
+        // Même fichier, type changé en PDF : refusé (c'est une image)
+        $this->envoyer('PATCH', $trace, ['type' => 'pdf']);
+        self::assertResponseStatusCodeSame(422);
     }
 
     public function testUnAncienFichierInchangeResteAccepte(): void

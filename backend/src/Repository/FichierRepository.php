@@ -24,14 +24,20 @@ class FichierRepository extends ServiceEntityRepository
         return Uuid::isValid($id) ? $this->findOneBy(['id' => Uuid::fromString($id), 'proprietaire' => $proprietaire]) : null;
     }
 
-    /** Octets déjà déposés par l'utilisateur. */
-    public function espaceUtilise(Users $proprietaire): int
+    /**
+     * Nombre de fichiers et octets déjà déposés par l'utilisateur.
+     *
+     * @return array{int, int}
+     */
+    public function utilisation(Users $proprietaire): array
     {
-        return (int) $this->createQueryBuilder('f')
-            ->select('COALESCE(SUM(f.taille), 0)')
+        $ligne = $this->createQueryBuilder('f')
+            ->select('COUNT(f.id) AS nombre, COALESCE(SUM(f.taille), 0) AS octets')
             ->where('f.proprietaire = :proprietaire')
             ->setParameter('proprietaire', $proprietaire)
             ->getQuery()
-            ->getSingleScalarResult();
+            ->getSingleResult();
+
+        return [(int) $ligne['nombre'], (int) $ligne['octets']];
     }
 }

@@ -13,7 +13,7 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * GET /api/fichiers/{id} : le contenu du fichier, à son seul propriétaire (404 pour les autres).
+ * GET /api/fichiers/{id} : le contenu du fichier, à son seul propriétaire (404 pour les autres étudiants, 403 sinon).
  * Les en-têtes empêchent le navigateur d'interpréter le fichier autrement que son type réel.
  *
  * @implements ProviderInterface<BinaryFileResponse>
@@ -42,7 +42,8 @@ final class FichierProvider implements ProviderInterface
             'X-Content-Type-Options' => 'nosniff',
             // Le front (autre port, même site) peut l'afficher ; un autre site ne peut pas l'intégrer
             'Cross-Origin-Resource-Policy' => 'same-site',
-            'Cache-Control' => 'private, max-age=3600',
+            // Pas de copie réutilisée sans vérification (poste partagé après déconnexion)
+            'Cache-Control' => 'private, no-cache',
         ], public: false, autoEtag: false, autoLastModified: false);
         $reponse->headers->set('Content-Disposition', $reponse->headers->makeDisposition(
             ResponseHeaderBag::DISPOSITION_INLINE,

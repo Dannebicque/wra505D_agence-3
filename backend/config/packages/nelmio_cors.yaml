@@ -4,8 +4,8 @@ nelmio_cors:
         allow_origin: ['%env(CORS_ALLOW_ORIGIN)%']
         # Le front (localhost:3000) envoie le cookie de session à l'API (localhost:8000)
         allow_credentials: true
-        # À élargir quand des opérations PATCH ou DELETE seront exposées
-        allow_methods: ['GET', 'POST', 'OPTIONS']
+        # PATCH (merge-patch) et DELETE : traces et validations
+        allow_methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS']
         allow_headers: ['Content-Type', 'Accept']
         expose_headers: ['Link']
         max_age: 3600

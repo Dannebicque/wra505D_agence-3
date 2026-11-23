@@ -22,11 +22,21 @@ class CorsTest extends ApiTestCase
         self::assertResponseNotHasHeader('Access-Control-Allow-Origin');
     }
 
-    private function preflight(string $origine): void
+    public function testModificationEtSuppressionAutoriseesAuFront(): void
+    {
+        foreach (['PATCH', 'DELETE'] as $methode) {
+            $this->preflight('http://localhost:3000', $methode);
+
+            self::assertResponseIsSuccessful();
+            self::assertStringContainsString($methode, (string) $this->client->getResponse()->headers->get('Access-Control-Allow-Methods'));
+        }
+    }
+
+    private function preflight(string $origine, string $methode = 'GET'): void
     {
         $this->client->request('OPTIONS', '/api/me', server: [
             'HTTP_ORIGIN' => $origine,
-            'HTTP_ACCESS_CONTROL_REQUEST_METHOD' => 'GET',
+            'HTTP_ACCESS_CONTROL_REQUEST_METHOD' => $methode,
         ]);
     }
 }

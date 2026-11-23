@@ -28,8 +28,12 @@ final class FichierProcessor implements ProcessorInterface
     /** PDF de 10 Mo plus la marge du formulaire multipart. */
     private const ENVOI_MAX = 10 * 1024 * 1024 + 64 * 1024;
 
-    /** shortcut: plafond par étudiant, sans nettoyage des fichiers jamais associés à une trace ; à revoir avec la corbeille (C-09). */
+    /**
+     * Plafonds par étudiant : en octets et en nombre (des milliers de fichiers minuscules rempliraient le disque
+     * sous le plafond en octets). shortcut: pas de nettoyage des fichiers jamais associés à une trace ; à revoir avec la corbeille (C-09).
+     */
     private const ESPACE_MAX = 200 * 1024 * 1024;
+    private const NOMBRE_MAX = 100;
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -76,14 +80,27 @@ final class FichierProcessor implements ProcessorInterface
 
         $user = $this->security->getUser();
         \assert($user instanceof Users);
-        if ($this->fichiers->espaceUtilise($user) + $taille > self::ESPACE_MAX) {
-            throw self::refus('Vous avez atteint l’espace maximal de fichiers.');
-        }
+        $fichier = new Fichier($user, Fichier::nomPropre($envoi->getClientOriginalName(), $mimeType), $mimeType, $taille);
 
-        $fichier = new Fichier($user, Fichier::nomPropre($envoi->getClientOriginalName()), $mimeType, $taille);
-        $envoi->move($this->dossier, (string) $fichier->getId());
-        $this->em->persist($fichier);
-        $this->em->flush();
+        // Ligne de l'utilisateur verrouillée : deux envois simultanés ne lisent pas le même total et ne dépassent pas les plafonds
+        $this->em->wrapInTransaction(function () use ($user, $fichier, $taille): void {
+            $this->em->getConnection()->executeQuery('SELECT id FROM users WHERE id = ? FOR UPDATE', [$user->getId()]);
+            [$nombre, $octets] = $this->fichiers->utilisation($user);
+            if ($nombre >= self::NOMBRE_MAX || $octets + $taille > self::ESPACE_MAX) {
+                throw self::refus('Vous avez atteint l’espace maximal de fichiers.');
+            }
+            $this->em->persist($fichier);
+            $this->em->flush();
+        });
+
+        // Fichier rangé une fois la ligne enregistrée ; s'il ne peut pas l'être, la ligne est retirée (pas de fiche sans contenu)
+        try {
+            $envoi->move($this->dossier, (string) $fichier->getId());
+        } catch (\Throwable $erreur) {
+            $this->em->remove($fichier);
+            $this->em->flush();
+            throw $erreur;
+        }
 
         return $fichier;
     }

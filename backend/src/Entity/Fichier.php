@@ -79,14 +79,20 @@ class Fichier
         };
     }
 
-    /** Nom affichable et sans danger, comme cleanName() du front : pas de chemin ni de caractère spécial, accents gardés. */
-    public static function nomPropre(string $nom): string
-    {
-        $base = basename(str_replace('\\', '/', $nom));
-        $propre = (string) preg_replace('/[^\p{L}\p{N} ._-]+/u', '_', $base);
-        $propre = mb_substr((string) preg_replace('/^[_.\s]+/u', '', $propre), 0, 100);
+    private const EXTENSIONS = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif', 'application/pdf' => 'pdf'];
 
-        return '' === $propre ? 'fichier' : $propre;
+    /**
+     * Nom affichable et sans danger, comme cleanName() du front : pas de chemin ni de caractère spécial, accents gardés
+     * (forme NFC, comme le front). L'extension devient celle du type réel : « x.html » enregistré ne s'exécuterait pas.
+     */
+    public static function nomPropre(string $nom, string $mimeType): string
+    {
+        $nom = \Normalizer::normalize($nom, \Normalizer::FORM_C) ?: $nom;
+        $base = pathinfo(basename(str_replace('\\', '/', $nom)), \PATHINFO_FILENAME);
+        $propre = (string) preg_replace('/[^\p{L}\p{N} ._-]+/u', '_', $base);
+        $propre = mb_substr((string) preg_replace('/^[_.\s]+/u', '', $propre), 0, 90);
+
+        return ('' === $propre ? 'fichier' : $propre) . '.' . self::EXTENSIONS[$mimeType];
     }
 
     public function getId(): Uuid
