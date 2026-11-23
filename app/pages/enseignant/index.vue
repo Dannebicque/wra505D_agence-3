@@ -214,13 +214,13 @@ const firstPending = pending[0]
           <li
             v-for="{ etudiant, pendingTraces } in studentsWithPending"
             :key="etudiant.id"
-            class="relative rounded-feuille p-2 hover:bg-elevated has-focus-visible:bg-elevated motion-safe:transition-colors"
+            class="group relative rounded-feuille p-2 hover:bg-elevated has-focus-visible:bg-elevated motion-safe:transition-colors"
           >
             <div class="flex flex-wrap items-baseline justify-between gap-x-3">
               <!-- Élément partagé avec le titre de la fiche de l'étudiant (transition de vue) -->
               <NuxtLink
                 :to="`/enseignant/etudiants/${etudiant.id}`"
-                class="inline-block leading-titre font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille hover:underline"
+                class="inline-block leading-titre font-medium text-highlighted underline-offset-4 group-hover:underline group-has-focus-visible:underline after:absolute after:inset-0 after:rounded-feuille"
                 :style="{ viewTransitionName: `etudiant-${etudiant.id}` }"
               >
                 {{ etudiant.prenom }} {{ etudiant.nom }}
