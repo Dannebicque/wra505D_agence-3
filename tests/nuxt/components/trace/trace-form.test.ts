@@ -96,6 +96,73 @@ describe('formulaire de trace', () => {
     })
   })
 
+  describe('section « Plus de détails »', () => {
+    const toggle = (form: Form) => form.get('button[aria-expanded]')
+    // Contenu repliable (porte `hidden` quand la section est fermée)
+    const isHidden = (form: Form) =>
+      form.get('[data-details]').element.parentElement?.hasAttribute('hidden')
+
+    it('est fermée par défaut pour une nouvelle trace', async () => {
+      const form = await mountSuspended(TraceForm)
+
+      expect(toggle(form).attributes('aria-expanded')).toBe('false')
+      // Masquée mais présente (`hidden="until-found"`) : validée, trouvée par la recherche
+      expect(isHidden(form)).toBe(true)
+      expect(form.text()).toContain('Date de réalisation')
+    })
+
+    it('est ouverte d’emblée quand un de ses champs est renseigné', async () => {
+      const form = await mountSuspended(TraceForm, {
+        props: {
+          initial: {
+            titre: 'Affiche',
+            description: null,
+            contexte: null,
+            legende: null,
+            type: 'lien',
+            contenu: [],
+            statut: 'brouillon',
+            conceptionIa: 'moyen',
+            realisationIa: 'non_renseigne',
+            dateRealisation: null,
+          },
+        },
+      })
+
+      expect(toggle(form).attributes('aria-expanded')).toBe('true')
+      expect(isHidden(form)).toBe(false)
+    })
+
+    it('s’ouvre sur une erreur du serveur et place le focus sur le champ', async () => {
+      const form = await mountSuspended(TraceForm, { attachTo: document.body })
+
+      form.vm.setServerErrors([
+        { propertyPath: 'dateRealisation', message: 'La date ne peut pas être dans le futur.' },
+      ])
+
+      await vi.waitFor(() => expect(isHidden(form)).toBe(false))
+      await vi.waitFor(() =>
+        expect(document.activeElement).toBe(form.get('input[name="dateRealisation"]').element),
+      )
+      form.unmount()
+    })
+
+    it('s’ouvre sur une erreur de validation et place le focus sur le champ', async () => {
+      const form = await mountSuspended(TraceForm, { attachTo: document.body })
+
+      await form.get('input[name="titre"]').setValue('Trace datée')
+      await form.get('input[name="dateRealisation"]').setValue('2999-01-01')
+      await submitWith(form, 'brouillon')
+
+      await vi.waitFor(() => expect(isHidden(form)).toBe(false))
+      await vi.waitFor(() =>
+        expect(document.activeElement).toBe(form.get('input[name="dateRealisation"]').element),
+      )
+      expect(form.emitted('submit')).toBeUndefined()
+      form.unmount()
+    })
+  })
+
   it('affiche les erreurs du serveur sous les champs et renvoie celles sans champ', async () => {
     const form = await mountSuspended(TraceForm)
 

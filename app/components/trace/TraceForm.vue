@@ -109,6 +109,27 @@ function onSubmit() {
 }
 
 const form = useTemplateRef('form')
+
+/**
+ * Divulgation progressive : champs secondaires (contexte, date, usage de l'IA) dans une section
+ * repliable, fermée par défaut. Ouverte d'emblée si l'un d'eux est déjà renseigné.
+ */
+const DETAIL_FIELDS = /^(contexte|dateRealisation|conceptionIa|realisationIa)$/
+const detailsOpen = ref(
+  Boolean(
+    state.contexte.trim() ||
+    state.dateRealisation ||
+    state.conceptionIa !== 'non_renseigne' ||
+    state.realisationIa !== 'non_renseigne',
+  ),
+)
+/** Une erreur dans la section l'ouvre : elle se voit, et le focus peut atteindre le champ. */
+function revealDetailsFor(names: (string | undefined)[]) {
+  if (names.some((name) => name !== undefined && DETAIL_FIELDS.test(name))) {
+    detailsOpen.value = true
+  }
+}
+
 /**
  * Erreur du fichier (validation, serveur), affichée par le champ fichier. Le champ fichier n'est
  * pas un `UFormField` (accessibilité) : `UForm.setErrors` ignorerait une erreur du serveur à son
@@ -136,11 +157,12 @@ function focusField(id: string | undefined, name: string | undefined) {
   field?.focus()
 }
 
+const { onError: focusFirstError } = useFocusFirstError()
+
+/** Envoi refusé : la section ouverte s'il le faut, le focus va ensuite au premier champ en erreur. */
 function onError(event: FormErrorEvent) {
-  const first = event.errors[0]
-  // Pendant l'envoi, UForm désactive les champs (un champ désactivé refuse le focus) et ne les
-  // réactive qu'après avoir émis l'erreur : on attend la fin de ce rendu
-  setTimeout(() => focusField(first?.id, first?.name))
+  revealDetailsFor(event.errors.map((error) => error.name))
+  focusFirstError(event)
 }
 
 /** Les deux actions envoient le formulaire elles-mêmes : Entrée dans un champ ne change jamais le statut. */
@@ -158,8 +180,10 @@ function setServerErrors(violations: Violation[]): Violation[] {
   form.value?.setErrors(toFormErrors(shown))
   serverFichierError.value =
     shown.find((v) => fieldOf(v.propertyPath) === 'fichier')?.message ?? null
+  revealDetailsFor(shown.map((v) => fieldOf(v.propertyPath)))
   const first = shown[0]
-  if (first) nextTick(() => focusField(undefined, fieldOf(first.propertyPath)))
+  // Après le rendu, et après l'ouverture de « Plus de détails » si le champ s'y trouve
+  if (first) setTimeout(() => focusField(undefined, fieldOf(first.propertyPath)))
   return violations.filter((v) => !shown.includes(v))
 }
 defineExpose({ setServerErrors })
@@ -252,31 +276,64 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
       />
     </UFormField>
 
-    <div class="grid gap-6 sm:grid-cols-2">
-      <UFormField
-        label="Contexte"
-        name="contexte"
-        description="Cours, projet ou stage où la trace a été produite."
+    <!-- Champs secondaires : repliés par défaut, mais toujours dans la page (`hidden="until-found"`),
+         donc validés, trouvés par la recherche du navigateur et jamais perdus -->
+    <UCollapsible
+      v-model:open="detailsOpen"
+      :unmount-on-hide="false"
+      class="rounded-feuille border border-default"
+    >
+      <UButton
+        color="neutral"
+        variant="ghost"
+        block
+        trailing-icon="i-lucide-chevron-down"
+        class="group justify-between rounded-feuille p-4 text-left"
+        :ui="{
+          trailingIcon:
+            'transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none',
+        }"
       >
-        <UInput v-model="state.contexte" :maxlength="TRACE_LIMITS.contexte" class="w-full" />
-      </UFormField>
+        <span>
+          <span class="block font-medium text-highlighted">Plus de détails</span>
+          <span class="block text-sm font-normal text-muted">
+            Contexte, date de réalisation, usage de l’intelligence artificielle
+          </span>
+        </span>
+      </UButton>
 
-      <UFormField label="Date de réalisation" name="dateRealisation">
-        <UInput v-model="state.dateRealisation" type="date" class="w-full" />
-      </UFormField>
-    </div>
+      <template #content>
+        <div data-details class="space-y-6 border-t border-default p-4 sm:p-6">
+          <div class="grid gap-6 sm:grid-cols-2">
+            <UFormField
+              label="Contexte"
+              name="contexte"
+              description="Cours, projet ou stage où la trace a été produite."
+            >
+              <UInput v-model="state.contexte" :maxlength="TRACE_LIMITS.contexte" class="w-full" />
+            </UFormField>
 
-    <fieldset class="space-y-4 rounded-panneau bg-muted p-5">
-      <legend class="float-left mb-1 text-sm font-semibold text-highlighted">
-        Usage de l’intelligence artificielle
-      </legend>
-      <UFormField label="Pendant la conception" name="conceptionIa" class="clear-both">
-        <USelect v-model="state.conceptionIa" :items="CONCEPTION_ITEMS" class="w-full" />
-      </UFormField>
-      <UFormField label="Pendant la réalisation" name="realisationIa">
-        <USelect v-model="state.realisationIa" :items="REALISATION_ITEMS" class="w-full" />
-      </UFormField>
-    </fieldset>
+            <UFormField label="Date de réalisation" name="dateRealisation">
+              <UInput v-model="state.dateRealisation" type="date" class="w-full" />
+            </UFormField>
+          </div>
+
+          <fieldset>
+            <legend class="float-left mb-4 text-sm font-semibold text-highlighted">
+              Usage de l’intelligence artificielle
+            </legend>
+            <div class="clear-both grid gap-6 sm:grid-cols-2">
+              <UFormField label="Pendant la conception" name="conceptionIa">
+                <USelect v-model="state.conceptionIa" :items="CONCEPTION_ITEMS" class="w-full" />
+              </UFormField>
+              <UFormField label="Pendant la réalisation" name="realisationIa">
+                <USelect v-model="state.realisationIa" :items="REALISATION_ITEMS" class="w-full" />
+              </UFormField>
+            </div>
+          </fieldset>
+        </div>
+      </template>
+    </UCollapsible>
 
     <div class="flex flex-wrap justify-end gap-3">
       <UButton
