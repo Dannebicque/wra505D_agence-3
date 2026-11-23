@@ -65,7 +65,7 @@ const emptyMessage = computed(() => {
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mes retours</h1>
-        <p class="mt-3 text-muted">
+        <p class="mt-2 max-w-mesure text-muted">
           <template v-if="nonLus === 0">Aucun retour non lu.</template>
           <template v-else-if="nonLus === 1">1 retour non lu.</template>
           <template v-else>{{ nonLus }} retours non lus.</template>
@@ -97,7 +97,9 @@ const emptyMessage = computed(() => {
         @click="filtre = f.value"
       >
         {{ f.label }}
-        <span :class="filtre === f.value ? '' : 'text-muted'">({{ f.count }})</span>
+        <span class="tabular-nums" :class="{ 'text-muted': filtre !== f.value }">
+          ({{ f.count }})
+        </span>
       </UButton>
     </div>
 
@@ -110,7 +112,11 @@ const emptyMessage = computed(() => {
         <RetourItem :retour="retour" @open="markRead(retour)" />
       </li>
     </ul>
-    <div v-else class="mt-4 flex flex-col items-center gap-3 rounded-panneau bg-muted px-6 py-12">
+    <!-- État vide : un peu au-dessus du centre optique (moins d'air en haut qu'en bas) -->
+    <div
+      v-else
+      class="mt-4 flex flex-col items-center gap-3 rounded-panneau bg-muted px-6 pt-8 pb-12"
+    >
       <UIcon name="i-lucide-inbox" class="size-8 text-muted" aria-hidden="true" />
       <p class="max-w-md text-center text-muted">{{ emptyMessage }}</p>
     </div>
