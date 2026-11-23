@@ -38,6 +38,9 @@ security:
   access_control:
     - { path: ^/api/login$, roles: PUBLIC_ACCESS }
     - { path: ^/api/docs, roles: PUBLIC_ACCESS }
+    # Lien public d'un portfolio (E-PF-06) et ses fichiers : le contrôle est fait par l'API (404 si non public)
+    - { path: ^/api/portfolios/\d+/public$, methods: [GET], roles: PUBLIC_ACCESS }
+    - { path: ^/api/fichiers/[0-9a-f-]+$, methods: [GET], roles: PUBLIC_ACCESS }
     # Synchro intranet : écrit en base, réservée aux admins
     - { path: ^/api/intranet, roles: ROLE_ADMIN }
     - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

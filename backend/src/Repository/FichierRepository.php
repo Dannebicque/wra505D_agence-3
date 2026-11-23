@@ -25,6 +25,28 @@ class FichierRepository extends ServiceEntityRepository
     }
 
     /**
+     * Fichier montré par un portfolio public hors corbeille : sa bannière, ou le contenu d'une trace finalisée
+     * de l'une de ses pages hors corbeille (lien public, E-PF-06).
+     */
+    public function estPublic(Fichier $fichier): bool
+    {
+        return false !== $this->getEntityManager()->getConnection()->fetchOne(<<<'SQL'
+            SELECT 1 FROM portfolio p
+            WHERE p.visibilite AND p.date_suppression IS NULL AND (
+                p.banniere = :iri OR EXISTS (
+                    SELECT 1 FROM page pa
+                    JOIN ordre_trace ot ON ot.page_id = pa.id
+                    JOIN trace t ON t.id = ot.trace_id
+                    WHERE pa.portfolio_id = p.id AND pa.date_suppression IS NULL
+                      AND t.date_suppression IS NULL AND t.statut = 'finalisee'
+                      AND jsonb_exists(t.contenu::jsonb, :iri)
+                )
+            )
+            LIMIT 1
+            SQL, ['iri' => '/api/fichiers/' . $fichier->getId()]);
+    }
+
+    /**
      * Nombre de fichiers et octets déjà déposés par l'utilisateur.
      *
      * @return array{int, int}

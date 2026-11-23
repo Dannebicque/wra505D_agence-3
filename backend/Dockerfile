@@ -2,11 +2,12 @@
 FROM dunglas/frankenphp:1-php8.4
 
 # Extensions en plus de celles de l'image (ctype, iconv, fileinfo, dom, xml… sont déjà là)
-RUN install-php-extensions pdo_pgsql intl zip apcu
+# gd et exif : images des traces réencodées sans leurs métadonnées (position GPS…), dans le bon sens
+RUN install-php-extensions pdo_pgsql intl zip apcu gd exif
 
 RUN cp "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini" \
     # Fichiers des traces : PDF jusqu'à 10 Mo (2 Mo par défaut), plus la marge du formulaire multipart
-    && printf 'upload_max_filesize = 10M\npost_max_size = 11M\n' > "$PHP_INI_DIR/conf.d/uploads.ini"
+    && printf 'upload_max_filesize = 10M\npost_max_size = 11M\nmemory_limit = 256M\n' > "$PHP_INI_DIR/conf.d/uploads.ini"
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

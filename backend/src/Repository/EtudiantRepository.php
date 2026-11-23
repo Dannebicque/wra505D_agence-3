@@ -151,8 +151,7 @@ class EtudiantRepository extends ServiceEntityRepository
             ->join('e.semestre', 's')
             ->join('s.annee', 'a')
             ->leftJoin('a.portfolio', 'p')
-            ->leftJoin('p.ordrePages', 'op')
-            ->leftJoin('op.page', 'pa')
+            ->leftJoin('p.pages', 'pa')
             ->leftJoin('pa.ordreTraces', 'ot')
             ->leftJoin('ot.trace', 't')
             ->leftJoin('t.validations', 'v')
@@ -185,8 +184,7 @@ class EtudiantRepository extends ServiceEntityRepository
                     ->join('e2.semestre', 's2')
                     ->join('s2.annee', 'a2')
                     ->join('a2.portfolio', 'p2')
-                    ->join('p2.ordrePages', 'op2')
-                    ->join('op2.page', 'pa2')
+                    ->join('p2.pages', 'pa2')
                     ->join('pa2.ordreTraces', 'ot2')
                     ->join('ot2.trace', 't2')
                     ->join('t2.validations', 'v2')
@@ -200,7 +198,7 @@ class EtudiantRepository extends ServiceEntityRepository
             } elseif ($etat === 2) { // Portfolios non évalués
                 $qb->andWhere('p.etudiant = e')
                     ->andWhere('p.annee = s.annee');
-                $qb->andWhere('v.etat = 0 OR SIZE(p.ordrePages) = 0');
+                $qb->andWhere('v.etat = 0 OR SIZE(p.pages) = 0');
                 $qb->andWhere('p.visibilite = true');
             } elseif ($etat === 3) {
 // Etudiants sans portfolio

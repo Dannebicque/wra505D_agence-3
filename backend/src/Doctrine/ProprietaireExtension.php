@@ -7,6 +7,8 @@ use ApiPlatform\Doctrine\Orm\Extension\QueryItemExtensionInterface;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use App\Entity\Bibliotheque;
+use App\Entity\Page;
+use App\Entity\Portfolio;
 use App\Entity\Trace;
 use App\Entity\Users;
 use App\Entity\Validation;
@@ -36,7 +38,7 @@ final class ProprietaireExtension implements QueryCollectionExtensionInterface, 
 
     private function restreindre(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $noms, string $resourceClass): void
     {
-        if (!\in_array($resourceClass, [Trace::class, Bibliotheque::class, Validation::class], true)) {
+        if (!\in_array($resourceClass, [Trace::class, Bibliotheque::class, Validation::class, Portfolio::class, Page::class], true)) {
             return;
         }
         $racine = $queryBuilder->getRootAliases()[0];
@@ -52,6 +54,19 @@ final class ProprietaireExtension implements QueryCollectionExtensionInterface, 
 
         if (Bibliotheque::class === $resourceClass) {
             $queryBuilder->andWhere(sprintf('%s.etudiant = :%s', $racine, $parametre));
+
+            return;
+        }
+        // Portfolio et page : à l'étudiant et hors corbeille (une page d'un portfolio supprimé disparaît avec lui)
+        if (\in_array($resourceClass, [Portfolio::class, Page::class], true)) {
+            $portfolio = $racine;
+            if (Page::class === $resourceClass) {
+                $portfolio = $noms->generateJoinAlias('portfolio');
+                $queryBuilder->join(sprintf('%s.portfolio', $racine), $portfolio)
+                    ->andWhere(sprintf('%s.date_suppression IS NULL', $racine));
+            }
+            $queryBuilder->andWhere(sprintf('%s.etudiant = :%s', $portfolio, $parametre))
+                ->andWhere(sprintf('%s.date_suppression IS NULL', $portfolio));
 
             return;
         }

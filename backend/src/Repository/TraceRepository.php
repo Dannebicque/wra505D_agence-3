@@ -110,11 +110,10 @@ class TraceRepository extends ServiceEntityRepository
 
         // If annee is provided, restrict traces to those that are present in portfolios for that year
         if (!empty($annee)) {
-            // join through ordreTrace -> page -> ordrePage -> portfolio
-            $qb->innerJoin('t.ordreTrace', 'ot')
+            // trace -> page (OrdreTrace) -> portfolio
+            $qb->innerJoin(\App\Entity\OrdreTrace::class, 'ot', 'WITH', 'ot.trace = t')
                 ->innerJoin('ot.page', 'pa')
-                ->innerJoin('pa.ordrePage', 'op')
-                ->innerJoin('op.portfolio', 'p')
+                ->innerJoin('pa.portfolio', 'p')
                 ->andWhere('p.annee = :annee')
                 ->andWhere('p.visibilite = true')
                 ->setParameter('annee', $annee);

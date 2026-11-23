@@ -2,6 +2,8 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\Page;
+use App\Entity\Portfolio;
 use App\Entity\Trace;
 use App\Entity\Validation;
 use App\Repository\ApcNiveauRepository;
@@ -14,7 +16,8 @@ use Doctrine\Persistence\ObjectManager;
 
 /**
  * Traces de démonstration du compte « etudiant » : une par état utile au front (lien finalisé et évalué,
- * vidéo en attente d'évaluation, brouillon d'image sans fichier). « etudiant2 » n'a aucune trace.
+ * vidéo en attente d'évaluation, brouillon d'image sans fichier), et son portfolio public de l'année avec deux
+ * pages-projets. « etudiant2 » n'a ni trace ni portfolio.
  */
 class TraceFixture extends Fixture implements OrderedFixtureInterface
 {
@@ -33,7 +36,8 @@ class TraceFixture extends Fixture implements OrderedFixtureInterface
 
     public function load(ObjectManager $manager): void
     {
-        $bibliotheque = $this->bibliotheques->courante($this->etudiants->findOneBy(['username' => 'etudiant']));
+        $etudiant = $this->etudiants->findOneBy(['username' => 'etudiant']);
+        $bibliotheque = $this->bibliotheques->courante($etudiant);
         [$niveau1, $niveau2] = $this->niveaux->findBy(['ordre' => 1], ['id' => 'ASC'], 2);
 
         $site = $this->trace($bibliotheque, 'Site vitrine d’une association', 'lien', ['https://exemple.fr'], 'finalisee')
@@ -47,7 +51,18 @@ class TraceFixture extends Fixture implements OrderedFixtureInterface
             ->setDateCreation(new \DateTime('-10 days'))->setDateModification(new \DateTime('-3 days'));
         $enAttente = (new Validation())->setTrace($video)->setNiveau($niveau2)->setEtat(0)->setDateCreation(new \DateTime('-2 days'));
 
-        foreach ([$site, $video, $brouillon, $evaluee, $enAttente] as $entite) {
+        $portfolio = (new Portfolio())->setEtudiant($etudiant)->setIntitule('Mon parcours en MMI')
+            ->setDescription('Mes projets de première année.')->setVisibilite(true)
+            ->setDateCreation(new \DateTime('-5 days'))->setDateModification(new \DateTime('-1 day'));
+        $portfolio->setAnnee($etudiant->getSemestre()?->getAnnee());
+        $web = (new Page())->setIntitule('Projet web')->setDescription('Site d’une association.')->setOrdre(1);
+        $motion = (new Page())->setIntitule('Motion design')->setOrdre(2);
+        $portfolio->addPage($web);
+        $portfolio->addPage($motion);
+        $web->setTraces([$site]);
+        $motion->setTraces([$video]);
+
+        foreach ([$site, $video, $brouillon, $evaluee, $enAttente, $portfolio, $web, $motion] as $entite) {
             $manager->persist($entite);
         }
         $manager->flush();
