@@ -44,8 +44,11 @@ test.describe('modifier une page-projet', () => {
     for (const checkbox of await checkboxes.all()) await checkbox.check()
     await page.getByRole('button', { name: /Ajouter la sélection/ }).click()
 
+    // Les autres traces finalisées de l'étudiante sont dans les autres pages du portfolio
     await expect(
-      page.getByText('Toutes vos traces finalisées sont déjà dans cette page.'),
+      page.getByText(
+        'Vos autres traces finalisées sont déjà dans cette page ou dans une autre page du portfolio.',
+      ),
     ).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Traces de la page' })).toBeFocused()
   })
