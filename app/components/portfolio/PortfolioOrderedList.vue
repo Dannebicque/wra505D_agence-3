@@ -153,10 +153,11 @@ function onDragEnd() {
         <!-- Poignée visuelle : le glisser-déposer est réservé à la souris, les flèches le doublent -->
         <span class="flex cursor-grab items-center gap-2 text-muted" aria-hidden="true">
           <UIcon name="i-lucide-grip-vertical" class="size-5" />
+          <!-- Chiffres de même largeur (tabular-nums), centrés sur la hauteur des capitales -->
           <span
-            class="flex size-7 items-center justify-center rounded-full bg-muted text-sm font-medium text-highlighted"
+            class="flex size-7 items-center justify-center rounded-full bg-muted text-sm font-medium text-highlighted tabular-nums"
           >
-            {{ index + 1 }}
+            <span class="centre-optique">{{ index + 1 }}</span>
           </span>
         </span>
 

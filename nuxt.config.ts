@@ -11,8 +11,10 @@ export default defineNuxtConfig({
   },
   css: ['~/assets/css/main.css'],
   fonts: {
-    // Polices téléchargées au build et servies par l'application : aucune requête vers Google en production
-    families: [{ name: 'Instrument Sans', weights: [400, 500, 600], global: true }],
+    // Polices téléchargées au build et servies par l'application : aucune requête vers Google en production.
+    // Pas de `global` : la famille est lue dans main.css (`--font-instrument`), ce qui produit aussi la
+    // police de secours aux métriques ajustées (sans elle, le texte bouge à l'arrivée de la police).
+    families: [{ name: 'Instrument Sans', weights: [400, 500, 600] }],
   },
   // Mise en page des espaces (une page peut toujours déclarer la sienne avec definePageMeta)
   routeRules: {

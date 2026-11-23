@@ -2,11 +2,33 @@
 @import '@nuxt/ui';
 
 /*
- * Thème du style A, éditorial (docs/superpowers/specs/2026-11-02-charpente-visuelle-design.md).
- * Seul endroit où sont fixées les couleurs, polices et formes : les composants n'utilisent que ces jetons.
+ * Thème UniFolio : style A éditorial (docs/superpowers/specs/2026-11-02-charpente-visuelle-design.md)
+ * aux couleurs de l'IUT (docs/superpowers/specs/2026-11-23-identite-iut-design.md).
+ * Seul endroit où sont fixées les couleurs, polices, formes et règles typographiques globales :
+ * les composants n'utilisent que ces jetons.
+ *
+ * Mode d'emploi
+ * - Couleurs : les neutres (`gris`, jetons `--ui-*` : bg-default, bg-muted, text-muted…) portent
+ *   l'essentiel. `primary` (= prune) est réservé à l'action principale, aux liens, au focus et aux
+ *   éléments actifs. `or` est un accent décoratif, très rare : jamais de texte or, jamais
+ *   d'information portée par l'or seul. Seule nuance utilisée : `or-400` (#F7B000), en fond sous un
+ *   texte `text-prune-950` (9,6:1) ou en décor (trait de la navigation active, logo).
+ * - Espacements : pas Tailwind 1, 2, 3, 4, 6, 8, 12 seulement (pas de 0.5, 1.5, 2.5, 5, 10 ni de
+ *   valeur arbitraire). 1 : icône ↔ texte, titre ↔ sous-ligne ; 2 : éléments d'un groupe ;
+ *   3 : lignes d'une liste de cartes ; 4 : titre de section → contenu ; 6 : champs d'un formulaire,
+ *   colonnes ; 8 : h1 + chapeau → premier bloc ; 12 : entre deux sections.
+ *   Panneau : `rounded-panneau bg-muted p-4 sm:p-6`. Carte de liste : `rounded-feuille border
+ *   border-default p-4`.
+ * - Texte courant (descriptions, aide, chapeaux) : `max-w-mesure` (≈ 65 caractères). Les
+ *   paragraphes ont déjà l'interlignage `leading-corps` et `text-wrap: pretty` ; les titres,
+ *   `text-wrap: balance`. Interlignage et interlettrage des grands corps (text-xl et plus) suivent la
+ *   taille : rien à ajouter sur un titre.
+ * - Nombres qui s'alignent ou changent (compteurs, tuiles de statistiques, positions, dates et
+ *   notes en colonne) : `tabular-nums`. Chiffre centré dans une pastille : `centre-optique`.
  */
 @theme static {
-  --font-sans: 'Instrument Sans', system-ui, sans-serif;
+  /* Famille déclarée dans `:root` (plus bas) : @nuxt/fonts ne lit pas l'intérieur de `@theme` */
+  --font-sans: var(--font-instrument);
 
   /*
    * Palettes en OKLCH : teinte constante, clarté régulière, chroma réduite aux extrémités.
@@ -56,6 +78,30 @@
   /* Rayons : `rounded-feuille` (contenu), `rounded-panneau` (aplats) */
   --radius-feuille: 16px;
   --radius-panneau: 22px;
+
+  /*
+   * Interlignage : `leading-corps` (texte courant, déjà appliqué aux paragraphes),
+   * `leading-interface` (textes courts d'interface : pastilles, étiquettes maison),
+   * `leading-titre` (titre écrit dans une petite taille, text-lg ou moins).
+   */
+  --leading-corps: 1.6;
+  --leading-interface: 1.25;
+  --leading-titre: 1.25;
+
+  /* Grands corps (titres) : l'interlignage se resserre et l'interlettrage négatif croît avec la taille */
+  --text-xl--line-height: 1.25;
+  --text-xl--letter-spacing: -0.01em;
+  --text-2xl--line-height: 1.2;
+  --text-2xl--letter-spacing: -0.01em;
+  --text-3xl--line-height: 1.15;
+  --text-3xl--letter-spacing: -0.02em;
+  --text-4xl--line-height: 1.15;
+  --text-4xl--letter-spacing: -0.02em;
+  --text-5xl--line-height: 1.15;
+  --text-5xl--letter-spacing: -0.02em;
+
+  /* Longueur de ligne du texte courant : `max-w-mesure` (45 à 75 caractères) */
+  --container-mesure: 65ch;
 }
 
 /*
@@ -63,6 +109,12 @@
  * dans la teinte du gris. Contrastes mesurés : docs/DECISIONS.md, entrée du 2026-11-23.
  */
 :root {
+  /*
+   * @nuxt/fonts télécharge Instrument Sans au build et ajoute ici une police de secours aux
+   * métriques ajustées (« Instrument Sans Fallback: Arial », size-adjust…) : le texte ne bouge pas
+   * quand la police arrive.
+   */
+  --font-instrument: 'Instrument Sans', system-ui, sans-serif;
   --uf-cadre: oklch(95.7% 0.005 297.55);
   /* Fond de la sélection de texte (sous un texte prune-950) */
   --uf-selection: var(--color-or-200);
@@ -102,15 +154,51 @@
   --ui-border: oklch(28.3% 0.009 297.55);
 }
 
-body {
-  font-variant-numeric: tabular-nums;
+@layer base {
+  html {
+    font-kerning: normal;
+    font-optical-sizing: auto;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    text-wrap: balance;
+  }
+
+  /*
+   * Texte courant : interlignage de lecture, sans mot seul en dernière ligne. Passer par
+   * `--tw-leading` fait aussi gagner `leading-corps` sur l'interlignage des tailles (text-sm…) ;
+   * une classe `leading-*` sur l'élément reste prioritaire.
+   */
+  p,
+  dd,
+  blockquote,
+  figcaption {
+    --tw-leading: var(--leading-corps);
+    line-height: var(--leading-corps);
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--uf-selection);
+    color: var(--color-prune-950);
+  }
 }
 
-/* Titres (h1 des pages, accueil) : Instrument Sans en gras, un seul endroit pour les ajuster */
+/* Titres (h1 des pages, accueil) : Instrument Sans en gras ; l'interlettrage suit la taille (@theme) */
 @utility font-titre {
   font-family: var(--font-sans);
   font-weight: 600;
-  letter-spacing: -0.02em;
+}
+
+/* Chiffre ou icône seul dans une pastille : centré sur la hauteur des capitales, pas sur la ligne */
+@utility centre-optique {
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
 }
 
 /*
@@ -122,10 +210,4 @@ body {
 :focus-visible:not([tabindex='-1']) {
   outline: 2px solid var(--ui-primary);
   outline-offset: 2px;
-}
-
-/* Sélection de texte : accent or, sous un texte prune très foncé (14,5:1 en clair, 9,6:1 en sombre) */
-::selection {
-  background-color: var(--uf-selection);
-  color: var(--color-prune-950);
 }
