@@ -18,23 +18,33 @@ const today = new Intl.DateTimeFormat('fr-FR', {
 }).format(new Date())
 const todayLabel = today.charAt(0).toUpperCase() + today.slice(1)
 
-const tiles = computed(() =>
+// Indicateur de synthèse : part des évaluations acquises (« niveaux » ou « évaluations » :
+// question ouverte n° 11 de docs/FONCTIONNALITES.md)
+const rate = computed(() =>
+  counters.value ? acquisitionRate(counters.value.acquired, counters.value.validations) : null,
+)
+
+// Chiffres secondaires : le nombre d'évaluations acquises est déjà l'indicateur de synthèse
+const figures = computed(() =>
   counters.value
     ? [
-        { label: 'Traces déposées', value: counters.value.traces, suffix: '' },
-        {
-          // « Niveaux » ou « évaluations » : question ouverte n° 11 (docs/FONCTIONNALITES.md)
-          label: 'Évaluations acquises',
-          value: counters.value.acquired,
-          suffix: `sur ${counters.value.validations}`,
-        },
-        { label: 'En cours d’acquisition', value: counters.value.inProgress, suffix: '' },
-        { label: 'En attente d’évaluation', value: counters.value.pending, suffix: '' },
+        { label: 'Traces déposées', value: counters.value.traces },
+        { label: 'En cours d’acquisition', value: counters.value.inProgress },
+        { label: 'En attente d’évaluation', value: counters.value.pending },
       ]
     : [],
 )
 
-const maxTotal = computed(() => Math.max(1, ...progression.value.map((p) => p.total)))
+const rows = computed(() =>
+  progression.value.map((p) => ({
+    id: p.competence['@id'],
+    label: p.competence.nomCourt,
+    acquired: p.acquired,
+    inProgress: p.inProgress,
+    notAcquired: p.notAcquired,
+    pending: p.pending,
+  })),
+)
 
 // Dates sans heure (AAAA-MM-JJ) : lues en UTC pour ne pas reculer d'un jour selon le fuseau
 const dayMonth = new Intl.DateTimeFormat('fr-FR', {
@@ -46,86 +56,86 @@ const dayMonth = new Intl.DateTimeFormat('fr-FR', {
 
 <template>
   <div>
-    <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">{{ greeting }}</h1>
+    <!-- Titre à taille d'application : la donnée principale (le graphique) porte le poids -->
+    <h1 class="font-titre text-2xl text-highlighted">{{ greeting }}</h1>
     <p class="mt-2 text-muted">{{ todayLabel }}</p>
 
     <UiAsyncState :status="status" :error="error" skeleton="tuiles" class="mt-8" @retry="refresh()">
-      <template v-if="counters">
-        <section aria-labelledby="en-chiffres">
-          <h2 id="en-chiffres" class="sr-only">En chiffres</h2>
-          <dl class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
-            <div
-              v-for="tile in tiles"
-              :key="tile.label"
-              class="flex min-h-24 flex-col justify-between gap-3 rounded-panneau bg-muted p-4 sm:p-6 lg:min-h-28"
+      <!--
+        Hiérarchie : la progression par compétence (panneau teinté, deux colonnes sur trois) est
+        lue en premier ; les chiffres secondaires n'ont pas de surface ; les brouillons, à
+        reprendre, sont une liste bordée.
+      -->
+      <div v-if="counters" class="grid gap-4 lg:grid-cols-3 lg:gap-6">
+        <section
+          aria-labelledby="vos-competences"
+          class="rounded-panneau bg-muted p-4 sm:p-6 lg:col-span-2 lg:row-span-2"
+        >
+          <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <h2 id="vos-competences" class="text-lg leading-titre font-semibold text-highlighted">
+              Vos compétences
+            </h2>
+            <NuxtLink
+              to="/etudiant/competences"
+              class="text-sm font-medium text-primary underline-offset-4 hover:underline"
             >
-              <dt class="text-sm text-muted">{{ tile.label }}</dt>
-              <dd class="text-3xl text-highlighted tabular-nums">
-                {{ tile.value }}
-                <span v-if="tile.suffix" class="text-base text-muted">{{ tile.suffix }}</span>
-              </dd>
-            </div>
-          </dl>
+              Détail par compétence
+            </NuxtLink>
+          </div>
+
+          <!-- Grand nombre seul : chiffres proportionnels (les chiffres tabulaires le desserrent) -->
+          <p v-if="rate !== null" class="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span class="text-4xl font-semibold text-highlighted">{{ rate }}&nbsp;%</span>
+            <span class="text-muted">
+              des évaluations acquises
+              <span class="whitespace-nowrap tabular-nums">
+                ({{ counters.acquired }} sur {{ counters.validations }})
+              </span>
+            </span>
+          </p>
+          <p v-else class="mt-4 text-muted">Aucune évaluation pour l’instant.</p>
+
+          <p v-if="progression.length === 0" class="mt-6 text-muted">
+            Aucun référentiel de compétences n’est associé à votre formation.
+          </p>
+          <template v-else>
+            <TableauDeBordProgressionLegend class="mt-6" />
+            <TableauDeBordProgressionList
+              :rows="rows"
+              label="Progression par compétence"
+              class="mt-4"
+            />
+          </template>
         </section>
 
-        <div class="mt-3 grid gap-3 lg:mt-4 lg:grid-cols-[3fr_1fr] lg:gap-4">
-          <section aria-labelledby="vos-competences" class="rounded-panneau bg-muted p-4 sm:p-6">
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              <h2 id="vos-competences" class="text-sm font-semibold text-highlighted">
-                Vos compétences
-              </h2>
-              <TableauDeBordProgressionLegend />
-            </div>
-            <p v-if="progression.length === 0" class="mt-4 text-muted">
-              Aucun référentiel de compétences n’est associé à votre formation.
-            </p>
-            <ul v-else class="mt-4 space-y-2" aria-label="Progression par compétence">
-              <li
-                v-for="p in progression"
-                :key="p.competence['@id']"
-                class="grid grid-cols-[7rem_1fr] items-center gap-x-4 gap-y-1 sm:grid-cols-[8rem_1fr_13rem]"
-              >
-                <span>{{ p.competence.nomCourt }}</span>
-                <TableauDeBordProgressionBar
-                  :acquired="p.acquired"
-                  :in-progress="p.inProgress"
-                  :not-acquired="p.notAcquired"
-                  :pending="p.pending"
-                  :max="maxTotal"
-                />
-                <span
-                  class="col-span-2 text-xs text-muted tabular-nums sm:col-span-1 sm:text-right"
-                >
-                  {{ progressionSummary(p) }}
-                </span>
-              </li>
-            </ul>
-          </section>
+        <TableauDeBordChiffres :figures="figures" title="En chiffres" />
 
-          <section aria-labelledby="a-terminer" class="rounded-panneau bg-muted p-4 sm:p-6">
-            <h2 id="a-terminer" class="text-sm font-semibold text-highlighted">À terminer</h2>
-            <!-- Chaque brouillon mène à son éditeur : toute la ligne est cliquable -->
-            <ul v-if="drafts.length" class="-mx-2 mt-4 space-y-2">
-              <li
-                v-for="trace in drafts"
-                :key="trace['@id']"
-                class="group relative rounded-feuille p-2 transition-colors hover:bg-elevated motion-reduce:transition-none"
+        <section
+          aria-labelledby="a-terminer"
+          class="rounded-panneau border border-default p-4 sm:p-6"
+        >
+          <h2 id="a-terminer" class="text-sm font-semibold text-highlighted">À terminer</h2>
+          <!-- Chaque brouillon mène à son éditeur : toute la ligne est cliquable, au survol comme au focus -->
+          <ul v-if="drafts.length" class="-mx-2 mt-4 space-y-2">
+            <li
+              v-for="trace in drafts"
+              :key="trace['@id']"
+              class="group relative rounded-feuille p-2 hover:bg-elevated has-focus-visible:bg-elevated motion-safe:transition-colors"
+            >
+              <NuxtLink
+                :to="`/etudiant/traces/${idFromIri(trace['@id'])}`"
+                class="block font-medium leading-titre break-words text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille group-hover:underline"
               >
-                <NuxtLink
-                  :to="`/etudiant/traces/${idFromIri(trace['@id'])}`"
-                  class="block font-medium leading-titre break-words text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille group-hover:underline"
-                >
-                  {{ trace.titre }}
-                </NuxtLink>
-                <p v-if="trace.dateModification" class="mt-1 text-xs text-muted">
-                  Brouillon modifié le {{ dayMonth.format(new Date(trace.dateModification)) }}
-                </p>
-              </li>
-            </ul>
-            <p v-else class="mt-4 text-muted">Aucun brouillon en cours.</p>
-          </section>
-        </div>
-      </template>
+                {{ trace.titre }}
+              </NuxtLink>
+              <p v-if="trace.dateModification" class="mt-1 text-xs text-muted">
+                Brouillon modifié le {{ dayMonth.format(new Date(trace.dateModification)) }}
+              </p>
+            </li>
+          </ul>
+          <p v-else class="mt-4 text-muted">Aucun brouillon en cours.</p>
+        </section>
+      </div>
     </UiAsyncState>
   </div>
 </template>
