@@ -60,12 +60,13 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
       :error="error"
       :empty="items.length === 0"
       empty-message="Vous n’avez encore déposé aucune trace. Commencez par « Nouvelle trace »."
+      skeleton="liste"
       class="mt-8"
       @retry="refresh()"
     >
-      <section aria-labelledby="filtres" class="rounded-panneau bg-muted p-5 lg:p-6">
+      <section aria-labelledby="filtres" class="rounded-panneau bg-muted p-4 sm:p-6">
         <h2 id="filtres" class="sr-only">Filtres</h2>
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_auto]">
+        <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_auto]">
           <UFormField label="Rechercher" class="sm:col-span-2 xl:col-span-1">
             <UInput
               v-model="criteria.recherche"
@@ -79,7 +80,14 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
             <USelect v-model="criteria.statut" :items="statutItems" class="w-full" />
           </UFormField>
           <UFormField label="Compétence">
-            <USelect v-model="selectedCompetence" :items="competenceItems" class="w-full" />
+            <!-- Liste appelée à s'allonger (référentiels, niveaux) : recherche dans la liste -->
+            <USelectMenu
+              v-model="selectedCompetence"
+              :items="competenceItems"
+              value-key="value"
+              :search-input="{ placeholder: 'Filtrer les compétences…' }"
+              class="w-full"
+            />
           </UFormField>
           <div class="flex items-end">
             <!-- Toujours présent (aria-disabled plutôt que v-if) : le focus n'est pas perdu après le clic -->
@@ -102,24 +110,21 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
         <!-- Nombre de résultats annoncé à chaque changement de filtre -->
         <p role="status" class="text-sm text-muted">{{ resultLabel }}</p>
 
-        <ul
-          v-if="filtered.length"
-          class="mt-3 divide-y divide-default rounded-panneau bg-muted"
-          aria-label="Traces"
-        >
+        <!-- Cartes entièrement cliquables : le lien du titre couvre la carte (::after) -->
+        <ul v-if="filtered.length" class="mt-4 space-y-3" aria-label="Traces">
           <li
             v-for="{ trace, competences: traceCompetences } in filtered"
             :key="trace['@id']"
-            class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-4"
+            class="group relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-feuille border border-default p-4 transition-colors hover:border-accented hover:bg-muted motion-reduce:transition-none"
           >
             <div class="min-w-0">
               <NuxtLink
                 :to="{ path: `/etudiant/traces/${idFromIri(trace['@id'])}`, query: activeQuery }"
-                class="font-medium break-words text-highlighted underline-offset-4 hover:underline"
+                class="font-medium break-words text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille group-hover:underline"
               >
                 {{ trace.titre }}
               </NuxtLink>
-              <p class="text-sm text-muted">
+              <p class="mt-1 text-sm text-muted tabular-nums">
                 {{ TRACE_TYPE_LIBELLES[trace.type] }} ·
                 {{ dayMonthYear.format(new Date(trace.dateModification ?? trace.dateCreation)) }}
               </p>
