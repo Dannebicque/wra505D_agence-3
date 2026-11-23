@@ -5,6 +5,8 @@ const props = defineProps<{
   /** Erreur de l'appel : son message (ApiError, déjà en français) est affiché. */
   error?: unknown
   empty?: boolean
+  /** État vide : titre court (« Aucune trace pour l'instant »), affiché au-dessus du message. */
+  emptyTitle?: string
   emptyMessage?: string
   /**
    * Forme du squelette de chargement, proche du contenu attendu pour que rien ne saute à
@@ -91,9 +93,22 @@ const errorMessage = computed(() => {
       ]"
     />
 
-    <p v-else-if="empty" class="text-muted">
-      {{ emptyMessage ?? 'Rien à afficher pour l’instant.' }}
-    </p>
+    <!--
+      État vide : il dit ce qui manque et propose l'étape suivante (slot `empty-action`, un bouton
+      principal ou secondaire) au lieu d'une simple phrase grise
+    -->
+    <div
+      v-else-if="empty"
+      :class="emptyTitle || $slots['empty-action'] ? 'rounded-panneau bg-muted p-6 sm:p-8' : ''"
+    >
+      <p v-if="emptyTitle" class="font-semibold leading-titre text-highlighted">{{ emptyTitle }}</p>
+      <p class="max-w-mesure text-muted" :class="{ 'mt-1': emptyTitle }">
+        {{ emptyMessage ?? 'Rien à afficher pour l’instant.' }}
+      </p>
+      <div v-if="$slots['empty-action']" class="mt-6 flex flex-wrap gap-2">
+        <slot name="empty-action" />
+      </div>
+    </div>
 
     <slot v-else />
   </div>

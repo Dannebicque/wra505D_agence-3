@@ -106,6 +106,17 @@
 
   /* Longueur de ligne du texte courant : `max-w-mesure` (45 à 75 caractères) */
   --container-mesure: 65ch;
+
+  /*
+   * Relief (passe #32) : rien n'a d'ombre au repos, sauf ce qu'on presse et ce qui flotte.
+   * `shadow-touche` : boutons pleins (reflet en haut, ombre courte, posés par app.config.ts) ;
+   * `shadow-flottant` : menus, fenêtres, aperçu de la page d'accueil.
+   */
+  --shadow-touche:
+    inset 0 1px 0 0 rgb(255 255 255 / 0.18), 0 1px 2px 0 oklch(20.5% 0.055 297.55 / 0.3),
+    0 3px 8px -3px oklch(20.5% 0.055 297.55 / 0.35);
+  --shadow-flottant:
+    0 1px 2px 0 oklch(20.5% 0.055 297.55 / 0.06), 0 12px 32px -8px oklch(20.5% 0.055 297.55 / 0.22);
 }
 
 /*
@@ -239,6 +250,31 @@
   padding-right: env(safe-area-inset-right);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
+}
+
+/*
+ * Aplat prune (`champ-fort`) : le bloc à lire en premier d'un écran (« À faire maintenant » des
+ * tableaux de bord, une section de la page d'accueil). Un seul par écran : le prune reste un accent.
+ * Les jetons de texte et de bordure sont redéfinis à l'intérieur : les composants Nuxt UI posés
+ * dessus (liens, badges, boutons secondaires) suivent. Contrastes sur prune 900 : texte 15,7:1,
+ * texte discret (prune 200) 10,4:1, contour (prune 400) 5,4:1, bouton or (fond) 8,3:1.
+ * Action principale dans l'aplat : bouton or (`bg-or-400 text-prune-950`, 9,6:1), jamais prune
+ * sur prune.
+ */
+@utility champ-fort {
+  background-color: var(--color-prune-900);
+  color: #fff;
+  --ui-text: #fff;
+  --ui-text-highlighted: #fff;
+  --ui-text-muted: var(--color-prune-200);
+  --ui-text-toned: var(--color-prune-100);
+  --ui-primary: var(--color-prune-200);
+  --ui-border: oklch(100% 0 0 / 0.14);
+  --ui-border-accented: oklch(100% 0 0 / 0.28);
+  --ui-bg: var(--color-prune-900);
+  --ui-bg-muted: oklch(100% 0 0 / 0.06);
+  --ui-bg-elevated: oklch(100% 0 0 / 0.12);
+  --uf-contour: var(--color-prune-400);
 }
 
 /* Zone qui défile : la place de la barre de défilement est réservée, le contenu ne se décale pas quand elle apparaît */

@@ -51,16 +51,41 @@ export default defineAppConfig({
     // Astérisque des champs requis : visuel seulement (texte de remplacement vide, `content: '*' /
     // ''`), sinon il est lu « étoile » dans le nom du champ. Le champ porte `aria-required`.
     formField: { variants: { required: { true: { label: "after:content-['*'_/_'']" } } } },
+    /*
+     * Hiérarchie des actions (docs/superpowers/specs/2026-11-23-passe-ui-ux-design.md) :
+     * - principale : `color="primary"` plein (par défaut), une seule par écran, placée en dernier
+     *   (à droite) dans `UiEnTetePage` ou en bas d'un formulaire ;
+     * - secondaire : `color="neutral" variant="outline"` ;
+     * - tertiaire : `color="neutral" variant="ghost"` (barres d'outils, actions de ligne) ;
+     * - destructive : `color="error"`, pleine seulement dans la confirmation.
+     * Relief : les boutons pleins ont un reflet en haut et une ombre portée courte (ils se lisent
+     * comme des touches), le secondaire une ombre d'un pixel ; à l'appui, le bouton s'enfonce.
+     */
     button: {
       // Style éditorial : boutons en pilule
-      slots: { base: 'rounded-full' },
+      slots: {
+        base: 'rounded-full font-semibold motion-safe:transition-[background-color,box-shadow,color,translate] motion-safe:duration-150 motion-safe:active:translate-y-px',
+      },
       compoundVariants: [
         {
           // Au survol, le fond fonce (clair) ou s'éclaircit (sombre) : le texte reste lisible (AA)
           color: 'primary',
           variant: 'solid',
           class:
-            'hover:bg-(--ui-color-primary-800) active:bg-(--ui-color-primary-800) dark:hover:bg-(--ui-color-primary-300) dark:active:bg-(--ui-color-primary-300)',
+            'shadow-touche active:shadow-none hover:bg-(--ui-color-primary-800) active:bg-(--ui-color-primary-800) dark:hover:bg-(--ui-color-primary-300) dark:active:bg-(--ui-color-primary-300)',
+        },
+        {
+          color: 'error',
+          variant: 'solid',
+          class: 'shadow-touche active:shadow-none',
+        },
+        {
+          // Secondaire : fond de la feuille (il se détache d'un panneau gris), ombre d'un pixel,
+          // contour renforcé au survol
+          color: 'neutral',
+          variant: 'outline',
+          class:
+            'bg-default shadow-xs hover:bg-muted hover:ring-contour active:shadow-none active:bg-elevated',
         },
         {
           // Bouton icône (sans libellé) sur écran tactile : zone de 44 × 44 px au moins, l'icône
