@@ -112,12 +112,12 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
           <li
             v-for="{ trace, competences: traceCompetences } in filtered"
             :key="trace['@id']"
-            class="group relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-feuille border border-default p-4 transition-colors hover:border-accented hover:bg-muted motion-reduce:transition-none"
+            class="group relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-feuille border border-default p-4 transition-colors hover:border-accented hover:bg-muted has-focus-visible:border-accented has-focus-visible:bg-muted motion-reduce:transition-none"
           >
             <div class="min-w-0">
               <NuxtLink
                 :to="{ path: `/etudiant/traces/${idFromIri(trace['@id'])}`, query: activeQuery }"
-                class="font-medium break-words text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille group-hover:underline"
+                class="font-medium break-words text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille group-hover:underline group-has-focus-visible:underline"
               >
                 {{ trace.titre }}
               </NuxtLink>
