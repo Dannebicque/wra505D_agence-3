@@ -66,15 +66,10 @@ const pageLink = (id: number) => ({ query: { page: String(id) } })
 
 <template>
   <div>
-    <UiEnTetePage :titre="portfolio.intitule">
+    <!-- Titre : Élément partagé avec le lien de la fiche de l'étudiant (transition de vue) -->
+    <UiEnTetePage :titre="portfolio.intitule" :transition-name="`portfolio-${portfolio.id}`">
       <template #avant>
         <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
-      </template>
-      <template #titre>
-        <!-- Élément partagé avec le lien de la fiche de l'étudiant (transition de vue) -->
-        <span class="block" :style="{ viewTransitionName: `portfolio-${portfolio.id}` }">
-          {{ portfolio.intitule }}
-        </span>
       </template>
       <template #chapeau>
         Portfolio de {{ nom }} · {{ portfolio.annee }} · modifié le

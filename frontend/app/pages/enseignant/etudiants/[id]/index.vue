@@ -70,15 +70,10 @@ const breadcrumb = [{ label: 'Étudiants', to: '/enseignant/etudiants' }, { labe
 
 <template>
   <div>
-    <UiEnTetePage :titre="nom" :chapeau="chapeau">
+    <!-- Titre : Élément partagé avec le nom de la carte ou de la ligne d'où l'on vient (transition de vue) -->
+    <UiEnTetePage :titre="nom" :chapeau="chapeau" :transition-name="`etudiant-${etudiant.id}`">
       <template #avant>
         <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
-      </template>
-      <template #titre>
-        <!-- Élément partagé avec le nom de la carte ou de la ligne d'où l'on vient (transition de vue) -->
-        <span class="block" :style="{ viewTransitionName: `etudiant-${etudiant.id}` }">
-          {{ nom }}
-        </span>
       </template>
       <template #actions>
         <!-- P-ST-08 : génération du bilan individuel, à brancher -->

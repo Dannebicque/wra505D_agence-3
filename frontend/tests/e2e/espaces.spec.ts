@@ -46,7 +46,9 @@ test.describe('espaces', () => {
     await expect(page.locator('main')).toHaveCount(1)
 
     await page.goBack()
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('UniFolio')
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+      'Vos compétences, trace après trace.',
+    )
     await expect(page.getByRole('navigation', { name: NAV_ESPACE })).toHaveCount(0)
     await expect(page.locator('main')).toHaveCount(1)
   })

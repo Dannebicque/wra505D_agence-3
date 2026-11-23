@@ -195,8 +195,7 @@ for (const { list, detail, name } of VIEW_TRANSITIONS) {
     expect(new Set(names).size).toBe(names.length)
 
     await gotoHydrated(page, detail)
-    // Le nom de transition est porté par le texte du titre (bloc dans le h1 de UiEnTetePage)
-    const titre = page.getByRole('heading', { level: 1 }).locator('span').first()
+    const titre = page.getByRole('heading', { level: 1 })
     expect(await titre.evaluate((el) => getComputedStyle(el).viewTransitionName)).toBe(name)
     const detailNames = await viewTransitionNames(page)
     expect(new Set(detailNames).size).toBe(detailNames.length)

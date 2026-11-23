@@ -55,11 +55,7 @@ function confirmErase() {
  */
 function eraseReturnFocus(reason: 'confirm' | 'cancel') {
   if (reason !== 'confirm') return undefined
-  const root = pageHeader.value?.$el as HTMLElement | undefined
-  const heading = root?.querySelector<HTMLElement>('h1')
-  heading?.setAttribute('tabindex', '-1')
-  heading?.classList.add('focus:outline-none')
-  return heading
+  return pageHeader.value?.heading ?? undefined
 }
 </script>
 

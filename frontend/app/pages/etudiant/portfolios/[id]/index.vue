@@ -211,15 +211,13 @@ const traceCount = (page: PageItem) =>
       Action principale de l'écran : « Publier », dans le panneau de publication (qui dit ce
       qu'elle fait). L'enregistrement des informations est une action secondaire de sa section.
     -->
-    <UiEnTetePage titre="Modifier le portfolio">
+    <!-- Titre : Le titre de la carte de « Mes portfolios » s'y transforme (même nom de transition) -->
+    <UiEnTetePage
+      titre="Modifier le portfolio"
+      :transition-name="`portfolio-${portfolio.id}-titre`"
+    >
       <template #avant>
         <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
-      </template>
-      <template #titre>
-        <!-- Le titre de la carte de « Mes portfolios » s'y transforme (même nom de transition) -->
-        <span class="block" :style="{ viewTransitionName: `portfolio-${portfolio.id}-titre` }">
-          Modifier le portfolio
-        </span>
       </template>
       <template #chapeau>
         {{ intitule }} · année {{ portfolio.annee }} · modifié le

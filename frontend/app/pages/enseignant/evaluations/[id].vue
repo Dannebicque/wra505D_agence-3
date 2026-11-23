@@ -80,15 +80,10 @@ async function saveAndNext() {
 
 <template>
   <div>
-    <UiEnTetePage :titre="trace.titre">
+    <!-- Titre : Élément partagé avec le titre de la carte d'où l'on vient (transition de vue) -->
+    <UiEnTetePage :titre="trace.titre" :transition-name="`trace-${trace.id}`">
       <template #avant>
         <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
-      </template>
-      <template #titre>
-        <!-- Élément partagé avec le titre de la carte d'où l'on vient (transition de vue) -->
-        <span class="block" :style="{ viewTransitionName: `trace-${trace.id}` }">
-          {{ trace.titre }}
-        </span>
       </template>
       <template #chapeau>
         <NuxtLink
