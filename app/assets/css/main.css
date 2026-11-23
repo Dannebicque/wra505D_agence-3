@@ -12,7 +12,7 @@
  *   l'essentiel. `primary` (= prune) est réservé à l'action principale, aux liens, au focus et aux
  *   éléments actifs. `or` est un accent décoratif, très rare : jamais de texte or, jamais
  *   d'information portée par l'or seul. Seule nuance utilisée : `or-400` (#F7B000), en fond sous un
- *   texte `text-prune-950` (9,6:1) ou en décor (trait de la navigation active, logo).
+ *   texte `text-prune-950` (9,6:1) ou en décor (trait de la navigation active en mode sombre, logo).
  *   Contour d'un champ ou d'une commande (≥ 3:1) : `ring-contour` / `border-contour`, déjà posé
  *   par le thème (`app.config.ts`) sur les champs, listes, cases, radios et l'interrupteur.
  * - Espacements : pas Tailwind 1, 2, 3, 4, 6, 8, 12 seulement (pas de 0.5, 1.5, 2.5, 5, 10 ni de
