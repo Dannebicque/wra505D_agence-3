@@ -11,6 +11,14 @@ const espace = computed(() => espaceFromPath(route.path))
 
 const isOpen = ref(false)
 
+// Position de la fenêtre :
+// - téléphone : en haut, sous la zone sûre, pour que le clavier virtuel ne cache pas les résultats ;
+// - à partir de `sm` : un peu au-dessus du centre de l'écran (centre optique, 45 % au lieu de 50 %).
+const MODAL_UI = {
+  content:
+    'max-sm:top-[calc(--spacing(4)+env(safe-area-inset-top))] max-sm:translate-y-0 sm:top-[45%] sm:max-w-2xl',
+}
+
 // Champ de recherche : un libellé explicite en plus de l'indication (transmis à l'<input>)
 const PALETTE_INPUT = {
   placeholder: 'Rechercher une page, une trace…',
@@ -28,6 +36,10 @@ const PALETTE_UI = {
   input: 'sticky top-0 z-10 bg-default',
   content: 'overflow-visible',
   viewport: 'overflow-visible',
+  // Résultat actif (aux flèches comme au survol) : fond plein et contour prune, comme l'anneau de
+  // focus. Le fond seul, à 50 % par défaut, se distinguait à peine du blanc, et moins que le
+  // résultat de la page courante.
+  item: 'data-highlighted:not-data-disabled:before:bg-elevated data-highlighted:not-data-disabled:before:ring-2 data-highlighted:not-data-disabled:before:ring-primary',
 }
 const paletteWrapper = useTemplateRef('paletteWrapper')
 watch(
@@ -77,7 +89,7 @@ defineShortcuts({
     v-model:open="isOpen"
     title="Recherche globale"
     description="Retrouver une page ou un élément de votre espace"
-    :ui="{ content: 'sm:max-w-2xl' }"
+    :ui="MODAL_UI"
   >
     <UButton
       icon="i-lucide-search"
@@ -88,7 +100,7 @@ defineShortcuts({
     >
       <!-- Libellé lu par les lecteurs d'écran à toutes les tailles, affiché à partir de la tablette -->
       <span class="sr-only md:not-sr-only md:flex-1 md:text-left md:text-muted">Rechercher…</span>
-      <span class="hidden items-center gap-0.5 md:inline-flex">
+      <span class="hidden items-center gap-1 md:inline-flex">
         <UKbd value="meta" />
         <UKbd value="k" />
       </span>
