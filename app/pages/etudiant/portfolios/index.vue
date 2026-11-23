@@ -85,7 +85,7 @@ const newPortfolioLink = computed(() =>
         <!-- Carte entièrement cliquable : le lien du titre la couvre (::after), les boutons
              d'action restent au-dessus (relative) -->
         <article
-          class="group relative flex h-full flex-col gap-4 rounded-panneau bg-muted p-4 transition-colors hover:bg-elevated motion-reduce:transition-none sm:p-6"
+          class="group relative flex h-full flex-col gap-4 rounded-panneau bg-muted p-4 transition-colors hover:bg-elevated has-focus-visible:bg-elevated motion-reduce:transition-none sm:p-6"
         >
           <PortfolioBanner size="sm" />
           <div>
@@ -97,7 +97,7 @@ const newPortfolioLink = computed(() =>
             >
               <NuxtLink
                 :to="`/etudiant/portfolios/${portfolio.id}`"
-                class="underline-offset-4 after:absolute after:inset-0 after:rounded-panneau group-hover:underline"
+                class="underline-offset-4 after:absolute after:inset-0 after:rounded-panneau group-hover:underline group-has-focus-visible:underline"
               >
                 {{ portfolio.intitule }}
               </NuxtLink>

@@ -119,12 +119,30 @@ test('les filtres des étudiants vivent dans l’URL', async ({ page }) => {
   await expect(page.getByRole('main').getByRole('status')).toHaveText('1 étudiant')
 })
 
+// Liste avec recherche : le nom du déclencheur suit la valeur choisie (au clavier comme à l'URL)
+test('le filtre « Groupe » des étudiants dit sa valeur et la garde dans l’URL', async ({
+  page,
+}) => {
+  await gotoHydrated(page, '/enseignant/etudiants')
+
+  const groupe = page.getByRole('button', { name: /^Groupe / })
+  await expect(groupe).toHaveAccessibleName('Groupe Tous les groupes')
+  await groupe.click()
+  await page.getByRole('combobox', { name: 'Filtrer les groupes' }).fill('B1')
+  await page.getByRole('option', { name: 'TP B1' }).click()
+
+  await expect(page).toHaveURL(/groupe=TP(\+|%20)B1/)
+  await expect(groupe).toHaveAccessibleName('Groupe TP B1')
+  await page.reload()
+  await expect(groupe).toHaveAccessibleName('Groupe TP B1')
+})
+
 test('« Réinitialiser les filtres » garde le focus et vide l’URL', async ({ page }) => {
   await gotoHydrated(page, '/enseignant/evaluations?statut=tous&etudiant=999')
 
   // Étudiant inconnu : retombe sur « tous », seul le statut reste un filtre actif
-  await expect(page.getByRole('button', { name: 'Étudiant', exact: true })).toContainText(
-    'Tous les étudiants',
+  await expect(page.getByRole('button', { name: /^Étudiant / })).toHaveAccessibleName(
+    'Étudiant Tous les étudiants',
   )
 
   const reset = page.getByRole('button', { name: 'Réinitialiser les filtres' })
@@ -177,14 +195,17 @@ for (const { list, detail, name } of VIEW_TRANSITIONS) {
 test('le filtre « Étudiant » se cherche au clavier et reste dans l’URL', async ({ page }) => {
   await gotoHydrated(page, '/enseignant/evaluations?statut=tous')
 
-  const etudiant = page.getByRole('button', { name: 'Étudiant', exact: true })
+  // Nom du déclencheur : libellé et valeur choisie, lus au focus comme après un choix
+  const etudiant = page.getByRole('button', { name: /^Étudiant / })
+  await expect(etudiant).toHaveAccessibleName('Étudiant Tous les étudiants')
   await etudiant.click()
+  await expect(page.getByRole('combobox', { name: 'Filtrer les étudiants' })).toBeFocused()
   await page.keyboard.type('moreau')
   await expect(page.getByRole('option')).toHaveCount(1)
   await page.keyboard.press('Enter')
 
   await expect(page).toHaveURL(/etudiant=3/)
-  await expect(etudiant).toContainText('Moreau Inès')
+  await expect(etudiant).toHaveAccessibleName('Étudiant Moreau Inès')
   await expect(etudiant).toBeFocused()
   await expect(page.getByRole('main').getByRole('status')).toHaveText(/^\d+ traces?$/)
 })

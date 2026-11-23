@@ -7,8 +7,10 @@ const homePath = computed(() => (espace.value ? `/${espace.value}` : '/'))
 // (la fermeture automatique de Nuxt UI ne réagit qu'à un changement d'URL)
 const isMenuOpen = ref(false)
 
+// Trait de la page courante, au moins 3:1 sur la pilule et le cadre (WCAG 1.4.11) : prune en clair
+// (7,9:1 ; l'or n'y faisait que 1,5:1), or de l'IUT en sombre (7,6:1)
 const ACTIVE_LINK_CLASS =
-  'font-semibold after:absolute after:inset-y-2 after:start-0 after:w-1 after:rounded-full after:bg-or-400'
+  'font-semibold after:absolute after:inset-y-2 after:start-0 after:w-1 after:rounded-full after:bg-primary dark:after:bg-or-400'
 
 // La barre latérale est en rem (unit="rem") : elle garde ses 224 px (14 rem) quelle que soit la fenêtre
 const items = computed(() =>
@@ -22,8 +24,8 @@ const items = computed(() =>
     return {
       ...item,
       active,
-      // La page courante se repère par la pilule et la graisse, pas seulement par la couleur
-      // (WCAG 1.4.1) ; le trait or (accent de l'IUT) n'est qu'un décor, sans information propre
+      // La page courante se repère par le trait, la pilule et la graisse, pas par la seule couleur
+      // (WCAG 1.4.1)
       class: active ? ACTIVE_LINK_CLASS : undefined,
       onSelect: () => {
         isMenuOpen.value = false
@@ -52,8 +54,9 @@ const items = computed(() =>
         <LayoutAppLogo :to="homePath" />
       </template>
 
-      <!-- Élément actif : pilule grise, libellé en encre et trait or (maquette éditoriale) ; la
-           couleur d'action reste aux données et à l'action principale de chaque page -->
+      <!-- Élément actif : pilule grise, libellé en encre et trait (prune en clair, or en sombre) ;
+           la couleur d'action ne colore pas les libellés, gardée aux données et à l'action
+           principale de chaque page -->
       <UNavigationMenu
         :items="items"
         color="neutral"
@@ -79,7 +82,12 @@ const items = computed(() =>
           elle est transparente en haut de la feuille (le logo est dans la barre latérale).
           Chaque outil n'existe qu'une fois : un seul raccourci Ctrl + K, une seule fenêtre.
         -->
-        <UDashboardNavbar class="bg-cadre lg:bg-transparent" :ui="{ root: 'border-none' }">
+        <!-- En-tête de l'espace (repère « banner », comme le <header> de la mise en page publique) -->
+        <UDashboardNavbar
+          as="header"
+          class="bg-cadre lg:bg-transparent"
+          :ui="{ root: 'border-none' }"
+        >
           <template #left>
             <LayoutAppLogo :to="homePath" class="lg:hidden" />
           </template>

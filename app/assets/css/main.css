@@ -12,7 +12,9 @@
  *   l'essentiel. `primary` (= prune) est réservé à l'action principale, aux liens, au focus et aux
  *   éléments actifs. `or` est un accent décoratif, très rare : jamais de texte or, jamais
  *   d'information portée par l'or seul. Seule nuance utilisée : `or-400` (#F7B000), en fond sous un
- *   texte `text-prune-950` (9,6:1) ou en décor (trait de la navigation active, logo).
+ *   texte `text-prune-950` (9,6:1) ou en décor (trait de la navigation active en mode sombre, logo).
+ *   Contour d'un champ ou d'une commande (≥ 3:1) : `ring-contour` / `border-contour`, déjà posé
+ *   par le thème (`app.config.ts`) sur les champs, listes, cases, radios et l'interrupteur.
  * - Espacements : pas Tailwind 1, 2, 3, 4, 6, 8, 12 seulement (pas de 0.5, 1.5, 2.5, 5, 10 ni de
  *   valeur arbitraire). 1 : icône ↔ texte, titre ↔ sous-ligne ; 2 : éléments d'un groupe ;
  *   3 : lignes d'une liste de cartes ; 4 : titre de section → contenu ; 6 : champs d'un formulaire,
@@ -74,6 +76,8 @@
 
   /* Fond du cadre (barre latérale, barre haute) : classe `bg-cadre` */
   --color-cadre: var(--uf-cadre);
+  /* Contour des champs (saisie, listes, cases, radios, interrupteur éteint) : `ring-contour` */
+  --color-contour: var(--uf-contour);
 
   /* Rayons : `rounded-feuille` (contenu), `rounded-panneau` (aplats) */
   --radius-feuille: 16px;
@@ -116,6 +120,12 @@
    */
   --font-instrument: 'Instrument Sans', system-ui, sans-serif;
   --uf-cadre: oklch(95.7% 0.005 297.55);
+  /*
+   * Contour des champs (WCAG 1.4.11, ≥ 3:1) : gris 500 sur bg-default / bg-muted 4,79 / 4,46:1.
+   * `--ui-border-accented` (gris 300, 1,49:1) reste aux contours décoratifs (boutons et badges
+   * « outline », séparateurs), qu'un gris 500 alourdirait sans rien apporter.
+   */
+  --uf-contour: var(--color-gris-500);
   /* Fond de la sélection de texte (sous un texte prune-950) */
   --uf-selection: var(--color-or-200);
   /* 700 : texte blanc lisible sur les boutons (9,9:1) */
@@ -138,6 +148,8 @@
 
 .dark {
   --uf-cadre: oklch(18% 0.007 297.55);
+  /* Gris 500 sur bg-default / bg-muted : 3,69 / 3,35:1 (gris 400, à 6,9:1, découperait trop) */
+  --uf-contour: var(--color-gris-500);
   --uf-selection: var(--color-or-400);
   /* 400 : prune éclairci, texte foncé (gris-900) sur les boutons (6,2:1) */
   --ui-primary: var(--ui-color-primary-400);

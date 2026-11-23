@@ -28,6 +28,15 @@ test.describe('espaces', () => {
     )
   })
 
+  test('range la barre d’outils de l’espace dans un seul repère « banner »', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant')
+
+    const banner = page.getByRole('banner')
+    await expect(banner).toHaveCount(1)
+    await expect(banner.getByRole('button', { name: /Rechercher/ })).toBeVisible()
+    await expect(banner.getByRole('button', { name: 'Aide' })).toBeVisible()
+  })
+
   test('change de mise en page en naviguant côté client, dans les deux sens', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await gotoHydrated(page, '/')

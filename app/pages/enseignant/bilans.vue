@@ -77,9 +77,12 @@ const resultLabel = computed(() =>
           <USelect v-model="annee" :items="anneeItems" class="w-full" />
         </UFormField>
         <!-- Groupe : liste avec recherche (un département compte de nombreux groupes) -->
-        <UFormField label="Groupe">
-          <USelectMenu v-model="groupe" :items="groupeItems" value-key="value" class="w-full" />
-        </UFormField>
+        <CommunFiltreListe
+          v-model="groupe"
+          label="Groupe"
+          :items="groupeItems"
+          search-label="Filtrer les groupes"
+        />
       </div>
       <p role="status" class="mt-4 text-sm text-muted">{{ resultLabel }}</p>
     </section>

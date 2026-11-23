@@ -1,3 +1,9 @@
+// Option active d'une liste (aux flèches comme au survol) : le focus réel est sur l'option
+// (tabindex="-1"), sans contour de focus (main.css). Fond plein et anneau prune, comme les
+// résultats de la recherche globale : le fond seul, à 50 %, ne se voyait pas (1,1:1).
+const ACTIVE_OPTION =
+  'data-highlighted:not-data-disabled:before:bg-elevated data-highlighted:not-data-disabled:before:ring-2 data-highlighted:not-data-disabled:before:ring-primary'
+
 export default defineAppConfig({
   ui: {
     colors: {
@@ -17,6 +23,34 @@ export default defineAppConfig({
           'mt-[env(safe-area-inset-top)] mb-[env(safe-area-inset-bottom)] ms-[env(safe-area-inset-left)] me-[env(safe-area-inset-right)]',
       },
     },
+    // Contour des champs et des commandes à au moins 3:1 (WCAG 1.4.11) : `contour` (main.css) au
+    // lieu de `accented` (1,4 à 1,7:1), gardé pour les contours décoratifs (boutons « outline »…)
+    input: { variants: { variant: { outline: 'ring-contour', subtle: 'ring-contour' } } },
+    textarea: { variants: { variant: { outline: 'ring-contour', subtle: 'ring-contour' } } },
+    select: {
+      slots: { item: ACTIVE_OPTION },
+      variants: { variant: { outline: 'ring-contour', subtle: 'ring-contour' } },
+    },
+    selectMenu: {
+      slots: { item: ACTIVE_OPTION },
+      variants: { variant: { outline: 'ring-contour', subtle: 'ring-contour' } },
+    },
+    checkbox: { slots: { base: 'ring-contour' } },
+    radioGroup: { slots: { base: 'ring-contour' } },
+    // Interrupteur éteint : piste en contour (le curseur, bg-default, s'y détache à 3,7:1 au moins)
+    switch: { slots: { base: 'data-[state=unchecked]:bg-contour' } },
+    // Fil d'Ariane sous `sm` : les libellés passent à la ligne au lieu d'être tronqués (à 320 px,
+    // « Mes portfolios › Portfolio… › … » ne laissait plus rien lire, WCAG 1.4.10)
+    breadcrumb: {
+      slots: {
+        list: 'max-sm:flex-wrap',
+        link: 'max-sm:items-start',
+        linkLabel: 'max-sm:whitespace-normal max-sm:wrap-break-word',
+      },
+    },
+    // Astérisque des champs requis : visuel seulement (texte de remplacement vide, `content: '*' /
+    // ''`), sinon il est lu « étoile » dans le nom du champ. Le champ porte `aria-required`.
+    formField: { variants: { required: { true: { label: "after:content-['*'_/_'']" } } } },
     button: {
       // Style éditorial : boutons en pilule
       slots: { base: 'rounded-full' },

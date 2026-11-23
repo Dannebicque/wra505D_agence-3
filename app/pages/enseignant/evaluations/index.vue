@@ -87,22 +87,18 @@ const resultLabel = computed(() =>
           <USelect v-model="criteria.statut" :items="statutItems" class="w-full" />
         </UFormField>
         <!-- Listes longues, où l'on cherche un nom : liste avec recherche (combobox) -->
-        <UFormField label="Étudiant">
-          <USelectMenu
-            v-model="criteria.etudiant"
-            :items="etudiantItems"
-            value-key="value"
-            class="w-full"
-          />
-        </UFormField>
-        <UFormField label="Groupe">
-          <USelectMenu
-            v-model="criteria.groupe"
-            :items="groupeItems"
-            value-key="value"
-            class="w-full"
-          />
-        </UFormField>
+        <CommunFiltreListe
+          v-model="criteria.etudiant"
+          label="Étudiant"
+          :items="etudiantItems"
+          search-label="Filtrer les étudiants"
+        />
+        <CommunFiltreListe
+          v-model="criteria.groupe"
+          label="Groupe"
+          :items="groupeItems"
+          search-label="Filtrer les groupes"
+        />
         <UFormField label="Compétence">
           <USelect v-model="criteria.competence" :items="competenceItems" class="w-full" />
         </UFormField>

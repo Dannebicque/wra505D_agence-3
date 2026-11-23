@@ -123,6 +123,8 @@ const detailsOpen = ref(
     state.realisationIa !== 'non_renseigne',
   ),
 )
+/** Bouton de la section : nommé par son titre, décrit par sa sous-ligne. */
+const detailsId = useId()
 /** Une erreur dans la section l'ouvre : elle se voit, et le focus peut atteindre le champ. */
 function revealDetailsFor(names: (string | undefined)[]) {
   if (names.some((name) => name !== undefined && DETAIL_FIELDS.test(name))) {
@@ -229,8 +231,15 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
       />
     </UFormField>
 
-    <UFormField label="Type de trace" name="type">
-      <URadioGroup v-model="state.type" :items="TYPE_ITEMS" orientation="horizontal" />
+    <!-- Le groupe est nommé par sa légende (un libellé de UFormField ne vise aucun champ ici) ;
+         UFormField garde l'erreur du champ, liée au groupe (aria-describedby) -->
+    <UFormField name="type">
+      <URadioGroup
+        v-model="state.type"
+        legend="Type de trace"
+        :items="TYPE_ITEMS"
+        orientation="horizontal"
+      />
     </UFormField>
 
     <TraceFileField
@@ -293,10 +302,15 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
           trailingIcon:
             'transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none',
         }"
+        :aria-labelledby="`${detailsId}-titre`"
+        :aria-describedby="`${detailsId}-resume`"
       >
+        <!-- Nom court (« Plus de détails ») ; la sous-ligne est une description -->
         <span>
-          <span class="block font-medium text-highlighted">Plus de détails</span>
-          <span class="block text-sm font-normal text-muted">
+          <span :id="`${detailsId}-titre`" class="block font-medium text-highlighted"
+            >Plus de détails</span
+          >
+          <span :id="`${detailsId}-resume`" class="block text-sm font-normal text-muted">
             Contexte, date de réalisation, usage de l’intelligence artificielle
           </span>
         </span>

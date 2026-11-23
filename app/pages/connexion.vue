@@ -83,6 +83,7 @@ const DEMO_ACCESS = [
       <UFormField label="Identifiant universitaire" name="identifiant" required>
         <UInput
           v-model="state.identifiant"
+          aria-required="true"
           autocomplete="username"
           autocapitalize="none"
           spellcheck="false"
@@ -96,6 +97,7 @@ const DEMO_ACCESS = [
         <UInput
           id="mot-de-passe"
           v-model="state.motDePasse"
+          aria-required="true"
           :type="isPasswordVisible ? 'text' : 'password'"
           autocomplete="current-password"
           size="lg"

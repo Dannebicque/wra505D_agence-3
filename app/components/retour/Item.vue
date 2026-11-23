@@ -24,7 +24,7 @@ const trace = computed(() => traceById(props.retour.traceId))
     class="group relative flex gap-4 border-l-4 p-4 transition-colors motion-reduce:transition-none sm:px-6"
     :class="[
       retour.lu ? 'border-transparent' : 'border-primary bg-default',
-      { 'hover:bg-elevated': trace },
+      { 'hover:bg-elevated has-focus-visible:bg-elevated': trace },
     ]"
   >
     <!-- Icône seule, sans pastille : le type est aussi écrit dans le badge -->
@@ -55,7 +55,7 @@ const trace = computed(() => traceById(props.retour.traceId))
         <NuxtLink
           v-if="trace"
           :to="`/etudiant/traces/${trace.id}`"
-          class="text-highlighted underline-offset-4 after:absolute after:inset-0 group-hover:underline"
+          class="text-highlighted underline-offset-4 after:absolute after:inset-0 group-hover:underline group-has-focus-visible:underline"
           @click="$emit('open')"
         >
           {{ trace.titre }}
