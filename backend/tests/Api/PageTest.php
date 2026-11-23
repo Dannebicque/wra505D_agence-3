@@ -26,7 +26,7 @@ class PageTest extends ApiTestCase
         self::assertSame(['@id', '@type', 'dateSuppression', 'description', 'intitule', 'portfolio', 'traces'], $cles);
         self::assertSame($this->portfolio(), $page['portfolio']);
         self::assertSame([$this->trace('Site vitrine d’une association')], $page['traces']);
-        foreach (['/api/portfolios/999999', 'abc', '/api/pages/1'] as $inconnu) {
+        foreach (['/api/portfolios/999999', '/api/portfolios/2147483648', 'abc', '/api/pages/1'] as $inconnu) {
             self::assertSame(0, $this->lire('/api/pages?portfolio=' . urlencode($inconnu))['totalItems'], $inconnu);
         }
     }

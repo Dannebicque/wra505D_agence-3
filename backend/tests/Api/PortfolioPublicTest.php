@@ -37,8 +37,10 @@ class PortfolioPublicTest extends ApiTestCase
         $this->lire("/api/portfolios/$id/public");
         self::assertResponseStatusCodeSame(404);
 
-        $this->lire('/api/portfolios/999999/public');
-        self::assertResponseStatusCodeSame(404);
+        foreach (['999999', '2147483648'] as $inconnu) {
+            $this->lire("/api/portfolios/$inconnu/public");
+            self::assertResponseStatusCodeSame(404, $inconnu);
+        }
     }
 
     public function testMasqueLesPagesSupprimeesEtLesTracesRepasseesEnBrouillon(): void

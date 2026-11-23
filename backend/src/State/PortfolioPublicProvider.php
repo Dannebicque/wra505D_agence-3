@@ -22,7 +22,7 @@ final class PortfolioPublicProvider implements ProviderInterface
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): Portfolio
     {
-        $id = filter_var($uriVariables['id'] ?? null, \FILTER_VALIDATE_INT);
+        $id = filter_var($uriVariables['id'] ?? null, \FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 2147483647]]);
         $portfolio = false === $id ? null : $this->portfolios->publicAvecContenu($id);
 
         return $portfolio ?? throw new NotFoundHttpException('Portfolio introuvable.');
