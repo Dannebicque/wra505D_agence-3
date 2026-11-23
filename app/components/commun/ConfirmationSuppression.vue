@@ -85,7 +85,7 @@ const MODAL_CONTENT = { role: 'alertdialog', onOpenAutoFocus: focusCancel, onClo
     :title="props.title"
     :description="props.description"
     :content="MODAL_CONTENT"
-    :ui="{ footer: 'justify-end' }"
+    :ui="{ footer: 'justify-end gap-2' }"
     @update:open="onUpdateOpen"
   >
     <template #footer>

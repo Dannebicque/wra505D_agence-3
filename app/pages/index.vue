@@ -13,19 +13,25 @@ const SPACE_LINKS = [
 </script>
 
 <template>
-  <div class="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-16 sm:py-24">
+  <div class="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+    <!-- Échelle d'espacement : titre → texte 4, chapeau → action 8, entre sections 12, boutons 2 -->
     <h1 class="font-titre text-5xl text-highlighted">UniFolio</h1>
-    <p class="text-lg text-muted">
+    <p class="mt-4 max-w-mesure text-lg text-muted">
       Déposez vos traces, composez votre portfolio de compétences et suivez vos évaluations.
     </p>
-    <div class="flex flex-wrap gap-3">
-      <UButton to="/connexion" size="lg" color="neutral" variant="outline" icon="i-lucide-log-in">
-        Se connecter
-      </UButton>
-    </div>
-    <section aria-labelledby="acces-direct" class="flex flex-col gap-3">
+    <UButton
+      to="/connexion"
+      size="lg"
+      color="neutral"
+      variant="outline"
+      icon="i-lucide-log-in"
+      class="mt-8"
+    >
+      Se connecter
+    </UButton>
+    <section aria-labelledby="acces-direct" class="mt-12">
       <h2 id="acces-direct" class="text-sm font-medium text-muted">Accès de démonstration</h2>
-      <div class="flex flex-wrap gap-3">
+      <div class="mt-4 flex flex-wrap gap-2">
         <UButton v-for="espace in SPACE_LINKS" :key="espace.to" :to="espace.to" size="lg">
           {{ espace.label }}
         </UButton>
