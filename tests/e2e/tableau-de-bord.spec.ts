@@ -15,9 +15,9 @@ test.describe('tableau de bord étudiant', () => {
   })
 
   test('met en avant le taux d’acquisition', async ({ page }) => {
-    // 3 évaluations acquises sur 8 soumises : 38 %
+    // 8 évaluations demandées, dont 2 en attente : 3 acquises sur 6 rendues, 50 %
     await expect(page.getByRole('region', { name: 'Vos compétences' })).toContainText(
-      /38\s*%\s*des évaluations acquises\s*\(3 sur 8\)/,
+      /50\s*%\s*de vos évaluations rendues sont acquises\s*\(3 sur 6\)/,
     )
   })
 

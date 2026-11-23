@@ -18,10 +18,14 @@ const today = new Intl.DateTimeFormat('fr-FR', {
 }).format(new Date())
 const todayLabel = today.charAt(0).toUpperCase() + today.slice(1)
 
-// Indicateur de synthèse : part des évaluations acquises (« niveaux » ou « évaluations » :
-// question ouverte n° 11 de docs/FONCTIONNALITES.md)
+// Indicateur de synthèse : part des évaluations rendues qui sont acquises, comme côté enseignant ;
+// les évaluations en attente sont comptées à part (« niveaux » ou « évaluations » : question
+// ouverte n° 11 de docs/FONCTIONNALITES.md)
+const evaluated = computed(() =>
+  counters.value ? counters.value.validations - counters.value.pending : 0,
+)
 const rate = computed(() =>
-  counters.value ? acquisitionRate(counters.value.acquired, counters.value.validations) : null,
+  counters.value ? acquisitionRate(counters.value.acquired, evaluated.value) : null,
 )
 
 // Chiffres secondaires : le nombre d'évaluations acquises est déjà l'indicateur de synthèse
@@ -87,9 +91,9 @@ const dayMonth = new Intl.DateTimeFormat('fr-FR', {
           <p v-if="rate !== null" class="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <span class="text-4xl font-semibold text-highlighted">{{ rate }}&nbsp;%</span>
             <span class="text-muted">
-              des évaluations acquises
+              de vos évaluations rendues sont acquises
               <span class="whitespace-nowrap tabular-nums">
-                ({{ counters.acquired }} sur {{ counters.validations }})
+                ({{ counters.acquired }} sur {{ evaluated }})
               </span>
             </span>
           </p>

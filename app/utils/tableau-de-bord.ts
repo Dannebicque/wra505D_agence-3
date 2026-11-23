@@ -137,9 +137,14 @@ export function progressionSummary(p: ProgressionCounts): string {
 }
 
 /**
- * Taux d'acquisition, en pourcentage arrondi à l'unité : part des évaluations acquises.
- * `null` sans évaluation (pas de « 0 % » trompeur).
+ * Taux d'acquisition, en pourcentage arrondi à l'unité : part des évaluations rendues (hors
+ * « en attente ») qui sont acquises. `null` sans évaluation rendue (pas de « 0 % » trompeur).
+ * L'arrondi ne dit jamais « 0 % » s'il y a un acquis, ni « 100 % » s'il en manque un.
  */
 export function acquisitionRate(acquired: number, total: number): number | null {
-  return total > 0 ? Math.round((acquired / total) * 100) : null
+  if (total <= 0) return null
+  const rate = Math.round((acquired / total) * 100)
+  if (acquired > 0 && rate === 0) return 1
+  if (acquired < total && rate === 100) return 99
+  return rate
 }

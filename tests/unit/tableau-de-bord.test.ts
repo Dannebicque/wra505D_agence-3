@@ -255,4 +255,9 @@ describe('acquisitionRate', () => {
   it('n’invente pas de taux sans évaluation', () => {
     expect(acquisitionRate(0, 0)).toBeNull()
   })
+
+  it('ne dit ni « 0 % » avec un acquis, ni « 100 % » s’il en manque un', () => {
+    expect(acquisitionRate(1, 201)).toBe(1)
+    expect(acquisitionRate(199, 200)).toBe(99)
+  })
 })
