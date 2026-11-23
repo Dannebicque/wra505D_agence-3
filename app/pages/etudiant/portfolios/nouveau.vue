@@ -30,9 +30,9 @@ function onSubmit() {
 
     <template v-if="currentYearPortfolio">
       <p
-        class="mt-6 flex items-start gap-2 rounded-panneau bg-muted px-4 py-3 text-sm text-default"
+        class="mt-8 flex items-start gap-2 rounded-panneau bg-muted px-4 py-3 text-sm text-default"
       >
-        <UIcon name="i-lucide-info" class="mt-0.5 size-4 shrink-0 text-muted" aria-hidden="true" />
+        <UIcon name="i-lucide-info" class="mt-1 size-4 shrink-0 text-muted" aria-hidden="true" />
         <span>
           Vous avez déjà un portfolio pour l’année {{ ANNEE_COURANTE }} :
           <NuxtLink
@@ -55,7 +55,7 @@ function onSubmit() {
     </template>
 
     <template v-else>
-      <p class="mt-3 text-muted">
+      <p class="mt-2 max-w-mesure text-muted">
         Ce portfolio sera rattaché à l’année {{ ANNEE_COURANTE }}. Vous y ajouterez ensuite vos
         projets, puis vous le publierez quand il sera prêt.
       </p>

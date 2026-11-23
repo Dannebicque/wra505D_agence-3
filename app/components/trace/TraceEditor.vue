@@ -153,14 +153,14 @@ watch(autosave.status, (status) => {
   <div>
     <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
       <p
-        class="text-sm"
+        class="flex items-center gap-1 text-sm"
         :class="autosave.status.value === 'error' ? 'text-error' : 'text-muted'"
         data-testid="etat-sauvegarde"
       >
         <UIcon
           v-if="autosave.status.value === 'saved'"
           name="i-lucide-check"
-          class="mr-1 align-[-2px]"
+          class="size-4 shrink-0"
           aria-hidden="true"
         />
         {{ statusLabel }}

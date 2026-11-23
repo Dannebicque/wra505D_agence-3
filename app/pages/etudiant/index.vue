@@ -46,21 +46,21 @@ const dayMonth = new Intl.DateTimeFormat('fr-FR', {
 
 <template>
   <div>
-    <h1 class="font-titre text-2xl leading-tight text-highlighted sm:text-3xl">{{ greeting }}</h1>
-    <p class="mt-3 text-muted">{{ todayLabel }}</p>
+    <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">{{ greeting }}</h1>
+    <p class="mt-2 text-muted">{{ todayLabel }}</p>
 
-    <UiAsyncState :status="status" :error="error" class="mt-8" @retry="refresh()">
+    <UiAsyncState :status="status" :error="error" skeleton="tuiles" class="mt-8" @retry="refresh()">
       <template v-if="counters">
-        <section aria-labelledby="en-chiffres" class="mt-9">
+        <section aria-labelledby="en-chiffres">
           <h2 id="en-chiffres" class="sr-only">En chiffres</h2>
           <dl class="grid grid-cols-2 gap-3 lg:grid-cols-4 lg:gap-4">
             <div
               v-for="tile in tiles"
               :key="tile.label"
-              class="flex min-h-24 flex-col justify-between gap-3 rounded-panneau bg-muted p-4 lg:min-h-28 lg:p-5"
+              class="flex min-h-24 flex-col justify-between gap-3 rounded-panneau bg-muted p-4 sm:p-6 lg:min-h-28"
             >
               <dt class="text-sm text-muted">{{ tile.label }}</dt>
-              <dd class="text-3xl text-highlighted">
+              <dd class="text-3xl text-highlighted tabular-nums">
                 {{ tile.value }}
                 <span v-if="tile.suffix" class="text-base text-muted">{{ tile.suffix }}</span>
               </dd>
@@ -69,7 +69,7 @@ const dayMonth = new Intl.DateTimeFormat('fr-FR', {
         </section>
 
         <div class="mt-3 grid gap-3 lg:mt-4 lg:grid-cols-[3fr_1fr] lg:gap-4">
-          <section aria-labelledby="vos-competences" class="rounded-panneau bg-muted p-5 lg:p-6">
+          <section aria-labelledby="vos-competences" class="rounded-panneau bg-muted p-4 sm:p-6">
             <div class="flex flex-wrap items-center justify-between gap-3">
               <h2 id="vos-competences" class="text-sm font-semibold text-highlighted">
                 Vos compétences
@@ -93,19 +93,31 @@ const dayMonth = new Intl.DateTimeFormat('fr-FR', {
                   :pending="p.pending"
                   :max="maxTotal"
                 />
-                <span class="col-span-2 text-xs text-muted sm:col-span-1 sm:text-right">
+                <span
+                  class="col-span-2 text-xs text-muted tabular-nums sm:col-span-1 sm:text-right"
+                >
                   {{ progressionSummary(p) }}
                 </span>
               </li>
             </ul>
           </section>
 
-          <section aria-labelledby="a-terminer" class="rounded-panneau bg-muted p-5 lg:p-6">
+          <section aria-labelledby="a-terminer" class="rounded-panneau bg-muted p-4 sm:p-6">
             <h2 id="a-terminer" class="text-sm font-semibold text-highlighted">À terminer</h2>
-            <ul v-if="drafts.length" class="mt-4 space-y-4">
-              <li v-for="trace in drafts" :key="trace['@id']">
-                <p class="font-medium text-highlighted">{{ trace.titre }}</p>
-                <p v-if="trace.dateModification" class="text-xs text-muted">
+            <!-- Chaque brouillon mène à son éditeur : toute la ligne est cliquable -->
+            <ul v-if="drafts.length" class="-mx-2 mt-4 space-y-2">
+              <li
+                v-for="trace in drafts"
+                :key="trace['@id']"
+                class="group relative rounded-feuille p-2 transition-colors hover:bg-elevated motion-reduce:transition-none"
+              >
+                <NuxtLink
+                  :to="`/etudiant/traces/${idFromIri(trace['@id'])}`"
+                  class="block font-medium leading-titre break-words text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille group-hover:underline"
+                >
+                  {{ trace.titre }}
+                </NuxtLink>
+                <p v-if="trace.dateModification" class="mt-1 text-xs text-muted">
                   Brouillon modifié le {{ dayMonth.format(new Date(trace.dateModification)) }}
                 </p>
               </li>

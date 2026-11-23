@@ -64,7 +64,7 @@ const eraseReturnFocus = (reason: 'confirm' | 'cancel') =>
       Corbeille
     </h1>
     <!-- Durée de conservation à confirmer avec le client (30 jours proposés par l'équipe) -->
-    <p class="mt-3 max-w-2xl text-muted">
+    <p class="mt-2 max-w-mesure text-muted">
       Les traces, pages et portfolios supprimés restent ici {{ CORBEILLE_DUREE_JOURS }} jours avant
       d’être effacés définitivement. Vous pouvez les restaurer d’ici là.
     </p>
@@ -78,7 +78,7 @@ const eraseReturnFocus = (reason: 'confirm' | 'cancel') =>
       <li
         v-for="element in elements"
         :key="element.id"
-        class="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between"
+        class="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
       >
         <div class="flex min-w-0 gap-4">
           <UIcon
@@ -92,7 +92,7 @@ const eraseReturnFocus = (reason: 'confirm' | 'cancel') =>
             <p v-if="element.origine" class="text-sm text-muted">
               Dans le portfolio « {{ element.origine }} »
             </p>
-            <p class="mt-1 text-xs text-muted">
+            <p class="mt-1 text-xs text-muted tabular-nums">
               Suppression le
               <time :datetime="element.dateSuppression">
                 {{ formatDate(element.dateSuppression) }}
@@ -105,7 +105,8 @@ const eraseReturnFocus = (reason: 'confirm' | 'cancel') =>
           </div>
         </div>
 
-        <div class="flex shrink-0 flex-wrap gap-2 pl-13 sm:pl-0">
+        <!-- Sur téléphone, les actions s'alignent sur le texte (icône size-4 + gap-4) -->
+        <div class="flex shrink-0 flex-wrap gap-2 pl-8 sm:pl-0">
           <UButton
             icon="i-lucide-rotate-ccw"
             color="neutral"
@@ -129,7 +130,11 @@ const eraseReturnFocus = (reason: 'confirm' | 'cancel') =>
       </li>
     </ul>
 
-    <div v-else class="mt-8 flex flex-col items-center gap-3 rounded-panneau bg-muted px-6 py-12">
+    <!-- État vide : un peu au-dessus du centre optique (moins d'air en haut qu'en bas) -->
+    <div
+      v-else
+      class="mt-8 flex flex-col items-center gap-3 rounded-panneau bg-muted px-6 pt-8 pb-12"
+    >
       <UIcon name="i-lucide-trash" class="size-8 text-muted" aria-hidden="true" />
       <p class="max-w-md text-center text-muted">
         La corbeille est vide. Les éléments que vous supprimez y restent

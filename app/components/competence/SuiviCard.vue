@@ -22,7 +22,7 @@ const criteres = computed(() => [
 </script>
 
 <template>
-  <article :aria-labelledby="headingId" class="rounded-panneau bg-muted p-5 lg:p-6">
+  <article :aria-labelledby="headingId" class="rounded-panneau bg-muted p-4 sm:p-6">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div class="min-w-0">
         <h2 :id="headingId" class="font-titre text-xl text-highlighted">
@@ -46,7 +46,9 @@ const criteres = computed(() => [
         :pending="suivi.pending"
         :max="max"
       />
-      <p class="text-xs text-muted sm:text-right">Évaluations : {{ progressionSummary(suivi) }}</p>
+      <p class="text-xs text-muted tabular-nums sm:text-right">
+        Évaluations : {{ progressionSummary(suivi) }}
+      </p>
     </div>
 
     <UAccordion
@@ -55,18 +57,18 @@ const criteres = computed(() => [
       :ui="{ trigger: 'text-sm font-medium text-highlighted' }"
     >
       <template #criteres>
-        <ul class="list-disc space-y-1.5 pb-4 pl-5 text-sm">
+        <ul class="max-w-mesure list-disc space-y-2 pb-4 pl-6 text-sm">
           <li v-for="ac in suivi.competence.apprentissagesCritiques" :key="ac">{{ ac }}</li>
         </ul>
       </template>
     </UAccordion>
 
-    <h3 class="mt-5 text-sm font-semibold text-highlighted">Traces associées</h3>
+    <h3 class="mt-6 text-sm font-semibold text-highlighted">Traces associées</h3>
     <ul v-if="suivi.traces.length" class="mt-2 divide-y divide-default">
       <li
         v-for="{ trace, etat } in suivi.traces"
         :key="trace.id"
-        class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2.5"
+        class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3"
       >
         <div class="min-w-0">
           <NuxtLink
@@ -75,7 +77,7 @@ const criteres = computed(() => [
           >
             {{ trace.titre }}
           </NuxtLink>
-          <p class="text-xs text-muted">{{ formatDate(trace.date) }}</p>
+          <p class="text-xs text-muted tabular-nums">{{ formatDate(trace.date) }}</p>
         </div>
         <UBadge
           v-if="trace.statut === 'brouillon'"

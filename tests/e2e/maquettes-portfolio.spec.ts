@@ -153,3 +153,31 @@ test.describe('outils communs des espaces', () => {
     expect(results.violations).toEqual([])
   })
 })
+
+test.describe('liste des portfolios', () => {
+  test('la carte entière mène au portfolio, dont le titre partage la transition', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/etudiant/portfolios')
+    const carte = page
+      .getByRole('list', { name: 'Portfolios' })
+      .getByRole('listitem')
+      .filter({ hasText: 'Léa Martin, développeuse web' })
+    const titre = carte.getByRole('heading', { level: 2 })
+    await expect(titre).toHaveCSS('view-transition-name', 'portfolio-1-titre')
+
+    // Un clic hors du titre et des boutons (sur « Modifié le ») ouvre le portfolio : le lien du
+    // titre couvre la carte, d'où un clic à la souris plutôt que sur l'élément
+    const modifie = carte.getByText('Modifié le')
+    await modifie.scrollIntoViewIfNeeded()
+    const box = await modifie.boundingBox()
+    if (!box) throw new Error('« Modifié le » n’est pas affiché')
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+
+    await expect(page).toHaveURL(/\/etudiant\/portfolios\/1$/)
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCSS(
+      'view-transition-name',
+      'portfolio-1-titre',
+    )
+  })
+})

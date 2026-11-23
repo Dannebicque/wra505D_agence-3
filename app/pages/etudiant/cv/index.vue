@@ -95,14 +95,14 @@ function removeCompetence(competence: string) {
 <template>
   <div>
     <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mon CV</h1>
-    <p class="mt-3 max-w-2xl text-muted">
+    <p class="mt-2 max-w-mesure text-muted">
       Complétez votre CV et adaptez-le à chaque candidature. L’aperçu se met à jour au fil de la
       saisie.
     </p>
     <p role="status" class="sr-only">{{ announcement }}</p>
 
     <div
-      class="mt-8 flex flex-col gap-4 rounded-panneau bg-muted p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6"
+      class="mt-8 flex flex-col gap-4 rounded-panneau bg-muted p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between"
     >
       <URadioGroup
         v-model="variante"
@@ -151,35 +151,37 @@ function removeCompetence(competence: string) {
         <h2 id="cv-edition" class="sr-only">Modifier le CV</h2>
 
         <!-- Identité -->
-        <fieldset class="space-y-4 rounded-panneau bg-muted p-5">
-          <legend class="float-left mb-1 text-sm font-semibold text-highlighted">Identité</legend>
-          <div class="clear-both grid gap-4 sm:grid-cols-2">
-            <UFormField label="Prénom">
-              <UInput v-model="cv.prenom" autocomplete="given-name" class="w-full" />
+        <fieldset class="rounded-panneau bg-muted p-4 sm:p-6">
+          <legend class="float-left mb-4 text-sm font-semibold text-highlighted">Identité</legend>
+          <div class="clear-both space-y-6">
+            <div class="grid gap-6 sm:grid-cols-2">
+              <UFormField label="Prénom">
+                <UInput v-model="cv.prenom" autocomplete="given-name" class="w-full" />
+              </UFormField>
+              <UFormField label="Nom">
+                <UInput v-model="cv.nom" autocomplete="family-name" class="w-full" />
+              </UFormField>
+            </div>
+            <UFormField label="Titre" description="Une ligne sous votre nom.">
+              <UInput v-model="cv.titre" class="w-full" />
             </UFormField>
-            <UFormField label="Nom">
-              <UInput v-model="cv.nom" autocomplete="family-name" class="w-full" />
+            <div class="grid gap-6 sm:grid-cols-2">
+              <UFormField label="Adresse e-mail">
+                <UInput v-model="cv.email" type="email" autocomplete="email" class="w-full" />
+              </UFormField>
+              <UFormField label="Téléphone">
+                <UInput v-model="cv.telephone" type="tel" autocomplete="tel" class="w-full" />
+              </UFormField>
+            </div>
+            <UFormField label="Ville">
+              <UInput v-model="cv.ville" autocomplete="address-level2" class="w-full" />
             </UFormField>
           </div>
-          <UFormField label="Titre" description="Une ligne sous votre nom.">
-            <UInput v-model="cv.titre" class="w-full" />
-          </UFormField>
-          <div class="grid gap-4 sm:grid-cols-2">
-            <UFormField label="Adresse e-mail">
-              <UInput v-model="cv.email" type="email" autocomplete="email" class="w-full" />
-            </UFormField>
-            <UFormField label="Téléphone">
-              <UInput v-model="cv.telephone" type="tel" autocomplete="tel" class="w-full" />
-            </UFormField>
-          </div>
-          <UFormField label="Ville">
-            <UInput v-model="cv.ville" autocomplete="address-level2" class="w-full" />
-          </UFormField>
         </fieldset>
 
         <!-- Accroche, propre à chaque variante (E-CV-06) -->
-        <fieldset class="rounded-panneau bg-muted p-5">
-          <legend class="float-left mb-3 text-sm font-semibold text-highlighted">Accroche</legend>
+        <fieldset class="rounded-panneau bg-muted p-4 sm:p-6">
+          <legend class="float-left mb-4 text-sm font-semibold text-highlighted">Accroche</legend>
           <UFormField
             :label="`Accroche pour la ${varianteLabel}`"
             description="Chaque version du CV garde sa propre accroche."
@@ -190,19 +192,19 @@ function removeCompetence(competence: string) {
         </fieldset>
 
         <!-- Expériences -->
-        <fieldset class="rounded-panneau bg-muted p-5">
-          <legend class="float-left mb-3 text-sm font-semibold text-highlighted">
+        <fieldset class="rounded-panneau bg-muted p-4 sm:p-6">
+          <legend class="float-left mb-4 text-sm font-semibold text-highlighted">
             Expériences
           </legend>
           <p v-if="cv.experiences.length === 0" class="clear-both text-sm text-muted">
             Aucune expérience. Stages, projets, emplois d’été : tout compte.
           </p>
-          <ol v-else class="clear-both space-y-4">
+          <ol v-else class="clear-both space-y-3">
             <li
               v-for="(e, index) in cv.experiences"
               :key="e.id"
               :data-cv-item="`experiences-${e.id}`"
-              class="space-y-3 rounded-feuille bg-default p-4"
+              class="space-y-4 rounded-feuille bg-default p-4"
             >
               <div class="flex items-center justify-between gap-2">
                 <p class="text-sm font-medium text-highlighted">Expérience {{ index + 1 }}</p>
@@ -218,7 +220,7 @@ function removeCompetence(competence: string) {
               <UFormField label="Poste ou projet">
                 <UInput v-model="e.poste" class="w-full" />
               </UFormField>
-              <div class="grid gap-3 sm:grid-cols-2">
+              <div class="grid gap-4 sm:grid-cols-2">
                 <UFormField label="Structure">
                   <UInput v-model="e.structure" class="w-full" />
                 </UFormField>
@@ -245,17 +247,17 @@ function removeCompetence(competence: string) {
         </fieldset>
 
         <!-- Formations -->
-        <fieldset class="rounded-panneau bg-muted p-5">
-          <legend class="float-left mb-3 text-sm font-semibold text-highlighted">Formations</legend>
+        <fieldset class="rounded-panneau bg-muted p-4 sm:p-6">
+          <legend class="float-left mb-4 text-sm font-semibold text-highlighted">Formations</legend>
           <p v-if="cv.formations.length === 0" class="clear-both text-sm text-muted">
             Aucune formation.
           </p>
-          <ol v-else class="clear-both space-y-4">
+          <ol v-else class="clear-both space-y-3">
             <li
               v-for="(f, index) in cv.formations"
               :key="f.id"
               :data-cv-item="`formations-${f.id}`"
-              class="space-y-3 rounded-feuille bg-default p-4"
+              class="space-y-4 rounded-feuille bg-default p-4"
             >
               <div class="flex items-center justify-between gap-2">
                 <p class="text-sm font-medium text-highlighted">Formation {{ index + 1 }}</p>
@@ -271,7 +273,7 @@ function removeCompetence(competence: string) {
               <UFormField label="Diplôme">
                 <UInput v-model="f.diplome" class="w-full" />
               </UFormField>
-              <div class="grid gap-3 sm:grid-cols-2">
+              <div class="grid gap-4 sm:grid-cols-2">
                 <UFormField label="Établissement">
                   <UInput v-model="f.etablissement" class="w-full" />
                 </UFormField>
@@ -295,15 +297,15 @@ function removeCompetence(competence: string) {
         </fieldset>
 
         <!-- Langues -->
-        <fieldset class="rounded-panneau bg-muted p-5">
-          <legend class="float-left mb-3 text-sm font-semibold text-highlighted">Langues</legend>
+        <fieldset class="rounded-panneau bg-muted p-4 sm:p-6">
+          <legend class="float-left mb-4 text-sm font-semibold text-highlighted">Langues</legend>
           <p v-if="cv.langues.length === 0" class="clear-both text-sm text-muted">Aucune langue.</p>
           <ol v-else class="clear-both space-y-3">
             <li
               v-for="(l, index) in cv.langues"
               :key="l.id"
               :data-cv-item="`langues-${l.id}`"
-              class="grid grid-cols-[1fr_auto] items-end gap-3 rounded-feuille bg-default p-4 sm:grid-cols-[1fr_1fr_auto]"
+              class="grid grid-cols-[1fr_auto] items-end gap-4 rounded-feuille bg-default p-4 sm:grid-cols-[1fr_1fr_auto]"
             >
               <UFormField :label="`Langue ${index + 1}`" class="col-span-2 sm:col-span-1">
                 <UInput v-model="l.langue" class="w-full" />
@@ -334,15 +336,15 @@ function removeCompetence(competence: string) {
         </fieldset>
 
         <!-- Compétences (étiquettes libres) -->
-        <fieldset class="rounded-panneau bg-muted p-5">
-          <legend class="float-left mb-3 text-sm font-semibold text-highlighted">
+        <fieldset class="rounded-panneau bg-muted p-4 sm:p-6">
+          <legend class="float-left mb-4 text-sm font-semibold text-highlighted">
             Compétences
           </legend>
           <ul v-if="cv.competences.length" class="clear-both flex flex-wrap gap-2">
             <li
               v-for="c in cv.competences"
               :key="c"
-              class="flex items-center gap-1 rounded-full bg-default py-0.5 pr-0.5 pl-3 text-sm"
+              class="flex items-center gap-1 rounded-full bg-default py-1 pr-1 pl-3 text-sm"
             >
               {{ c }}
               <UButton

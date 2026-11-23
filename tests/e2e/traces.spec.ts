@@ -70,6 +70,28 @@ test.describe('déposer une trace', () => {
     ).toBeVisible()
   })
 
+  // Divulgation progressive : champs secondaires repliés, mais une erreur ouvre la section
+  test('ouvre « Plus de détails » sur une erreur qu’elle contient et y place le focus', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/etudiant/traces/nouvelle')
+    const details = page.getByRole('button', { name: /Plus de détails/ })
+    const date = page.getByLabel('Date de réalisation')
+    await expect(details).toHaveAttribute('aria-expanded', 'false')
+    await expect(date).toBeHidden()
+
+    await details.click()
+    await date.fill('2999-01-01')
+    // Refermée par l'étudiant : l'erreur doit la rouvrir
+    await details.click()
+    await expect(date).toBeHidden()
+    await page.getByRole('textbox', { name: /Titre/ }).fill('Trace du futur')
+    await page.getByRole('button', { name: 'Enregistrer le brouillon' }).click()
+
+    await expect(details).toHaveAttribute('aria-expanded', 'true')
+    await expect(date).toBeFocused()
+  })
+
   test('modifie une trace existante et la repasse en brouillon', async ({ page }) => {
     await gotoHydrated(page, '/etudiant/traces')
     await page.getByRole('link', { name: 'Refonte du site du BDE' }).click()
@@ -215,7 +237,9 @@ test.describe('rechercher et filtrer mes traces', () => {
     await page.getByRole('option', { name: 'Brouillons' }).click()
     await expect(liste(page)).toHaveCount(2)
 
-    await page.getByRole('combobox', { name: 'Compétence' }).click()
+    // Liste avec recherche (USelectMenu) : le déclencheur est un bouton, la recherche un combobox
+    await page.getByRole('button', { name: 'Compétence' }).click()
+    await page.getByPlaceholder('Filtrer les compétences…').fill('entre')
     await page.getByRole('option', { name: 'Entreprendre' }).click()
     await expect(liste(page)).toHaveCount(1)
     await expect(liste(page)).toContainText('Business model d’une appli de covoiturage')
@@ -282,7 +306,7 @@ test.describe('rechercher et filtrer mes traces', () => {
     await gotoHydrated(page, '/etudiant/traces?competence=999')
 
     await expect(liste(page)).toHaveCount(8)
-    await expect(page.getByRole('combobox', { name: 'Compétence' })).toHaveText(
+    await expect(page.getByRole('button', { name: 'Compétence' })).toHaveText(
       /Toutes les compétences/,
     )
   })
