@@ -14,7 +14,7 @@ interface FiltreItem {
   value: string
 }
 
-defineProps<{
+const props = defineProps<{
   label: string
   items: FiltreItem[]
   /** Nom du champ de recherche de la liste ouverte, ex. « Filtrer les compétences ». */
@@ -24,6 +24,14 @@ defineProps<{
 const model = defineModel<string>({ required: true })
 
 const id = useId()
+
+// Attributs HTML du champ (id, aria-label) : `UInput` les transmet à son <input>, mais son type
+// de props ne les déclare pas ; un objet nommé (et non littéral) passe la vérification de type
+const searchInput = computed(() => ({
+  id: `${id}-recherche`,
+  'aria-label': props.searchLabel,
+  placeholder: `${props.searchLabel}…`,
+}))
 </script>
 
 <template>
@@ -37,11 +45,7 @@ const id = useId()
       :items="items"
       value-key="value"
       :aria-labelledby="`${id}-libelle ${id}`"
-      :search-input="{
-        id: `${id}-recherche`,
-        'aria-label': searchLabel,
-        placeholder: `${searchLabel}…`,
-      }"
+      :search-input="searchInput"
       class="w-full"
     />
   </UFormField>
