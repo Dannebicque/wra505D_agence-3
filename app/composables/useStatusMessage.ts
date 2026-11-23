@@ -32,7 +32,13 @@ export function useStatusMessage() {
     })
   }
 
+  /** Efface le message (et l'annonce en attente), par exemple au début d'une nouvelle action. */
+  function clear() {
+    cancelPending()
+    message.value = ''
+  }
+
   onScopeDispose(cancelPending)
 
-  return { message: readonly(message), announce }
+  return { message: readonly(message), announce, clear }
 }

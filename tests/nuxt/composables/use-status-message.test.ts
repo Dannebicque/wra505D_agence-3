@@ -40,4 +40,19 @@ describe('useStatusMessage', () => {
 
     expect(message.value).toBe('Expérience supprimée.')
   })
+
+  it('clear efface le message et annule l’annonce en attente', async () => {
+    const { message, announce, clear } = useStatusMessage()
+    await vi.runAllTimersAsync()
+    void announce('Page enregistrée.')
+    await vi.runAllTimersAsync()
+    expect(message.value).toBe('Page enregistrée.')
+
+    const pending = announce('Autre message.')
+    clear()
+    await vi.runAllTimersAsync()
+    await pending
+
+    expect(message.value).toBe('')
+  })
 })

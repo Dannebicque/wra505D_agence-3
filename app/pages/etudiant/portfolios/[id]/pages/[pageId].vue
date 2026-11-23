@@ -1,21 +1,35 @@
 <script setup lang="ts">
 import type { FormError } from '@nuxt/ui'
-import {
-  competenceById,
-  ETUDIANT_COURANT_ID,
-  formatDate,
-  TRACES,
-  traceById,
-  type DemoTrace,
-} from '~/demo/base'
-import { numericParam, PORTFOLIO_LIMITS, pageProjetById, portfolioById } from '~/demo/portfolio'
+import type { Iri, Violation } from '#shared/types/api'
+import type { PageInfo } from '#shared/types/portfolio'
+import { PAGE_LIMITS, validatePage } from '#shared/utils/page-validation'
+import type { PageTraceItem } from '~/composables/usePageProjet'
+import { ApiError, errorMessage } from '~/services/errors'
 
-// MAQUETTE (E-PG-01, E-TR-08) : intitulé, description et traces ordonnées d'une page-projet.
-// L'ordre, les ajouts et les retraits ne vivent que dans l'état local de la page.
+// Page-projet (E-PG-01, E-TR-08) : intitulé, description et traces ordonnées, enregistrés par l'API.
 const route = useRoute()
-const portfolio = portfolioById(numericParam(route.params.id))
-const found = portfolio ? pageProjetById(portfolio, numericParam(route.params.pageId)) : undefined
-if (!portfolio || !found) {
+const portfolioId = String(route.params.id)
+const pageId = String(route.params.pageId)
+
+const {
+  portfolio,
+  info,
+  traces,
+  available,
+  usedElsewhereCount,
+  status,
+  error,
+  refresh,
+  tracesStatus,
+  tracesError,
+  reorderTraces,
+  addTraces,
+  removeTrace,
+  saveInfo,
+} = await usePageProjet(portfolioId, pageId)
+
+// Page inconnue, ou d'un autre portfolio : vraie réponse 404, comme une adresse inconnue
+if ((error.value as { statusCode?: number } | null)?.statusCode === 404) {
   throw createError({
     statusCode: 404,
     statusMessage: 'Not Found',
@@ -23,77 +37,125 @@ if (!portfolio || !found) {
     fatal: true,
   })
 }
-const page = found
 
-useSeoMeta({ title: `Modifier la page « ${page.intitule} »` })
-
-const editPath = `/etudiant/portfolios/${portfolio.id}`
-const breadcrumb = [
+// Le titre de l'onglet et le fil d'Ariane suivent l'intitulé enregistré
+useSeoMeta({
+  title: () =>
+    info.value.intitule ? `Modifier la page « ${info.value.intitule} »` : 'Modifier la page',
+})
+const editPath = `/etudiant/portfolios/${portfolioId}`
+const breadcrumb = computed(() => [
   { label: 'Mes portfolios', to: '/etudiant/portfolios' },
-  { label: portfolio.intitule, to: editPath },
-  { label: page.intitule },
-]
+  { label: portfolio.value?.intitule ?? 'Portfolio', to: editPath },
+  { label: info.value.intitule || 'Page' },
+])
 
 // --- Informations de la page ---
-const state = reactive({ intitule: page.intitule, description: page.description })
-const infoMessage = ref('')
+const state = reactive({ intitule: '', description: '' })
+watch(
+  info,
+  (saved) => {
+    state.intitule = saved.intitule
+    state.description = saved.description ?? ''
+  },
+  { immediate: true },
+)
+const { message: infoMessage, announce: announceInfo, clear: clearInfo } = useStatusMessage()
+/** Échec de l'enregistrement des informations hors erreur de champ (réseau, serveur…). */
+const infoError = ref('')
+const isSavingInfo = ref(false)
+const infoForm = useTemplateRef('infoForm')
+const INFO_FIELDS = new Set(['intitule', 'description'])
+
+const toFormErrors = (violations: Violation[]): FormError[] =>
+  violations.map((v) => ({ name: v.propertyPath, message: v.message }))
 
 function validate(values: Partial<typeof state>): FormError[] {
-  const errors: FormError[] = []
-  if (!values.intitule?.trim())
-    errors.push({ name: 'intitule', message: 'Donnez un intitulé à la page.' })
-  return errors
+  const result = validatePage(values)
+  return result.ok ? [] : toFormErrors(result.violations)
 }
 
 const { onError } = useFocusFirstError()
 
-function onSubmit() {
-  infoMessage.value =
-    'Maquette : modifications appliquées à cette page seulement, rien n’est enregistré.'
+async function onSubmit() {
+  // Valeurs normalisées (espaces retirés), celles que le serveur enregistrera
+  const result = validatePage(state)
+  if (!result.ok || isSavingInfo.value) return
+  isSavingInfo.value = true
+  infoError.value = ''
+  // Un ancien « Page enregistrée. » ne doit pas côtoyer l'issue de ce nouvel envoi
+  clearInfo()
+  try {
+    await saveInfo(result.value satisfies PageInfo)
+    void announceInfo('Page enregistrée.')
+  } catch (cause) {
+    // Erreurs de champ sous le champ concerné ; les autres dans l'alerte du formulaire
+    const violations = cause instanceof ApiError ? cause.violations : []
+    const fieldErrors = violations.filter((v) => INFO_FIELDS.has(v.propertyPath))
+    const others = violations.filter((v) => !INFO_FIELDS.has(v.propertyPath))
+    infoForm.value?.setErrors(toFormErrors(fieldErrors))
+    if (others.length || !fieldErrors.length) {
+      const detail = others.length ? others.map((v) => v.message).join(' ') : errorMessage(cause)
+      infoError.value = `La page n’a pas été enregistrée : ${detail}`
+    }
+    const first = fieldErrors[0]?.propertyPath
+    if (first) nextTick(() => document.querySelector<HTMLElement>(`[name="${first}"]`)?.focus())
+  } finally {
+    isSavingInfo.value = false
+  }
 }
 
 // --- Traces de la page, dans l'ordre (E-TR-08) ---
-const traces = ref<DemoTrace[]>(
-  page.traceIds.map((id) => traceById(id)).filter((t): t is DemoTrace => t !== undefined),
-)
-const tracesMessage = ref('')
+const tracesOrder = computed({
+  get: () => traces.value,
+  set: (next: PageTraceItem[]) => void reorderTraces(next),
+})
+const { message: tracesMessage, announce: announceTraces } = useStatusMessage()
 const tracesHeading = useTemplateRef('tracesHeading')
+const tracesAlert = computed(() =>
+  tracesStatus.value === 'error'
+    ? `Les traces de la page n’ont pas été enregistrées : ${errorMessage(tracesError.value)} La page a repris son état précédent.`
+    : '',
+)
 
-function removeTrace(trace: DemoTrace) {
-  traces.value = traces.value.filter((t) => t.id !== trace.id)
-  tracesMessage.value = `« ${trace.titre} » retirée de la page. Elle reste dans votre bibliothèque.`
+async function onRemove(item: PageTraceItem) {
   // Le bouton cliqué disparaît : le focus revient au titre de la section
-  nextTick(() => tracesHeading.value?.focus())
+  const saving = removeTrace(item.trace['@id'])
+  await nextTick()
+  tracesHeading.value?.focus()
+  // Échec : l'alerte de la section l'explique, rien à annoncer en plus
+  if (await saving) {
+    void announceTraces(
+      `« ${item.trace.titre} » retirée de la page. Elle reste dans votre bibliothèque.`,
+    )
+  }
 }
 
-// --- Ajout de traces : traces finalisées de l'étudiant, absentes de la page ---
-const available = computed(() =>
-  TRACES.filter(
-    (t) =>
-      t.etudiantId === ETUDIANT_COURANT_ID &&
-      t.statut === 'finalisee' &&
-      !traces.value.some((inPage) => inPage.id === t.id),
-  ),
-)
+// --- Ajout de traces : traces finalisées de l'étudiant, absentes du portfolio ---
 const availableItems = computed(() =>
-  available.value.map((t) => ({
-    label: t.titre,
-    description: `${TRACE_TYPE_LIBELLES[t.type]} · ${formatDate(t.date)}`,
-    value: String(t.id),
+  available.value.map(({ trace }) => ({
+    label: trace.titre,
+    description: `${TRACE_TYPE_LIBELLES[trace.type]} · ${formatDay(trace.dateCreation)}`,
+    value: trace['@id'],
   })),
 )
-const selected = ref<string[]>([])
-const addMessage = ref('')
+const selected = ref<Iri[]>([])
+/** Traces cochées encore proposées (une trace en cours d'ajout quitte la liste). */
+const selectedCount = computed(
+  () => available.value.filter(({ trace }) => selected.value.includes(trace['@id'])).length,
+)
+const isAddingTraces = ref(false)
+const { message: addMessage, announce: announceAdd } = useStatusMessage()
 const addError = ref('')
 const addForm = useTemplateRef('addForm')
 
 function onSelectionChange() {
-  addMessage.value = ''
   addError.value = ''
 }
 
 async function addSelected() {
-  const added = available.value.filter((t) => selected.value.includes(String(t.id)))
+  if (isAddingTraces.value) return
+  const added = available.value.filter(({ trace }) => selected.value.includes(trace['@id']))
   if (added.length === 0) {
     // Erreur liée au groupe de cases (aria-describedby) ; le focus va à la première case
     addError.value = 'Cochez au moins une trace à ajouter.'
@@ -101,147 +163,192 @@ async function addSelected() {
     addForm.value?.querySelector<HTMLElement>('[role="checkbox"]')?.focus()
     return
   }
-  traces.value = [...traces.value, ...added]
-  selected.value = []
   addError.value = ''
-  addMessage.value =
-    added.length === 1
-      ? `« ${added[0]?.titre} » ajoutée en fin de page.`
-      : `${added.length} traces ajoutées en fin de page.`
+  const addedIris = added.map(({ trace }) => trace['@id'])
+  isAddingTraces.value = true
+  const saving = addTraces(addedIris).finally(() => (isAddingTraces.value = false))
   // Plus rien à ajouter : le formulaire disparaît avec le bouton cliqué, le focus va aux traces
   await nextTick()
   if (available.value.length === 0) tracesHeading.value?.focus()
+  // Échec : les traces reviennent dans la liste, toujours cochées ; l'alerte explique la cause
+  if (!(await saving)) return
+  selected.value = selected.value.filter((traceIri) => !addedIris.includes(traceIri))
+  void announceAdd(
+    added.length === 1
+      ? `« ${added[0]?.trace.titre} » ajoutée en fin de page.`
+      : `${added.length} traces ajoutées en fin de page.`,
+  )
 }
 
-const competenceNames = (trace: DemoTrace) =>
-  trace.competences
-    .map(({ competenceId }) => competenceById(competenceId)?.nomCourt)
-    .filter((name): name is string => Boolean(name))
+const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'Europe/Paris',
+})
+const formatDay = (date: string) => dayMonthYear.format(new Date(date))
 </script>
 
 <template>
   <div>
     <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
     <h1 class="mt-4 font-titre text-2xl text-highlighted sm:text-3xl">Modifier la page</h1>
-    <p class="mt-2 text-muted">Page-projet du portfolio « {{ portfolio.intitule }} ».</p>
+    <p v-if="portfolio" class="mt-2 text-muted">
+      Page-projet du portfolio « {{ portfolio.intitule }} ».
+    </p>
 
-    <div class="mt-8 grid gap-6 lg:grid-cols-[1fr_20rem] lg:gap-8">
-      <div class="min-w-0 space-y-10">
-        <section aria-labelledby="informations">
-          <h2 id="informations" class="text-lg font-semibold text-highlighted">Informations</h2>
-          <UForm
-            :state="state"
-            :validate="validate"
-            :validate-on="['blur']"
-            novalidate
-            class="mt-4 space-y-6"
-            @submit="onSubmit"
-            @error="onError"
-          >
-            <UFormField
-              label="Intitulé"
-              name="intitule"
-              required
-              description="Le plus souvent, le nom du projet."
-              :hint="`${state.intitule.length} / ${PORTFOLIO_LIMITS.pageIntitule}`"
+    <UiAsyncState :status="status" :error="error" class="mt-8" @retry="refresh()">
+      <div class="grid gap-6 lg:grid-cols-[1fr_20rem] lg:gap-8">
+        <div class="min-w-0 space-y-10">
+          <section aria-labelledby="informations">
+            <h2 id="informations" class="text-lg font-semibold text-highlighted">Informations</h2>
+            <UForm
+              ref="infoForm"
+              :state="state"
+              :validate="validate"
+              :validate-on="['blur']"
+              novalidate
+              class="mt-4 space-y-6"
+              @submit="onSubmit"
+              @error="onError"
             >
-              <UInput
-                v-model="state.intitule"
-                :maxlength="PORTFOLIO_LIMITS.pageIntitule"
-                aria-required="true"
-                autocomplete="off"
-                class="w-full"
-              />
-            </UFormField>
-            <UFormField
-              label="Description"
-              name="description"
-              description="Contexte du projet : durée, équipe, commanditaire, votre rôle."
-              :hint="`${state.description.length} / ${PORTFOLIO_LIMITS.pageDescription}`"
-            >
-              <UTextarea
-                v-model="state.description"
-                :rows="3"
-                :maxlength="PORTFOLIO_LIMITS.pageDescription"
-                autoresize
-                class="w-full"
-              />
-            </UFormField>
-            <div class="flex flex-wrap justify-end gap-3">
-              <UButton :to="editPath" color="neutral" variant="outline">
-                Retour au portfolio
-              </UButton>
-              <UButton type="submit">Enregistrer la page</UButton>
-            </div>
-          </UForm>
-          <p role="status" class="mt-3 text-sm text-muted" :class="{ 'sr-only': !infoMessage }">
-            {{ infoMessage }}
-          </p>
-        </section>
-
-        <section aria-labelledby="traces-de-la-page">
-          <h2
-            id="traces-de-la-page"
-            ref="tracesHeading"
-            tabindex="-1"
-            class="text-lg font-semibold text-highlighted focus:outline-none"
-          >
-            Traces de la page
-          </h2>
-          <p class="mt-1 text-sm text-muted">
-            Affichées dans cet ordre sur votre portfolio. Glissez-déposez une trace ou utilisez les
-            flèches pour la déplacer.
-          </p>
-
-          <p v-if="traces.length === 0" class="mt-4 rounded-panneau bg-muted p-5 text-muted">
-            Cette page ne contient encore aucune trace. Ajoutez-en depuis votre bibliothèque.
-          </p>
-          <PortfolioOrderedList
-            v-else
-            v-model="traces"
-            class="mt-4"
-            label="Traces de la page"
-            :item-label="(trace) => trace.titre"
-          >
-            <template #item="{ item }">
-              <p class="font-medium break-words text-highlighted">{{ item.titre }}</p>
-              <p class="text-sm text-muted">
-                {{ TRACE_TYPE_LIBELLES[item.type] }} · {{ formatDate(item.date) }}
-              </p>
-              <ul
-                v-if="competenceNames(item).length"
-                class="mt-2 flex flex-wrap gap-1.5"
-                :aria-label="`Compétences de « ${item.titre} »`"
+              <UFormField
+                label="Intitulé"
+                name="intitule"
+                required
+                description="Le plus souvent, le nom du projet."
+                :hint="`${state.intitule.length} / ${PAGE_LIMITS.intitule}`"
               >
-                <li v-for="name in competenceNames(item)" :key="name">
-                  <UBadge color="primary" variant="subtle" class="rounded-full">{{ name }}</UBadge>
-                </li>
-              </ul>
-            </template>
-            <template #actions="{ item }">
-              <UButton
-                icon="i-lucide-circle-minus"
-                color="neutral"
-                variant="ghost"
-                :aria-label="`Retirer « ${item.titre} » de la page`"
-                @click="removeTrace(item)"
+                <UInput
+                  v-model="state.intitule"
+                  name="intitule"
+                  :maxlength="PAGE_LIMITS.intitule"
+                  aria-required="true"
+                  autocomplete="off"
+                  class="w-full"
+                />
+              </UFormField>
+              <UFormField
+                label="Description"
+                name="description"
+                description="Contexte du projet : durée, équipe, commanditaire, votre rôle."
+                :hint="`${state.description.length} / ${PAGE_LIMITS.description}`"
+              >
+                <UTextarea
+                  v-model="state.description"
+                  name="description"
+                  :rows="3"
+                  :maxlength="PAGE_LIMITS.description"
+                  autoresize
+                  class="w-full"
+                />
+              </UFormField>
+              <div class="flex flex-wrap justify-end gap-3">
+                <UButton :to="editPath" color="neutral" variant="outline">
+                  Retour au portfolio
+                </UButton>
+                <UButton type="submit" :loading="isSavingInfo">Enregistrer la page</UButton>
+              </div>
+            </UForm>
+            <div role="alert" class="mt-3 empty:hidden">
+              <UAlert
+                v-if="infoError"
+                color="error"
+                variant="subtle"
+                icon="i-lucide-circle-alert"
+                :description="infoError"
               />
-            </template>
-          </PortfolioOrderedList>
-          <p role="status" class="sr-only">{{ tracesMessage }}</p>
-        </section>
-      </div>
+            </div>
+            <p role="status" class="mt-3 text-sm text-muted" :class="{ 'sr-only': !infoMessage }">
+              {{ infoMessage }}
+            </p>
+          </section>
 
-      <aside
-        aria-labelledby="ajouter-des-traces"
-        class="space-y-4 rounded-panneau bg-muted p-5 lg:sticky lg:top-6 lg:self-start"
-      >
-        <h2 id="ajouter-des-traces" class="text-sm font-semibold text-highlighted">
-          Ajouter des traces
-        </h2>
-        <template v-if="available.length">
-          <p class="text-sm text-muted">Seules vos traces finalisées peuvent être ajoutées.</p>
-          <form ref="addForm" novalidate class="space-y-4" @submit.prevent="addSelected">
+          <section aria-labelledby="traces-de-la-page">
+            <h2
+              id="traces-de-la-page"
+              ref="tracesHeading"
+              tabindex="-1"
+              class="text-lg font-semibold text-highlighted focus:outline-none"
+            >
+              Traces de la page
+            </h2>
+            <p class="mt-1 text-sm text-muted">
+              Affichées dans cet ordre sur votre portfolio. Glissez-déposez une trace ou utilisez
+              les flèches pour la déplacer : l’ordre est enregistré à chaque déplacement.
+            </p>
+
+            <!-- Zone d'alerte permanente : l'échec d'un enregistrement est annoncé dès qu'il s'affiche -->
+            <div role="alert" class="mt-4 empty:hidden">
+              <UAlert
+                v-if="tracesAlert"
+                color="error"
+                variant="subtle"
+                icon="i-lucide-circle-alert"
+                :description="tracesAlert"
+              />
+            </div>
+
+            <p v-if="traces.length === 0" class="mt-4 rounded-panneau bg-muted p-5 text-muted">
+              Cette page ne contient encore aucune trace. Ajoutez-en depuis votre bibliothèque.
+            </p>
+            <PortfolioOrderedList
+              v-else
+              v-model="tracesOrder"
+              class="mt-4"
+              label="Traces de la page"
+              :item-label="(item) => item.trace.titre"
+            >
+              <template #item="{ item }">
+                <p class="font-medium break-words text-highlighted">{{ item.trace.titre }}</p>
+                <p class="text-sm text-muted">
+                  {{ TRACE_TYPE_LIBELLES[item.trace.type] }} ·
+                  {{ formatDay(item.trace.dateCreation) }}
+                </p>
+                <ul
+                  v-if="item.competences.length"
+                  class="mt-2 flex flex-wrap gap-1.5"
+                  :aria-label="`Compétences de « ${item.trace.titre} »`"
+                >
+                  <li v-for="competence in item.competences" :key="competence['@id']">
+                    <UBadge color="primary" variant="subtle" class="rounded-full">
+                      {{ competence.nomCourt }}
+                    </UBadge>
+                  </li>
+                </ul>
+              </template>
+              <template #actions="{ item }">
+                <UButton
+                  icon="i-lucide-circle-minus"
+                  color="neutral"
+                  variant="ghost"
+                  :aria-label="`Retirer « ${item.trace.titre} » de la page`"
+                  @click="onRemove(item)"
+                />
+              </template>
+            </PortfolioOrderedList>
+            <p role="status" class="sr-only">{{ tracesMessage }}</p>
+          </section>
+        </div>
+
+        <aside
+          aria-labelledby="ajouter-des-traces"
+          class="space-y-4 rounded-panneau bg-muted p-5 lg:sticky lg:top-6 lg:self-start"
+        >
+          <h2 id="ajouter-des-traces" class="text-sm font-semibold text-highlighted">
+            Ajouter des traces
+          </h2>
+          <p class="text-sm text-muted">
+            Seules vos traces finalisées peuvent être ajoutées, et chacune ne figure que dans une
+            page du portfolio.
+          </p>
+          <form
+            v-if="available.length"
+            ref="addForm"
+            novalidate
+            class="space-y-4"
+            @submit.prevent="addSelected"
+          >
             <UFormField name="traces" :error="addError || undefined">
               <UCheckboxGroup
                 v-model="selected"
@@ -252,29 +359,34 @@ const competenceNames = (trace: DemoTrace) =>
                 @update:model-value="onSelectionChange"
               />
             </UFormField>
-            <UButton type="submit" icon="i-lucide-plus" block>
-              Ajouter la sélection<template v-if="selected.length">
-                ({{ selected.length }})</template
-              >
+            <UButton type="submit" icon="i-lucide-plus" block :loading="isAddingTraces">
+              Ajouter la sélection<template v-if="selectedCount"> ({{ selectedCount }})</template>
             </UButton>
           </form>
-        </template>
-        <p v-else class="text-sm text-muted">
-          Toutes vos traces finalisées sont déjà dans cette page.
-        </p>
-        <p role="status" class="text-sm text-default" :class="{ 'sr-only': !addMessage }">
-          {{ addMessage }}
-        </p>
-        <UButton
-          to="/etudiant/traces/nouvelle"
-          icon="i-lucide-file-plus"
-          color="neutral"
-          variant="link"
-          class="px-0"
-        >
-          Déposer une nouvelle trace
-        </UButton>
-      </aside>
-    </div>
+          <p v-else class="text-sm text-muted">
+            <template v-if="traces.length === 0 && usedElsewhereCount === 0">
+              Vous n’avez encore aucune trace finalisée.
+            </template>
+            <template v-else-if="usedElsewhereCount > 0">
+              Vos autres traces finalisées sont déjà dans cette page ou dans une autre page du
+              portfolio.
+            </template>
+            <template v-else>Toutes vos traces finalisées sont déjà dans cette page.</template>
+          </p>
+          <p role="status" class="text-sm text-default" :class="{ 'sr-only': !addMessage }">
+            {{ addMessage }}
+          </p>
+          <UButton
+            to="/etudiant/traces/nouvelle"
+            icon="i-lucide-file-plus"
+            color="neutral"
+            variant="link"
+            class="px-0"
+          >
+            Déposer une nouvelle trace
+          </UButton>
+        </aside>
+      </div>
+    </UiAsyncState>
   </div>
 </template>
