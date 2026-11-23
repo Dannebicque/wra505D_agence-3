@@ -7,7 +7,6 @@
  */
 namespace App\Entity;
 
-use ApiPlatform\Doctrine\Orm\Filter\IriFilter;
 use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
@@ -15,6 +14,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\QueryParameter;
+use App\Filter\PortfolioDeLaPageFilter;
 use App\Repository\PageRepository;
 use App\State\PageProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -34,7 +34,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ApiResource(
     operations: [
         // ?portfolio=/api/portfolios/1 : pages d'un portfolio (app/services/portfolio.ts)
-        new GetCollection(parameters: ['portfolio' => new QueryParameter(filter: new IriFilter())]),
+        new GetCollection(parameters: ['portfolio' => new QueryParameter(filter: new PortfolioDeLaPageFilter())]),
         new Get(),
         new Post(processor: PageProcessor::class, denormalizationContext: ['groups' => ['page:write', 'page:creation']]),
         new Patch(processor: PageProcessor::class, denormalizationContext: ['groups' => ['page:write', 'page:traces']]),
@@ -187,11 +187,6 @@ class Page
     }
 
     /**
-     * Nouvel ordre des traces visibles ; les traces de la corbeille sont gardées à la fin.
-     *
-     * @param list<Trace> $traces
-     */
-    /**
      * Version publique : seules les traces finalisées (une trace repassée en brouillon ne s'affiche plus).
      *
      * @return list<Trace>
@@ -203,6 +198,12 @@ class Page
         return array_values(array_filter($this->getTraces(), static fn (Trace $trace): bool => 'finalisee' === $trace->getStatut()));
     }
 
+    /**
+     * Nouvel ordre des traces visibles. Une trace de la corbeille garde son rang parmi les autres : chaque place
+     * ancienne est reprise par la trace visible suivante de la nouvelle liste, sauf celles de la corbeille.
+     *
+     * @param list<Trace> $traces
+     */
     #[Groups(['page:traces'])]
     public function setTraces(array $traces): self
     {
@@ -212,21 +213,20 @@ class Page
         foreach ($this->ordreTraces as $lien) {
             $liens[spl_object_id($lien->getTrace())] = $lien;
         }
+        $visibles = [];
+        foreach ($traces as $trace) {
+            $visibles[spl_object_id($trace)] ??= $liens[spl_object_id($trace)] ?? (new OrdreTrace())->setPage($this)->setTrace($trace);
+        }
+        $visibles = array_values($visibles);
 
         $ordre = 0;
         $gardes = [];
-        foreach ($traces as $trace) {
-            $cle = spl_object_id($trace);
-            if (isset($gardes[$cle])) {
-                continue;
-            }
-            $lien = $liens[$cle] ?? (new OrdreTrace())->setPage($this)->setTrace($trace);
-            $gardes[$cle] = $lien->setOrdre(++$ordre);
+        foreach ($this->ordreTraces as $lien) {
+            $gardes[] = null !== $lien->getTrace()?->getDateSuppression() ? $lien : array_shift($visibles);
         }
-        foreach ($liens as $cle => $lien) {
-            if (!isset($gardes[$cle]) && null !== $lien->getTrace()?->getDateSuppression()) {
-                $gardes[$cle] = $lien->setOrdre(++$ordre);
-            }
+        $gardes = array_filter([...$gardes, ...$visibles]);
+        foreach ($gardes as $lien) {
+            $lien->setOrdre(++$ordre);
         }
         foreach ($this->ordreTraces as $lien) {
             if (!\in_array($lien, $gardes, true)) {

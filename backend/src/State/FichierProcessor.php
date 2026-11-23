@@ -35,8 +35,11 @@ final class FichierProcessor implements ProcessorInterface
     private const ESPACE_MAX = 200 * 1024 * 1024;
     private const NOMBRE_MAX = 100;
 
-    /** Au-delà, l'image décompressée saturerait la mémoire (bombe de décompression). */
-    private const PIXELS_MAX = 40_000_000;
+    /**
+     * Au-delà, l'image décompressée saturerait la mémoire (bombe de décompression) : GD prend 4 octets par pixel,
+     * et la rotation une copie de plus, soit 128 Mo à 16 Mpx (memory_limit à 256M dans l'image Docker).
+     */
+    private const PIXELS_MAX = 16_000_000;
 
     public function __construct(
         private readonly EntityManagerInterface $em,
@@ -131,7 +134,7 @@ final class FichierProcessor implements ProcessorInterface
             throw self::refus($illisible);
         }
         if ($dimensions[0] * $dimensions[1] > self::PIXELS_MAX) {
-            throw self::refus('L’image est trop grande (40 mégapixels au plus).');
+            throw self::refus('L’image est trop grande (16 mégapixels au plus).');
         }
         $image = @imagecreatefromstring((string) file_get_contents($chemin));
         if (false === $image) {

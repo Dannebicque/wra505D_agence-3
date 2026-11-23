@@ -26,7 +26,7 @@ final class Version20261123150201 extends AbstractMigration
         $this->addSql('ALTER TABLE page ADD portfolio_id INT DEFAULT NULL');
         $this->addSql('ALTER TABLE page ALTER description DROP NOT NULL');
         $this->addSql('UPDATE page SET portfolio_id = (SELECT MIN(pp.portfolio_id) FROM page_portfolio pp WHERE pp.page_id = page.id)');
-        $this->addSql('UPDATE page SET portfolio_id = COALESCE(page.portfolio_id, op.portfolio_id), ordre = COALESCE(op.ordre, page.ordre) FROM ordre_page op WHERE op.page_id = page.id');
+        $this->addSql('UPDATE page SET portfolio_id = COALESCE(page.portfolio_id, op.portfolio_id), ordre = COALESCE(op.ordre, page.ordre) FROM ordre_page op WHERE op.page_id = page.id AND (page.portfolio_id IS NULL OR page.portfolio_id = op.portfolio_id)');
 
         // 2. Traces des pages : ordre_trace garde les places connues, page_trace complète sans place
         $this->addSql('DELETE FROM ordre_trace WHERE page_id IS NULL OR trace_id IS NULL');

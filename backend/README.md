@@ -104,7 +104,7 @@ Règles à connaître côté front :
 - **Traces d'une page** : `PATCH /api/pages/{id}` avec `traces` dans l'ordre voulu ; une trace ajoutée doit être finalisée et absente des autres pages du portfolio (mêmes messages que `page-rules.ts`). Une trace mise à la corbeille est masquée de `traces` mais garde sa place (elle reviendra si elle est restaurée). Une IRI de trace introuvable est signalée sur `traces[0]`, `traces[1]`…
 - **Corbeille** : une page supprimée disparaît de `pages` et libère ses traces pour d'autres pages ; un portfolio supprimé emporte ses pages.
 - **Lien public** : seules les traces finalisées s'affichent ; leurs fichiers se lisent sans connexion, tout autre fichier répond 404 au visiteur.
-- **Images** : JPEG, PNG et WebP sont réencodés à l'envoi (métadonnées et position GPS retirées, photo remise dans le bon sens) ; au-delà de 40 mégapixels, l'image est refusée. La taille renvoyée est celle du fichier réencodé.
+- **Images** : JPEG, PNG et WebP sont réencodés à l'envoi (métadonnées et position GPS retirées, photo remise dans le bon sens) ; au-delà de 16 mégapixels, l'image est refusée. La taille renvoyée est celle du fichier réencodé.
 - **Limites proposées** (à valider avec Solène) : intitulé d'un portfolio obligatoire, 100 caractères ; description 2 000 caractères.
 
 Le front autorisé à appeler l'API est fixé par `CORS_ALLOW_ORIGIN` (`.env`, par défaut `http://localhost:3000`).

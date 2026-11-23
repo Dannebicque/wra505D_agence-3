@@ -27,6 +27,20 @@ class PortfolioRepository extends ServiceEntityRepository
         parent::__construct($registry, Portfolio::class);
     }
 
+    /** Portfolio public hors corbeille avec ses pages, leurs traces et l'étudiant, en une requête (lien public). */
+    public function publicAvecContenu(int $id): ?Portfolio
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.etudiant', 'e')->addSelect('e')
+            ->leftJoin('p.pages', 'pa')->addSelect('pa')
+            ->leftJoin('pa.ordreTraces', 'ot')->addSelect('ot')
+            ->leftJoin('ot.trace', 't')->addSelect('t')
+            ->where('p.id = :id AND p.visibilite = true AND p.date_suppression IS NULL')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
     public function save(Portfolio $entity, bool $flush = false): void
     {
         $this->getEntityManager()->persist($entity);

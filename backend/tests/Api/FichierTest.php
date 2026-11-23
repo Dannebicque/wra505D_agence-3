@@ -178,7 +178,7 @@ class FichierTest extends ApiTestCase
         $reponse = $this->deposer('image', $enorme, 'enorme.png');
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSame('L’image est trop grande (40 mégapixels au plus).', $reponse['violations'][0]['message']);
+        self::assertSame('L’image est trop grande (16 mégapixels au plus).', $reponse['violations'][0]['message']);
     }
 
     public function testEnseignantNeDeposePas(): void

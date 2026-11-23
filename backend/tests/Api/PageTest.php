@@ -26,7 +26,9 @@ class PageTest extends ApiTestCase
         self::assertSame(['@id', '@type', 'dateSuppression', 'description', 'intitule', 'portfolio', 'traces'], $cles);
         self::assertSame($this->portfolio(), $page['portfolio']);
         self::assertSame([$this->trace('Site vitrine d’une association')], $page['traces']);
-        self::assertSame(0, $this->lire('/api/pages?portfolio=/api/portfolios/999999')['totalItems'], 'Le filtre s’applique');
+        foreach (['/api/portfolios/999999', 'abc', '/api/pages/1'] as $inconnu) {
+            self::assertSame(0, $this->lire('/api/pages?portfolio=' . urlencode($inconnu))['totalItems'], $inconnu);
+        }
     }
 
     public function testCreeUnePageEnFinDePortfolio(): void
@@ -67,7 +69,7 @@ class PageTest extends ApiTestCase
         $reponse = $this->envoyer('POST', '/api/pages', ['portfolio' => $this->portfolio(), 'intitule' => 'Pirate']);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSame('portfolio', $reponse['violations'][0]['propertyPath']);
+        self::assertSame([['portfolio', 'Portfolio introuvable.']], array_map(static fn (array $v) => [$v['propertyPath'], $v['message']], $reponse['violations']));
     }
 
     public function testRangeEtRetireDesTraces(): void
@@ -116,8 +118,7 @@ class PageTest extends ApiTestCase
         $reponse = $this->envoyer('PATCH', $this->page('Projet web'), ['traces' => [$autre]]);
 
         self::assertResponseStatusCodeSame(422);
-        // IRI introuvable : désignée par sa position (« traces[0] »)
-        self::assertStringStartsWith('traces', $reponse['violations'][0]['propertyPath']);
+        self::assertSame([['traces', 'Trace introuvable.']], array_map(static fn (array $v) => [$v['propertyPath'], $v['message']], $reponse['violations']));
     }
 
     public function testUneTraceDeLaCorbeilleEstMasqueeMaisGardeSaPlace(): void
@@ -134,7 +135,7 @@ class PageTest extends ApiTestCase
         $this->envoyer('PATCH', $this->page('Projet web'), ['traces' => [$logo]]);
         self::assertResponseIsSuccessful();
         $this->connection->executeStatement('UPDATE trace SET date_suppression = NULL WHERE id = ?', [basename($site)]);
-        self::assertSame([$logo, $site], $this->lire($this->page('Projet web'))['traces']);
+        self::assertSame([$site, $logo], $this->lire($this->page('Projet web'))['traces'], 'Restaurée à sa place');
     }
 
     public function testCorbeilleEtCloisonnement(): void

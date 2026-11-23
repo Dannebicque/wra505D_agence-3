@@ -61,7 +61,7 @@ class ValidationTest extends ApiTestCase
         $reponse = $this->envoyer('POST', '/api/validations', ['trace' => $this->trace(), 'niveau' => '/api/niveaux/999999']);
 
         self::assertResponseStatusCodeSame(422);
-        self::assertSame('niveau', $reponse['violations'][0]['propertyPath']);
+        self::assertSame([['niveau', 'Niveau de compétence introuvable.']], array_map(static fn (array $v) => [$v['propertyPath'], $v['message']], $reponse['violations']));
     }
 
     public function testRefuseUnNiveauDUnAutreReferentiel(): void

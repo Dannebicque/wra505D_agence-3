@@ -10,6 +10,7 @@ use ApiPlatform\Validator\Exception\ValidationException;
 use App\Entity\Portfolio;
 use App\Entity\Users;
 use App\Repository\PortfolioRepository;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -63,7 +64,12 @@ final class PortfolioProcessor implements ProcessorInterface
         }
         $data->setDateModification($maintenant);
 
-        return $this->persist->process($data, $operation, $uriVariables, $context);
+        try {
+            return $this->persist->process($data, $operation, $uriVariables, $context);
+        } catch (UniqueConstraintViolationException) {
+            // Deux créations simultanées : l'index partiel portfolio_unique_par_annee arrête la seconde
+            throw self::refus('Vous avez déjà un portfolio pour cette année.');
+        }
     }
 
     private static function refus(string $message): ValidationException

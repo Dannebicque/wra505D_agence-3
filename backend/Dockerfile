@@ -7,7 +7,7 @@ RUN install-php-extensions pdo_pgsql intl zip apcu gd exif
 
 RUN cp "$PHP_INI_DIR/php.ini-development" "$PHP_INI_DIR/php.ini" \
     # Fichiers des traces : PDF jusqu'à 10 Mo (2 Mo par défaut), plus la marge du formulaire multipart
-    && printf 'upload_max_filesize = 10M\npost_max_size = 11M\n' > "$PHP_INI_DIR/conf.d/uploads.ini"
+    && printf 'upload_max_filesize = 10M\npost_max_size = 11M\nmemory_limit = 256M\n' > "$PHP_INI_DIR/conf.d/uploads.ini"
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

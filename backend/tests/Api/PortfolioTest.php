@@ -116,6 +116,7 @@ class PortfolioTest extends ApiTestCase
         yield 'une page en moins' => [static fn (array $pages) => [$pages[0]]];
         yield 'une page en double' => [static fn (array $pages) => [$pages[0], $pages[0]]];
         yield 'liste vide' => [static fn (array $pages) => []];
+        yield 'page d’un autre portfolio' => [static fn (array $pages) => [$pages[0], '/api/pages/999999']];
     }
 
     #[DataProvider('ordresInvalides')]
