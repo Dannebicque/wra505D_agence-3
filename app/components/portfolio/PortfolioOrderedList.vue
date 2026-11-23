@@ -132,17 +132,17 @@ function onDragEnd() {
 
 <template>
   <div>
-    <ol :aria-label="label" class="space-y-2" @focusin="onFocusIn" @focusout="onFocusOut">
+    <ol :aria-label="label" class="space-y-3" @focusin="onFocusIn" @focusout="onFocusOut">
       <li
         v-for="(item, index) in items"
         :key="item.id"
         draggable="true"
-        class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-feuille border bg-default p-3 transition-colors motion-reduce:transition-none sm:p-4"
+        class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-feuille border bg-default p-4 transition-colors motion-reduce:transition-none"
         :class="[
           overIndex === index && draggedIndex !== index
             ? 'border-primary ring-1 ring-primary'
             : 'border-default',
-          draggedIndex === index ? 'opacity-60' : '',
+          draggedIndex === index ? 'cursor-grabbing opacity-60' : '',
         ]"
         @dragstart="onDragStart($event, index)"
         @dragover.prevent="overIndex = index"
@@ -150,8 +150,12 @@ function onDragEnd() {
         @drop.prevent="onDrop(index)"
         @dragend="onDragEnd"
       >
-        <!-- Poignée visuelle : le glisser-déposer est réservé à la souris, les flèches le doublent -->
-        <span class="flex cursor-grab items-center gap-2 text-muted" aria-hidden="true">
+        <!-- Poignée visuelle : le glisser-déposer est réservé à la souris, les flèches le doublent.
+             Main ouverte au survol, fermée une fois saisie. -->
+        <span
+          class="flex cursor-grab items-center gap-2 text-muted active:cursor-grabbing"
+          aria-hidden="true"
+        >
           <UIcon name="i-lucide-grip-vertical" class="size-5" />
           <!-- Chiffres de même largeur (tabular-nums), centrés sur la hauteur des capitales -->
           <span
@@ -165,7 +169,7 @@ function onDragEnd() {
           <slot name="item" :item="item" :index="index" />
         </div>
 
-        <div class="ms-auto flex items-center gap-1">
+        <div class="ms-auto flex items-center gap-2">
           <UButton
             :id="buttonId(item, 'up')"
             icon="i-lucide-arrow-up"
