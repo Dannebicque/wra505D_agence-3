@@ -2,6 +2,7 @@
 import type { Validation, ValidationEtat } from '../../shared/types/evaluation'
 import type { Competence, Referentiel } from '../../shared/types/referentiel'
 import type { Trace } from '../../shared/types/trace'
+import { idFromIri } from '../../shared/utils/iri'
 
 export interface Counters {
   /** Traces hors corbeille, brouillons compris. */
@@ -147,4 +148,69 @@ export function acquisitionRate(acquired: number, total: number): number | null 
   if (acquired > 0 && rate === 0) return 1
   if (acquired < total && rate === 100) return 99
   return rate
+}
+
+/** Une ligne du bloc « À faire maintenant » : ce qu'il y a à faire, et le bouton qui le fait. */
+export interface NextAction {
+  id: string
+  title: string
+  detail: string
+  /** Libellé du bouton : un verbe. */
+  action: string
+  to: string
+  icon: string
+}
+
+/**
+ * Prochaines actions de l'étudiant, de la plus pressante à la moins pressante : les retours non lus
+ * des enseignants (ils attendent une réaction), les brouillons du plus récent au plus ancien (à
+ * terminer pour être évalués), puis la première compétence sans aucune trace.
+ */
+export function studentNextActions(input: {
+  drafts: readonly Trace[]
+  unreadRetours: number
+  progression: readonly CompetenceProgression[]
+  /** Date AAAA-MM-JJ → « 30 octobre » (le format reste à la page). */
+  formatDay: (iso: string) => string
+  max?: number
+}): NextAction[] {
+  const actions: NextAction[] = []
+  if (input.unreadRetours > 0) {
+    const plural = input.unreadRetours > 1
+    actions.push({
+      id: 'retours',
+      title: `${input.unreadRetours} nouveau${plural ? 'x' : ''} retour${plural ? 's' : ''} de vos enseignants`,
+      detail: 'Évaluations et commentaires sur vos traces',
+      action: 'Lire',
+      to: '/etudiant/retours',
+      icon: 'i-lucide-message-square-text',
+    })
+  }
+  const drafts = [...input.drafts].sort((a, b) =>
+    (b.dateModification ?? '').localeCompare(a.dateModification ?? ''),
+  )
+  for (const draft of drafts) {
+    actions.push({
+      id: draft['@id'],
+      title: `Terminer « ${draft.titre} »`,
+      detail: draft.dateModification
+        ? `Brouillon modifié ${input.formatDay(draft.dateModification)}`
+        : 'Brouillon',
+      action: 'Reprendre',
+      to: `/etudiant/traces/${idFromIri(draft['@id'])}`,
+      icon: 'i-lucide-file-pen-line',
+    })
+  }
+  const withoutTrace = input.progression.find((p) => p.total === 0)
+  if (withoutTrace) {
+    actions.push({
+      id: withoutTrace.competence['@id'],
+      title: `Aucune trace pour ${withoutTrace.competence.nomCourt}`,
+      detail: 'Déposez une trace qui montre cette compétence',
+      action: 'Déposer',
+      to: '/etudiant/traces/nouvelle',
+      icon: 'i-lucide-file-plus-2',
+    })
+  }
+  return actions.slice(0, input.max ?? 4)
 }

@@ -61,15 +61,27 @@ for (const colorScheme of ['light', 'dark'] as const) {
   })
 }
 
-test('le tableau de bord met en avant la répartition des évaluations', async ({ page }) => {
+test('le tableau de bord commence par les évaluations à faire', async ({ page }) => {
   await gotoHydrated(page, '/enseignant')
 
   // Action principale dans la ligne du titre
   await expect(page.getByRole('link', { name: 'Évaluer à la suite' })).toBeVisible()
 
+  // Les plus anciennes d'abord, quatre au plus, puis le lien vers toute la file
+  const file = page.getByRole('region', { name: 'À évaluer maintenant' })
+  await expect(file.getByRole('listitem')).toHaveCount(4)
+  await expect(file.getByRole('listitem').first()).toContainText('Podcast « Métiers du web »')
+  await expect(file.getByRole('link', { name: 'Voir les 12 traces à évaluer' })).toBeVisible()
+})
+
+test('le tableau de bord donne la répartition des évaluations', async ({ page }) => {
+  await gotoHydrated(page, '/enseignant')
+
   // 16 évaluations acquises sur 26 saisies : 62 %
   const repartition = page.getByRole('region', { name: 'Évaluations par compétence' })
-  await expect(repartition).toContainText(/62\s*%\s*des évaluations saisies sont acquises/)
+  await expect(repartition).toContainText(
+    /16\s*sur 26\s*évaluations saisies sont acquises, soit 62\s*%/,
+  )
   const rows = repartition
     .getByRole('list', { name: 'Répartition des évaluations par compétence' })
     .getByRole('listitem')
@@ -77,9 +89,7 @@ test('le tableau de bord met en avant la répartition des évaluations', async (
   await expect(rows.first()).toContainText('3 acquis · 2 en attente')
 
   // Étudiants classés par nombre de traces en attente, le plus chargé d'abord
-  const etudiants = page
-    .getByRole('region', { name: 'Étudiants ayant des travaux en attente' })
-    .getByRole('listitem')
+  const etudiants = page.getByRole('region', { name: 'Étudiants à suivre' }).getByRole('listitem')
   await expect(etudiants.first()).toContainText(/Yanis Richard\s*4\s*traces/)
 })
 
