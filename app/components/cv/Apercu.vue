@@ -20,7 +20,7 @@ const langues = computed(() => props.cv.langues.filter((l) => l.langue.trim()))
 
 <template>
   <div class="rounded-feuille border border-default bg-default p-6 sm:p-8">
-    <header class="border-b border-default pb-5">
+    <header class="border-b border-default pb-6">
       <p class="font-titre text-2xl wrap-break-word text-highlighted sm:text-3xl">
         {{ nomComplet || 'Votre nom' }}
       </p>
@@ -30,7 +30,7 @@ const langues = computed(() => props.cv.langues.filter((l) => l.langue.trim()))
       </ul>
     </header>
 
-    <p v-if="accroche" class="mt-5 text-sm leading-relaxed wrap-break-word">{{ accroche }}</p>
+    <p v-if="accroche" class="mt-6 max-w-mesure text-sm wrap-break-word">{{ accroche }}</p>
 
     <section v-if="experiences.length" class="mt-6" aria-labelledby="apercu-experiences">
       <h3 id="apercu-experiences" class="text-xs font-semibold tracking-wider text-muted uppercase">
@@ -81,11 +81,11 @@ const langues = computed(() => props.cv.langues.filter((l) => l.langue.trim()))
         >
           Compétences
         </h3>
-        <ul class="mt-3 flex flex-wrap gap-1.5">
+        <ul class="mt-3 flex flex-wrap gap-2">
           <li
             v-for="c in cv.competences"
             :key="c"
-            class="rounded-full bg-elevated px-2.5 py-0.5 text-sm text-highlighted"
+            class="rounded-full bg-elevated px-3 py-1 text-sm leading-interface text-highlighted"
           >
             {{ c }}
           </li>
