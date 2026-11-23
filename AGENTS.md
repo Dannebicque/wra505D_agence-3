@@ -24,26 +24,31 @@ Refonte de **UniFolio**, l'outil de portfolio de compétences d'un IUT (approche
 - **Validation** (évaluation d'une trace pour un niveau de compétence) : `0` en attente, `1` non acquis, `2` en cours d'acquisition, `3` acquis.
 - **Commentaire** (enseignant, sur trace ou portfolio, avec visibilité et réponses), **Notification** (sur validation ou commentaire, lue/non lue), **Cv** (expériences, formations, langues, compétences, réseaux).
 
-### Arborescence cible (Nuxt 4)
+### Arborescence
+
+Le dépôt sépare le front du back : l'application Nuxt vit dans `frontend/`, la future API ApiPlatform aura son dossier `backend/` (Sprint 4). Documentation et règles IA restent à la racine. **Dans ce fichier et dans `docs/`, les chemins `app/`, `server/`, `shared/`, `tests/`… sont relatifs à `frontend/`.**
 
 ```
-app/
-  pages/        routes (kebab-case) — espaces /etudiant, /enseignant, /admin, portfolio public
-  layouts/      mises en page : `espace` (barre latérale) et `default` (publique), choisies par les `routeRules` (`appLayout`) de `nuxt.config.ts`
-  components/   composants Vue (PascalCase), regroupés par domaine (trace/, portfolio/…)
-  composables/  logique réutilisable (useXxx)
-  stores/       stores Pinia (un par domaine : trace, portfolio, auth…)
-  services/     couche d'accès aux données (seul endroit qui appelle l'API)
-  middleware/   garde des routes par rôle
-shared/types/   types du domaine, partagés entre app/ et server/
-server/api/     routes Nitro (phase 1) ; server/data/ pour les données factices
-tests/          unit/, nuxt/ (intégration), e2e/ (Playwright)
-docs/           FONCTIONNALITES.md, ROADMAP.md, DECISIONS.md
+frontend/         application Nuxt 4 (package.json, nuxt.config.ts, configs, .nvmrc)
+  app/
+    pages/        routes (kebab-case) — espaces /etudiant, /enseignant, /admin, portfolio public
+    layouts/      mises en page : `espace` (barre latérale) et `default` (publique), choisies par les `routeRules` (`appLayout`) de `nuxt.config.ts`
+    components/   composants Vue (PascalCase), regroupés par domaine (trace/, portfolio/…)
+    composables/  logique réutilisable (useXxx)
+    stores/       stores Pinia (un par domaine : trace, portfolio, auth…)
+    services/     couche d'accès aux données (seul endroit qui appelle l'API)
+    middleware/   garde des routes par rôle
+  shared/types/   types du domaine, partagés entre app/ et server/
+  server/api/     routes Nitro provisoires (phase 1, font partie de l'application Nuxt) ; server/data/ pour les données factices
+  tests/          unit/, nuxt/ (intégration), e2e/ (Playwright)
+backend/          (Sprint 4) API ApiPlatform
+docs/             FONCTIONNALITES.md, ROADMAP.md, DECISIONS.md, design/, superpowers/
+.github/          CI (exécutée dans frontend/)
 ```
 
 ## 2. Commandes
 
-Node 24 (`.nvmrc`). Après un `git pull` qui modifie `package-lock.json` : `npm ci`.
+**Toutes les commandes se lancent depuis `frontend/`** (`cd frontend`). Node 24 (`frontend/.nvmrc`). Après un `git pull` qui modifie `frontend/package-lock.json` : `npm ci`.
 
 | Action | Commande |
 |---|---|
@@ -59,7 +64,7 @@ Node 24 (`.nvmrc`). Après un `git pull` qui modifie `package-lock.json` : `npm 
 | Tests E2E (Playwright, build de production) | `npm run test:e2e` ; un fichier : `npx playwright test tests/e2e/accueil.spec.ts` |
 
 - **Tests** : `tests/unit/` pour la logique pure (environnement Node, rapide), `tests/nuxt/` pour ce qui a besoin du runtime Nuxt (composants, stores, composables : `mountSuspended`), `tests/e2e/` pour les parcours, chacun avec un contrôle axe.
-- **CI** (`.github/workflows/ci.yml`) : sur chaque PR, `npm ci`, lint, format, typage, tests, build et E2E. Une PR dont la CI échoue n'est pas prête pour la relecture.
+- **CI** (`.github/workflows/ci.yml`, exécutée dans `frontend/`) : sur chaque PR, `npm ci`, lint, format, typage, tests, build et E2E. Une PR dont la CI échoue n'est pas prête pour la relecture.
 
 ## 3. Gitflow (obligatoire, évalué)
 

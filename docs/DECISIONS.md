@@ -190,3 +190,11 @@ Format : date, décision, alternatives écartées, raison.
 - **Taux d'acquisition** : part des évaluations **rendues** (hors « en attente ») qui sont acquises, même définition dans les deux espaces ; « Aucune évaluation pour l'instant » si rien n'est rendu ; l'arrondi ne dit jamais « 0 % » avec un acquis ni « 100 % » s'il en manque un.
 - **À confirmer par le PO** : le panneau de répartition par compétence ajouté au tableau de bord enseignant (repris des bilans, P-ST-09) ; les brouillons « À terminer » devenus des liens vers l'éditeur ; le taux compté en évaluations plutôt qu'en compétences (point ouvert n° 11).
 - **Raison** : des écrans d'arrivée lisibles d'un coup d'œil, sans perdre l'accessibilité (audit WCAG 2.2 AA de la passe : 0 bloquant restant, voir l'entrée précédente pour les corrections).
+
+## 2026-11-23 — Le front dans `frontend/`, le back dans `backend/` (#26)
+
+- **Décision** : l'application Nuxt complète (`app/`, `server/`, `shared/`, `tests/`, `public/`, `package.json`, configurations, `.nvmrc`, `.env.example`) est déplacée dans `frontend/` avec `git mv` (historique conservé). La future API ApiPlatform aura son dossier `backend/` (Sprint 4). Restent à la racine : `docs/`, `.github/`, `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `AI_PROMPT_BOOK.md`, `README.md`, `.gitignore`, `.gitattributes`. La CI s'exécute dans `frontend/`. Dans `AGENTS.md` et `docs/`, les chemins `app/`, `server/`… sont relatifs à `frontend/`.
+- **Routes Nitro provisoires** : elles restent dans `frontend/server/`, car elles font partie de l'application Nuxt (même serveur, même build) ; elles disparaîtront avec la bascule vers ApiPlatform.
+- **Alternatives écartées** : tout mettre dans `frontend/`, docs et règles IA comprises (ces documents concernent tout le projet, back compris) ; déplacer `server/` vers `backend/` (impossible sans sortir les routes de l'application Nuxt).
+- **Conséquence pour l'équipe** : chaque branche créée avant ce déplacement doit être mise à jour (Git suit les fichiers renommés) ; les commandes se lancent depuis `frontend/`, et `npm ci` y est à refaire une fois.
+- **Raison** : séparer clairement le front du back sur GitHub, à la demande de l'équipe.
