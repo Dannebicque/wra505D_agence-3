@@ -14,7 +14,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\QueryParameter;
-use App\Filter\PortfolioDeLaPageFilter;
+use App\Filter\IriExacteFilter;
 use App\Repository\PageRepository;
 use App\State\PageProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -34,7 +34,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ApiResource(
     operations: [
         // ?portfolio=/api/portfolios/1 : pages d'un portfolio (app/services/portfolio.ts)
-        new GetCollection(parameters: ['portfolio' => new QueryParameter(filter: new PortfolioDeLaPageFilter())]),
+        new GetCollection(parameters: ['portfolio' => new QueryParameter(filter: new IriExacteFilter('portfolio', 'portfolios'))]),
         new Get(),
         new Post(processor: PageProcessor::class, denormalizationContext: ['groups' => ['page:write', 'page:creation']], security: "is_granted('ROLE_ETUDIANT')"),
         new Patch(processor: PageProcessor::class, denormalizationContext: ['groups' => ['page:write', 'page:traces']], security: "is_granted('ROLE_ETUDIANT')"),

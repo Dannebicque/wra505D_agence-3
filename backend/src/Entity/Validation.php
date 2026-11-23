@@ -16,7 +16,10 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\QueryParameter;
+use App\Filter\IriExacteFilter;
 use App\State\ValidationProcessor;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Context;
@@ -34,10 +37,16 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  */
 #[ApiResource(
     operations: [
-        new GetCollection(),
+        // ?trace=/api/traces/1 et ?etat=0 (évaluations en attente, P-OR-01)
+        new GetCollection(parameters: [
+            'trace' => new QueryParameter(filter: new IriExacteFilter('trace', 'traces')),
+            'etat' => new QueryParameter(filter: new IriExacteFilter('etat', null, 3)),
+        ]),
         new Get(),
         new Post(processor: ValidationProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
         new Delete(processor: ValidationProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
+        // Évaluation par un enseignant du département (P-EV-03, P-EV-07) : seul l'état change
+        new Patch(processor: ValidationProcessor::class, denormalizationContext: ['groups' => ['validation:evaluation']], security: "is_granted('ROLE_ENSEIGNANT')"),
     ],
     normalizationContext: ['groups' => ['validation:read']],
     denormalizationContext: ['groups' => ['validation:write']],
@@ -79,14 +88,29 @@ class Validation
     #[ORM\OneToMany(mappedBy: 'validation', targetEntity: Notification::class, cascade: ['persist', 'remove'])]
     private Collection $notifications;
 
+    /** État reçu d'un enseignant (PATCH), à contrôler. */
+    private ?int $etatEvalue = null;
+
     public function __construct()
     {
         $this->notifications = new ArrayCollection();
     }
 
+    public function isEvaluee(): bool
+    {
+        return null !== $this->etatEvalue;
+    }
+
     #[Assert\Callback]
     public function valider(ExecutionContextInterface $context): void
     {
+        if (null !== $this->etatEvalue) {
+            if (!\in_array($this->etatEvalue, [1, 2, 3], true)) {
+                $context->buildViolation('Choisissez un niveau d’acquisition : non acquis, en cours d’acquisition ou acquis.')->atPath('etat')->addViolation();
+            }
+
+            return;
+        }
         if (null === $this->trace) {
             $context->buildViolation('Choisissez une trace.')->atPath('trace')->addViolation();
         }
@@ -138,6 +162,16 @@ class Validation
     public function isEtat(): ?int
     {
         return $this->etat;
+    }
+
+    /** État donné par l'enseignant : 1 non acquis, 2 en cours d'acquisition, 3 acquis (contrôlé par valider()). */
+    #[Groups(['validation:evaluation'])]
+    #[SerializedName('etat')]
+    public function setEtatEvalue(?int $etat): self
+    {
+        $this->etatEvalue = $etat ?? -1;
+
+        return $this->setEtat($etat);
     }
 
     public function setEtat(?int $etat): self
