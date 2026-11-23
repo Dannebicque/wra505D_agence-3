@@ -211,8 +211,14 @@ const traceCount = (page: PageItem) =>
 
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
       <div class="min-w-0">
-        <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Modifier le portfolio</h1>
-        <p class="mt-2 text-muted">
+        <!-- Le titre de la carte de « Mes portfolios » s'y transforme (même nom de transition) -->
+        <h1
+          class="font-titre text-2xl text-highlighted sm:text-3xl"
+          :style="{ viewTransitionName: `portfolio-${portfolio.id}-titre` }"
+        >
+          Modifier le portfolio
+        </h1>
+        <p class="mt-2 max-w-mesure text-muted">
           {{ intitule }} · année {{ portfolio.annee }} · modifié le
           {{ formatDate(portfolio.dateModification) }}
         </p>
@@ -238,7 +244,7 @@ const traceCount = (page: PageItem) =>
     </div>
 
     <div class="mt-8 grid gap-6 lg:grid-cols-[1fr_18rem] lg:gap-8">
-      <div class="min-w-0 space-y-10">
+      <div class="min-w-0 space-y-12">
         <section aria-labelledby="informations">
           <h2 id="informations" class="text-lg font-semibold text-highlighted">Informations</h2>
           <PortfolioForm
@@ -268,7 +274,7 @@ const traceCount = (page: PageItem) =>
               >
                 Pages-projets
               </h2>
-              <p class="mt-1 text-sm text-muted">
+              <p class="mt-1 max-w-mesure text-sm text-muted">
                 Une page par projet, affichées dans cet ordre. Glissez-déposez une page ou utilisez
                 les flèches pour la déplacer : l’ordre est enregistré à chaque déplacement.
               </p>
@@ -288,7 +294,7 @@ const traceCount = (page: PageItem) =>
           <form
             v-if="isAdding"
             novalidate
-            class="mt-4 rounded-panneau bg-muted p-4 sm:p-5"
+            class="mt-4 rounded-panneau bg-muted p-4 sm:p-6"
             @submit.prevent="addPage"
           >
             <UFormField
@@ -334,6 +340,7 @@ const traceCount = (page: PageItem) =>
             :error="pagesLoadError"
             :empty="pages.length === 0"
             empty-message="Aucune page pour l’instant. Ajoutez une page pour chacun de vos projets."
+            skeleton="liste"
             class="mt-4"
             @retry="refreshPages()"
           >
@@ -374,7 +381,7 @@ const traceCount = (page: PageItem) =>
       <aside
         id="publication-panneau"
         aria-labelledby="publication"
-        class="space-y-4 rounded-panneau bg-muted p-5 lg:sticky lg:top-6 lg:self-start"
+        class="space-y-4 rounded-panneau bg-muted p-4 sm:p-6 lg:sticky lg:top-6 lg:self-start"
       >
         <h2 id="publication" class="text-sm font-semibold text-highlighted">Publication</h2>
 
@@ -387,7 +394,7 @@ const traceCount = (page: PageItem) =>
           >
             {{ publie ? 'Publié' : 'Non publié' }}
           </UBadge>
-          <span class="flex items-center gap-1.5 text-sm text-default">
+          <span class="flex items-center gap-1 text-sm text-default">
             <UIcon
               :name="visibilite === 'publique' ? 'i-lucide-globe' : 'i-lucide-lock'"
               class="size-4 text-muted"

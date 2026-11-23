@@ -30,7 +30,7 @@ const newPortfolioLink = computed(() =>
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
         <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mes portfolios</h1>
-        <p class="mt-2 text-muted">Un portfolio par année universitaire.</p>
+        <p class="mt-2 max-w-mesure text-muted">Un portfolio par année universitaire.</p>
       </div>
       <UButton
         :to="newPortfolioLink"
@@ -47,7 +47,7 @@ const newPortfolioLink = computed(() =>
       :id="limitId"
       class="mt-4 flex items-start gap-2 rounded-panneau bg-muted px-4 py-3 text-sm text-default"
     >
-      <UIcon name="i-lucide-info" class="mt-0.5 size-4 shrink-0 text-muted" aria-hidden="true" />
+      <UIcon name="i-lucide-info" class="mt-1 size-4 shrink-0 text-muted" aria-hidden="true" />
       <span>
         Vous avez déjà un portfolio pour l’année {{ ANNEE_COURANTE }} :
         <NuxtLink
@@ -59,9 +59,10 @@ const newPortfolioLink = computed(() =>
       </span>
     </p>
 
+    <!-- État vide : un peu au-dessus du centre optique (moins d'air en haut qu'en bas) -->
     <div
       v-if="portfolios.length === 0"
-      class="mt-8 rounded-panneau bg-muted px-6 py-10 text-center"
+      class="mt-8 rounded-panneau bg-muted px-6 pt-8 pb-12 text-center"
     >
       <UIcon name="i-lucide-book-open" class="size-8 text-muted" aria-hidden="true" />
       <p class="mt-3 font-medium text-highlighted">Vous n’avez pas encore de portfolio.</p>
@@ -73,22 +74,30 @@ const newPortfolioLink = computed(() =>
       <UButton
         :to="{ path: '/etudiant/portfolios/nouveau', query: { etat: 'vide' } }"
         icon="i-lucide-plus"
-        class="mt-5"
+        class="mt-6"
       >
         Créer mon portfolio
       </UButton>
     </div>
 
-    <ul v-else class="mt-8 grid gap-4 lg:grid-cols-2" aria-label="Portfolios">
+    <ul v-else class="mt-8 grid gap-6 lg:grid-cols-2" aria-label="Portfolios">
       <li v-for="portfolio in portfolios" :key="portfolio.id">
-        <article class="flex h-full flex-col gap-4 rounded-panneau bg-muted p-4 sm:p-5">
+        <!-- Carte entièrement cliquable : le lien du titre la couvre (::after), les boutons
+             d'action restent au-dessus (relative) -->
+        <article
+          class="group relative flex h-full flex-col gap-4 rounded-panneau bg-muted p-4 transition-colors hover:bg-elevated motion-reduce:transition-none sm:p-6"
+        >
           <PortfolioBanner size="sm" />
           <div>
             <p class="text-sm text-muted">Année {{ portfolio.annee }}</p>
-            <h2 class="mt-1 text-lg font-semibold text-highlighted">
+            <!-- Même nom de transition que le titre de l'écran du portfolio : il s'y transforme -->
+            <h2
+              class="mt-1 text-lg leading-titre font-semibold text-highlighted"
+              :style="{ viewTransitionName: `portfolio-${portfolio.id}-titre` }"
+            >
               <NuxtLink
                 :to="`/etudiant/portfolios/${portfolio.id}`"
-                class="underline-offset-4 hover:underline"
+                class="underline-offset-4 after:absolute after:inset-0 after:rounded-panneau group-hover:underline"
               >
                 {{ portfolio.intitule }}
               </NuxtLink>
@@ -98,7 +107,7 @@ const newPortfolioLink = computed(() =>
           <dl class="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
             <div>
               <dt class="text-muted">Visibilité</dt>
-              <dd class="mt-1 flex items-center gap-1.5 text-highlighted">
+              <dd class="mt-1 flex items-center gap-1 text-highlighted">
                 <UIcon
                   :name="portfolio.visibilite === 'publique' ? 'i-lucide-globe' : 'i-lucide-lock'"
                   class="size-4 text-muted"
@@ -122,11 +131,13 @@ const newPortfolioLink = computed(() =>
             </div>
             <div class="col-span-2 sm:col-span-1">
               <dt class="text-muted">Modifié le</dt>
-              <dd class="mt-1 text-highlighted">{{ formatDate(portfolio.dateModification) }}</dd>
+              <dd class="mt-1 text-highlighted tabular-nums">
+                {{ formatDate(portfolio.dateModification) }}
+              </dd>
             </div>
           </dl>
 
-          <div class="mt-auto flex flex-wrap gap-2 pt-1">
+          <div class="relative mt-auto flex flex-wrap gap-2 pt-1">
             <UButton
               :to="`/etudiant/portfolios/${portfolio.id}`"
               icon="i-lucide-pencil"
