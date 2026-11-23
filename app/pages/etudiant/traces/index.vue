@@ -79,16 +79,13 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
           <UFormField label="Statut">
             <USelect v-model="criteria.statut" :items="statutItems" class="w-full" />
           </UFormField>
-          <UFormField label="Compétence">
-            <!-- Liste appelée à s'allonger (référentiels, niveaux) : recherche dans la liste -->
-            <USelectMenu
-              v-model="selectedCompetence"
-              :items="competenceItems"
-              value-key="value"
-              :search-input="{ placeholder: 'Filtrer les compétences…' }"
-              class="w-full"
-            />
-          </UFormField>
+          <!-- Liste appelée à s'allonger (référentiels, niveaux) : recherche dans la liste -->
+          <CommunFiltreListe
+            v-model="selectedCompetence"
+            label="Compétence"
+            :items="competenceItems"
+            search-label="Filtrer les compétences"
+          />
           <div class="flex items-end">
             <!-- Toujours présent (aria-disabled plutôt que v-if) : le focus n'est pas perdu après le clic -->
             <UButton

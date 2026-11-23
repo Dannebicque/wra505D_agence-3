@@ -237,10 +237,16 @@ test.describe('rechercher et filtrer mes traces', () => {
     await page.getByRole('option', { name: 'Brouillons' }).click()
     await expect(liste(page)).toHaveCount(2)
 
-    // Liste avec recherche (USelectMenu) : le déclencheur est un bouton, la recherche un combobox
-    await page.getByRole('button', { name: 'Compétence' }).click()
-    await page.getByPlaceholder('Filtrer les compétences…').fill('entre')
+    // Liste avec recherche (USelectMenu) : le déclencheur est un bouton, nommé par le libellé et la
+    // valeur choisie ; la recherche est un combobox qui a son propre nom
+    const competence = page.getByRole('button', { name: /^Compétence/ })
+    await expect(competence).toHaveAccessibleName('Compétence Toutes les compétences')
+    await competence.click()
+    const recherche = page.getByRole('combobox', { name: 'Filtrer les compétences' })
+    expect(await recherche.getAttribute('id')).not.toBe(await competence.getAttribute('id'))
+    await recherche.fill('entre')
     await page.getByRole('option', { name: 'Entreprendre' }).click()
+    await expect(competence).toHaveAccessibleName('Compétence Entreprendre')
     await expect(liste(page)).toHaveCount(1)
     await expect(liste(page)).toContainText('Business model d’une appli de covoiturage')
     await expect(page).toHaveURL(/statut=brouillon/)
@@ -251,6 +257,7 @@ test.describe('rechercher et filtrer mes traces', () => {
 
     await expect(liste(page)).toHaveCount(1)
     await expect(page.getByRole('combobox', { name: 'Statut' })).toHaveText(/Brouillons/)
+    await expect(competence).toHaveAccessibleName('Compétence Entreprendre')
   })
 
   test('retrouve la liste filtrée après avoir enregistré une trace', async ({ page }) => {
@@ -306,8 +313,8 @@ test.describe('rechercher et filtrer mes traces', () => {
     await gotoHydrated(page, '/etudiant/traces?competence=999')
 
     await expect(liste(page)).toHaveCount(8)
-    await expect(page.getByRole('button', { name: 'Compétence' })).toHaveText(
-      /Toutes les compétences/,
+    await expect(page.getByRole('button', { name: /^Compétence/ })).toHaveAccessibleName(
+      'Compétence Toutes les compétences',
     )
   })
 })
