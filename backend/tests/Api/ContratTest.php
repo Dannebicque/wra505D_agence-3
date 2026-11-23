@@ -6,7 +6,7 @@ use App\Tests\ApiTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
- * Les réponses doivent correspondre exactement aux types du front (shared/types/structure.ts et utilisateur.ts) :
+ * Les réponses doivent correspondre exactement aux types du front (shared/types/structure.ts, utilisateur.ts, referentiel.ts) :
  * mêmes clés, aucun champ en plus (données personnelles) ni en moins (champs nullables compris).
  */
 class ContratTest extends ApiTestCase
@@ -99,7 +99,10 @@ class ContratTest extends ApiTestCase
         $niveau = $competence['niveaux'][0];
         self::assertCles('Niveau', ['libelle', 'ordre', 'annee', 'parcours', 'apprentissagesCritiques'], $niveau);
         self::assertStringStartsWith('/api/niveaux/', $niveau['@id']);
-        self::assertIsArray($niveau['parcours']);
+        self::assertStringStartsWith('/api/annees/', $niveau['annee']);
+        $parcours = array_merge(...array_column(array_merge(...array_column($referentiel['competences'], 'niveaux')), 'parcours'));
+        self::assertNotEmpty($parcours, 'Au moins un niveau propre à un parcours dans les fixtures');
+        self::assertStringStartsWith('/api/parcours/', $parcours[0]);
         self::assertCles('ApprentissageCritique', ['code', 'libelle'], $niveau['apprentissagesCritiques'][0]);
     }
 
