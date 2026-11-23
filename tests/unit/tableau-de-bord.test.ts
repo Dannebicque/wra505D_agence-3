@@ -238,9 +238,7 @@ describe('progressionParts', () => {
   })
 
   it('ne donne rien pour une compétence sans évaluation', () => {
-    expect(progressionParts({ acquired: 0, inProgress: 0, notAcquired: 0, pending: 0 })).toEqual(
-      [],
-    )
+    expect(progressionParts({ acquired: 0, inProgress: 0, notAcquired: 0, pending: 0 })).toEqual([])
   })
 })
 
