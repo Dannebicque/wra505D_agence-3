@@ -193,13 +193,20 @@ const formatDay = (date: string) => dayMonthYear.format(new Date(date))
   <div>
     <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
     <h1 class="mt-4 font-titre text-2xl text-highlighted sm:text-3xl">Modifier la page</h1>
-    <p v-if="portfolio" class="mt-2 text-muted">
+    <p v-if="portfolio" class="mt-2 max-w-mesure text-muted">
       Page-projet du portfolio « {{ portfolio.intitule }} ».
     </p>
 
-    <UiAsyncState :status="status" :error="error" class="mt-8" @retry="refresh()">
+    <UiAsyncState
+      :status="status"
+      :error="error"
+      skeleton="formulaire"
+      :skeleton-count="2"
+      class="mt-8"
+      @retry="refresh()"
+    >
       <div class="grid gap-6 lg:grid-cols-[1fr_20rem] lg:gap-8">
-        <div class="min-w-0 space-y-10">
+        <div class="min-w-0 space-y-12">
           <section aria-labelledby="informations">
             <h2 id="informations" class="text-lg font-semibold text-highlighted">Informations</h2>
             <UForm
@@ -273,7 +280,7 @@ const formatDay = (date: string) => dayMonthYear.format(new Date(date))
             >
               Traces de la page
             </h2>
-            <p class="mt-1 text-sm text-muted">
+            <p class="mt-1 max-w-mesure text-sm text-muted">
               Affichées dans cet ordre sur votre portfolio. Glissez-déposez une trace ou utilisez
               les flèches pour la déplacer : l’ordre est enregistré à chaque déplacement.
             </p>
@@ -289,7 +296,10 @@ const formatDay = (date: string) => dayMonthYear.format(new Date(date))
               />
             </div>
 
-            <p v-if="traces.length === 0" class="mt-4 rounded-panneau bg-muted p-5 text-muted">
+            <p
+              v-if="traces.length === 0"
+              class="mt-4 rounded-panneau bg-muted p-4 text-muted sm:p-6"
+            >
               Cette page ne contient encore aucune trace. Ajoutez-en depuis votre bibliothèque.
             </p>
             <PortfolioOrderedList
@@ -301,13 +311,13 @@ const formatDay = (date: string) => dayMonthYear.format(new Date(date))
             >
               <template #item="{ item }">
                 <p class="font-medium break-words text-highlighted">{{ item.trace.titre }}</p>
-                <p class="text-sm text-muted">
+                <p class="mt-1 text-sm text-muted tabular-nums">
                   {{ TRACE_TYPE_LIBELLES[item.trace.type] }} ·
                   {{ formatDay(item.trace.dateCreation) }}
                 </p>
                 <ul
                   v-if="item.competences.length"
-                  class="mt-2 flex flex-wrap gap-1.5"
+                  class="mt-2 flex flex-wrap gap-2"
                   :aria-label="`Compétences de « ${item.trace.titre} »`"
                 >
                   <li v-for="competence in item.competences" :key="competence['@id']">
@@ -333,7 +343,7 @@ const formatDay = (date: string) => dayMonthYear.format(new Date(date))
 
         <aside
           aria-labelledby="ajouter-des-traces"
-          class="space-y-4 rounded-panneau bg-muted p-5 lg:sticky lg:top-6 lg:self-start"
+          class="space-y-4 rounded-panneau bg-muted p-4 sm:p-6 lg:sticky lg:top-6 lg:self-start"
         >
           <h2 id="ajouter-des-traces" class="text-sm font-semibold text-highlighted">
             Ajouter des traces

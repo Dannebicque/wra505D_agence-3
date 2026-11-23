@@ -27,7 +27,7 @@ const auteur = etudiant ? `${etudiant.prenom} ${etudiant.nom}, ${etudiant.annee}
     <div
       role="note"
       aria-label="Mode aperçu"
-      class="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-panneau bg-primary/10 px-4 py-3 sm:px-5"
+      class="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-panneau bg-primary/10 px-4 py-3 sm:px-6"
     >
       <p class="flex items-center gap-2 text-sm font-medium text-highlighted">
         <UIcon name="i-lucide-eye" class="size-5 shrink-0 text-primary" aria-hidden="true" />

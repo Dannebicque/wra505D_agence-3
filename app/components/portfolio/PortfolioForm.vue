@@ -107,7 +107,7 @@ const VISIBILITE_ITEMS = [
 
     <PortfolioBannerField :current-name="banniere" />
 
-    <div class="space-y-5 rounded-panneau bg-muted p-5">
+    <div class="space-y-6 rounded-panneau bg-muted p-4 sm:p-6">
       <URadioGroup
         v-model="state.visibilite"
         name="visibilite"
