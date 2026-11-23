@@ -58,6 +58,16 @@ test.describe('thème du style éditorial', () => {
     })
   })
 
+  // WCAG 2.5.8 : 24 px au moins partout ; 44 px pour un bouton icône sur écran tactile (Pixel 7)
+  test('donne aux boutons icône une zone tactile suffisante', async ({ page, isMobile }) => {
+    await gotoHydrated(page, '/')
+
+    const box = await page.getByRole('button', { name: /Passer en mode/ }).boundingBox()
+    const min = isMobile ? 44 : 24
+    expect(box?.width).toBeGreaterThanOrEqual(min)
+    expect(box?.height).toBeGreaterThanOrEqual(min)
+  })
+
   test('compose les titres en Instrument Sans, en gras', async ({ page }) => {
     await gotoHydrated(page, '/etudiant')
 
