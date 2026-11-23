@@ -33,15 +33,16 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
     operations: [
         new GetCollection(),
         new Get(),
-        new Post(processor: TraceProcessor::class),
-        new Patch(processor: TraceProcessor::class),
+        new Post(processor: TraceProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
+        new Patch(processor: TraceProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
         // Suppression douce : la trace part dans la corbeille (dateSuppression), C-09
-        new Delete(processor: TraceProcessor::class),
+        new Delete(processor: TraceProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
     ],
     normalizationContext: ['groups' => ['trace:read']],
     denormalizationContext: ['groups' => ['trace:write']],
     order: ['id' => 'ASC'],
-    security: "is_granted('ROLE_ETUDIANT')",
+    // Lecture : l'étudiant (ses données) et l'enseignant (ses départements), cf. App\Doctrine\ProprietaireExtension
+    security: "is_granted('ROLE_ETUDIANT') or is_granted('ROLE_ENSEIGNANT')",
     // Valeur du mauvais type (titre: 12…) : 422 avec le champ en cause, comme les autres erreurs de saisie
     collectDenormalizationErrors: true,
 )]

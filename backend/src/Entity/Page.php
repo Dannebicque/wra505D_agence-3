@@ -36,14 +36,15 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
         // ?portfolio=/api/portfolios/1 : pages d'un portfolio (app/services/portfolio.ts)
         new GetCollection(parameters: ['portfolio' => new QueryParameter(filter: new PortfolioDeLaPageFilter())]),
         new Get(),
-        new Post(processor: PageProcessor::class, denormalizationContext: ['groups' => ['page:write', 'page:creation']]),
-        new Patch(processor: PageProcessor::class, denormalizationContext: ['groups' => ['page:write', 'page:traces']]),
+        new Post(processor: PageProcessor::class, denormalizationContext: ['groups' => ['page:write', 'page:creation']], security: "is_granted('ROLE_ETUDIANT')"),
+        new Patch(processor: PageProcessor::class, denormalizationContext: ['groups' => ['page:write', 'page:traces']], security: "is_granted('ROLE_ETUDIANT')"),
         // Corbeille : ses traces restent dans la bibliothèque
-        new Delete(processor: PageProcessor::class),
+        new Delete(processor: PageProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
     ],
     normalizationContext: ['groups' => ['page:read']],
     order: ['ordre' => 'ASC', 'id' => 'ASC'],
-    security: "is_granted('ROLE_ETUDIANT')",
+    // Lecture : l'étudiant (ses données) et l'enseignant (ses départements), cf. App\Doctrine\ProprietaireExtension
+    security: "is_granted('ROLE_ETUDIANT') or is_granted('ROLE_ENSEIGNANT')",
     collectDenormalizationErrors: true,
 )]
 #[ORM\Entity(repositoryClass: PageRepository::class)]

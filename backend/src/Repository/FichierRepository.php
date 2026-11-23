@@ -47,6 +47,27 @@ class FichierRepository extends ServiceEntityRepository
     }
 
     /**
+     * Fichier d'une trace finalisée, hors corbeille, d'un étudiant de l'un de ces départements (lecture enseignant).
+     *
+     * @param list<int> $departements
+     */
+    public function lisibleParEnseignant(Fichier $fichier, array $departements): bool
+    {
+        return [] !== $departements && false !== $this->getEntityManager()->getConnection()->fetchOne(<<<'SQL'
+            SELECT 1 FROM trace t
+            JOIN bibliotheque b ON b.id = t.bibliotheque_id
+            JOIN etudiant e ON e.id = b.etudiant_id
+            JOIN semestre s ON s.id = e.semestre_id
+            JOIN annee a ON a.id = s.annee_id
+            JOIN diplome d ON d.id = a.diplome_id
+            WHERE t.statut = 'finalisee' AND t.date_suppression IS NULL
+              AND d.departement_id IN (:departements)
+              AND jsonb_exists(t.contenu::jsonb, :iri)
+            LIMIT 1
+            SQL, ['iri' => '/api/fichiers/' . $fichier->getId(), 'departements' => $departements], ['departements' => \Doctrine\DBAL\ArrayParameterType::INTEGER]);
+    }
+
+    /**
      * Nombre de fichiers et octets déjà déposés par l'utilisateur.
      *
      * @return array{int, int}

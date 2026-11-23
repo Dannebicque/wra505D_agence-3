@@ -19,7 +19,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
 #[ApiResource(
     operations: [new Get()],
     normalizationContext: ['groups' => ['bibliotheque:read']],
-    security: "is_granted('ROLE_ETUDIANT')",
+    // Lecture : l'étudiant (ses données) et l'enseignant (ses départements), cf. App\Doctrine\ProprietaireExtension
+    security: "is_granted('ROLE_ETUDIANT') or is_granted('ROLE_ENSEIGNANT')",
 )]
 #[ORM\Entity(repositoryClass: BibliothequeRepository::class)]
 class Bibliotheque

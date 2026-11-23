@@ -36,13 +36,14 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
     operations: [
         new GetCollection(),
         new Get(),
-        new Post(processor: ValidationProcessor::class),
-        new Delete(processor: ValidationProcessor::class),
+        new Post(processor: ValidationProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
+        new Delete(processor: ValidationProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
     ],
     normalizationContext: ['groups' => ['validation:read']],
     denormalizationContext: ['groups' => ['validation:write']],
     order: ['id' => 'ASC'],
-    security: "is_granted('ROLE_ETUDIANT')",
+    // Lecture : l'étudiant (ses données) et l'enseignant (ses départements), cf. App\Doctrine\ProprietaireExtension
+    security: "is_granted('ROLE_ETUDIANT') or is_granted('ROLE_ENSEIGNANT')",
     // IRI d'une trace d'autrui, de la corbeille ou inexistante : 422 sur le champ, comme les autres erreurs de saisie
     collectDenormalizationErrors: true,
 )]

@@ -214,7 +214,7 @@ class TraceTest extends ApiTestCase
         self::assertSame('Mon site', $this->connection->fetchOne('SELECT titre FROM trace WHERE id = ?', [basename($iri)]));
     }
 
-    /** Évaluation des traces par les enseignants : Sprint 3. */
+    /** Lecture enseignant : tests/Api/EnseignantTest.php. Ici, seules les écritures sont vérifiées. */
     public static function nonEtudiants(): iterable
     {
         yield 'enseignant' => ['enseignant'];
@@ -222,22 +222,18 @@ class TraceTest extends ApiTestCase
     }
 
     #[DataProvider('nonEtudiants')]
-    public function testSeulLEtudiantAccedeAuxTraces(string $compte): void
+    public function testSeulLEtudiantEcritSesTraces(string $compte): void
     {
         $this->connecter('etudiant');
         $trace = $this->creer()['@id'];
         $this->connecter($compte);
 
-        $this->lire('/api/traces');
-        self::assertResponseStatusCodeSame(403);
         $this->envoyer('POST', '/api/traces', self::LIEN);
         self::assertResponseStatusCodeSame(403);
-        foreach (['GET', 'PATCH', 'DELETE'] as $methode) {
-            $this->envoyer($methode, $trace, 'GET' === $methode ? null : ['titre' => 'Pirate']);
+        foreach (['PATCH', 'DELETE'] as $methode) {
+            $this->envoyer($methode, $trace, ['titre' => 'Pirate']);
             self::assertContains($this->client->getResponse()->getStatusCode(), [403, 404], $methode);
         }
-        $this->lire($this->bibliotheque('etudiant'));
-        self::assertContains($this->client->getResponse()->getStatusCode(), [403, 404]);
         self::assertSame('Mon site', $this->connection->fetchOne('SELECT titre FROM trace WHERE id = ?', [basename($trace)]));
     }
 

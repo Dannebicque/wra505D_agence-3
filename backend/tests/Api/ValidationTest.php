@@ -161,15 +161,6 @@ class ValidationTest extends ApiTestCase
         self::assertSame(3, $this->lire($validation)['etat']);
     }
 
-    public function testEnseignantNAccedePasAuxValidationsCeSprint(): void
-    {
-        $this->connecter('enseignant');
-
-        $this->lire('/api/validations');
-
-        self::assertResponseStatusCodeSame(403);
-    }
-
     private function trace(): string
     {
         $trace = $this->envoyer('POST', '/api/traces', ['titre' => 'Mon site', 'type' => 'lien', 'contenu' => ['https://exemple.fr'], 'statut' => 'finalisee']);

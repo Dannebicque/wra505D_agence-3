@@ -152,15 +152,6 @@ class PortfolioTest extends ApiTestCase
         self::assertSame(0, $this->lire('/api/pages')['totalItems']);
     }
 
-    public function testEnseignantNAccedePasAuxPortfoliosCeSprint(): void
-    {
-        $this->connecter('enseignant');
-
-        $this->lire('/api/portfolios');
-
-        self::assertResponseStatusCodeSame(403);
-    }
-
     private function portfolio(): string
     {
         return $this->iri("SELECT '/api/portfolios/' || p.id FROM portfolio p JOIN etudiant e ON e.id = p.etudiant_id WHERE e.username = 'etudiant' AND p.date_suppression IS NULL");
