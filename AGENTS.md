@@ -26,7 +26,7 @@ Refonte de **UniFolio**, l'outil de portfolio de compétences d'un IUT (approche
 
 ### Arborescence
 
-Le dépôt sépare le front du back : l'application Nuxt vit dans `frontend/`, la future API ApiPlatform aura son dossier `backend/` (Sprint 4). Documentation et règles IA restent à la racine. **Dans ce fichier et dans `docs/`, les chemins `app/`, `server/`, `shared/`, `tests/`… sont relatifs à `frontend/`.**
+Le dépôt sépare le front du back : l'application Nuxt vit dans `frontend/`, l'API Symfony 8 + ApiPlatform dans `backend/` (Docker, PostgreSQL ; installation et commandes dans `backend/README.md`). Documentation et règles IA restent à la racine. **Dans ce fichier et dans `docs/`, les chemins `app/`, `server/`, `shared/`, `tests/`… sont relatifs à `frontend/`.**
 
 ```
 frontend/         application Nuxt 4 (package.json, nuxt.config.ts, configs, .nvmrc)
@@ -41,14 +41,14 @@ frontend/         application Nuxt 4 (package.json, nuxt.config.ts, configs, .nv
   shared/types/   types du domaine, partagés entre app/ et server/
   server/api/     routes Nitro provisoires (phase 1, font partie de l'application Nuxt) ; server/data/ pour les données factices
   tests/          unit/, nuxt/ (intégration), e2e/ (Playwright)
-backend/          (Sprint 4) API ApiPlatform
+backend/          API Symfony 8 + ApiPlatform (Docker) : voir backend/README.md
 docs/             FONCTIONNALITES.md, ROADMAP.md, DECISIONS.md, design/, superpowers/
 .github/          CI (exécutée dans frontend/)
 ```
 
 ## 2. Commandes
 
-**Toutes les commandes se lancent depuis `frontend/`** (`cd frontend`). Node 24 (`frontend/.nvmrc`). Après un `git pull` qui modifie `frontend/package-lock.json` : `npm ci`.
+**Les commandes ci-dessous sont celles du front et se lancent depuis `frontend/`** (`cd frontend`) ; celles du back sont dans `backend/README.md`. Node 24 (`frontend/.nvmrc`). Après un `git pull` qui modifie `frontend/package-lock.json` : `npm ci`.
 
 | Action | Commande |
 |---|---|

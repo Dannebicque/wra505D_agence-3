@@ -7,7 +7,7 @@ UniFolio : refonte de l'outil de portfolio de compétences de l'IUT (Nuxt 4, Typ
 | Dossier | Contenu |
 |---|---|
 | [`frontend/`](frontend/) | Application Nuxt 4 (interface, routes Nitro provisoires, tests) |
-| `backend/` | À venir (Sprint 4) : API ApiPlatform |
+| [`backend/`](backend/) | API Symfony 8 + ApiPlatform (Docker, PostgreSQL) : voir [`backend/README.md`](backend/README.md) |
 | [`docs/`](docs/) | Fonctionnalités, roadmap, décisions, design |
 
 ## Documentation
