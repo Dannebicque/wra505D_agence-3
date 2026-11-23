@@ -1,0 +1,14 @@
+<script setup lang="ts">
+useSeoMeta({ title: 'Nouvelle trace' })
+</script>
+
+<template>
+  <div class="max-w-2xl">
+    <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Nouvelle trace</h1>
+    <p class="mt-2 max-w-mesure text-muted">
+      Dès que vous saisissez un titre, la trace est enregistrée en brouillon. Finalisez-la pour la
+      soumettre à l’évaluation.
+    </p>
+    <TraceEditor class="mt-8" />
+  </div>
+</template>
