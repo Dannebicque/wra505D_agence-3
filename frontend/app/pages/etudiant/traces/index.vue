@@ -131,12 +131,21 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
 
         <!-- Cartes entièrement cliquables : le lien du titre couvre la carte (::after) -->
         <ul v-if="filtered.length" class="mt-4 space-y-3" aria-label="Traces">
+          <!--
+            Repères de la carte : le type de la trace (icône, le libellé est écrit dessous), le
+            statut, et le chevron qui dit « ouvrir » ; il glisse d'un pas au survol et au focus
+          -->
           <li
             v-for="{ trace, competences: traceCompetences } in filtered"
             :key="trace['@id']"
-            class="group relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-feuille border border-default p-4 transition-colors hover:border-accented hover:bg-muted has-focus-visible:border-accented has-focus-visible:bg-muted motion-reduce:transition-none"
+            class="group relative flex items-center gap-4 rounded-feuille border border-default p-4 transition-colors hover:border-accented hover:bg-muted has-focus-visible:border-accented has-focus-visible:bg-muted motion-reduce:transition-none"
           >
-            <div class="min-w-0">
+            <UIcon
+              :name="TRACE_TYPE_ICONS[trace.type]"
+              class="size-6 shrink-0 self-start text-muted max-sm:hidden"
+              aria-hidden="true"
+            />
+            <div class="min-w-0 flex-1">
               <NuxtLink
                 :to="{ path: `/etudiant/traces/${idFromIri(trace['@id'])}`, query: activeQuery }"
                 class="font-medium break-words text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille group-hover:underline group-has-focus-visible:underline"
@@ -147,18 +156,32 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
                 {{ TRACE_TYPE_LIBELLES[trace.type] }} ·
                 {{ dayMonthYear.format(new Date(trace.dateModification ?? trace.dateCreation)) }}
               </p>
-              <p v-if="traceCompetences.length" class="mt-1 text-sm text-muted">
+              <p v-if="traceCompetences.length" class="mt-2 flex flex-wrap gap-1">
                 <span class="sr-only">Compétences : </span>
-                {{ traceCompetences.map((c) => c.nomCourt).join(' · ') }}
+                <UBadge
+                  v-for="c in traceCompetences"
+                  :key="c['@id']"
+                  color="neutral"
+                  variant="soft"
+                  class="rounded-full"
+                  :label="c.nomCourt"
+                />
               </p>
             </div>
-            <UBadge
-              :color="trace.statut === 'brouillon' ? 'warning' : 'success'"
-              variant="subtle"
-              class="rounded-full"
-            >
-              {{ trace.statut === 'brouillon' ? 'Brouillon' : 'Finalisée' }}
-            </UBadge>
+            <div class="flex shrink-0 items-center gap-2">
+              <UBadge
+                :color="trace.statut === 'brouillon' ? 'warning' : 'success'"
+                variant="subtle"
+                class="rounded-full"
+              >
+                {{ trace.statut === 'brouillon' ? 'Brouillon' : 'Finalisée' }}
+              </UBadge>
+              <UIcon
+                name="i-lucide-chevron-right"
+                class="size-5 text-muted motion-safe:transition-transform motion-safe:group-hover:translate-x-1 motion-safe:group-has-focus-visible:translate-x-1"
+                aria-hidden="true"
+              />
+            </div>
           </li>
         </ul>
       </section>
