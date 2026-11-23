@@ -11,7 +11,16 @@ use App\Repository\BibliothequeRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use Symfony\Component\Serializer\Attribute\Groups;
 
+/** Bibliothèque d'un étudiant pour une année ; lisible par lui seul (App\Doctrine\ProprietaireExtension). */
+#[ApiResource(
+    operations: [new Get()],
+    normalizationContext: ['groups' => ['bibliotheque:read']],
+    security: "is_granted('ROLE_ETUDIANT')",
+)]
 #[ORM\Entity(repositoryClass: BibliothequeRepository::class)]
 class Bibliotheque
 {
@@ -42,6 +51,7 @@ class Bibliotheque
         return $this->id;
     }
 
+    #[Groups(['bibliotheque:read'])]
     public function getEtudiant(): ?Etudiant
     {
         return $this->etudiant;
@@ -54,6 +64,7 @@ class Bibliotheque
         return $this;
     }
 
+    #[Groups(['bibliotheque:read'])]
     public function getAnneeUniversitaire(): ?AnneeUniversitaire
     {
         return $this->annee_universitaire;
@@ -66,6 +77,7 @@ class Bibliotheque
         return $this;
     }
 
+    #[Groups(['bibliotheque:read'])]
     public function getAnnee(): ?Annee
     {
         return $this->annee;

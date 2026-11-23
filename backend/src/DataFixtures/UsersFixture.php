@@ -137,7 +137,9 @@ class UsersFixture extends Fixture implements OrderedFixtureInterface
         }
 
         $bibliotheque = new Bibliotheque();
-        $bibliotheque->setEtudiant($etudiant);
+        $bibliotheque->setEtudiant($etudiant)
+            ->setAnnee($semestre?->getAnnee())
+            ->setAnneeUniversitaire($anneeUniversitaire);
 
         $manager->persist($etudiant);
         $manager->persist($bibliotheque);

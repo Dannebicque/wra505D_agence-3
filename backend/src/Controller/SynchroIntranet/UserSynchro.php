@@ -8,7 +8,6 @@
 
 namespace App\Controller\SynchroIntranet;
 
-use App\Entity\Bibliotheque;
 use App\Entity\EnseignantDepartement;
 use App\Entity\Etudiant;
 use App\Entity\Enseignant;
@@ -186,12 +185,8 @@ class UserSynchro extends AbstractController
 
                 $etudiantRepository->save($newEtudiant, true);
 
-                $biblio = $bibliothequeRepository->findOneBy(['etudiant' => $newEtudiant]);
-                if (!$biblio) {
-                    $biblio = new Bibliotheque();
-                    $biblio->setEtudiant($newEtudiant);
-                    $bibliothequeRepository->save($biblio, true);
-                }
+                // Créée au besoin, avec l'année du semestre de l'étudiant
+                $bibliothequeRepository->save($bibliothequeRepository->courante($newEtudiant), true);
             }
             return true;
         } else {

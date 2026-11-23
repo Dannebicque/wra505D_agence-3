@@ -54,6 +54,15 @@ abstract class ApiTestCase extends WebTestCase
         return json_decode((string) $this->client->getResponse()->getContent(), true) ?? [];
     }
 
+    /** Requête JSON comme le front (merge-patch pour PATCH) ; renvoie le corps décodé. */
+    protected function envoyer(string $methode, string $url, ?array $corps = null): array
+    {
+        $type = 'PATCH' === $methode ? 'application/merge-patch+json' : 'application/json';
+        $this->client->request($methode, $url, server: ['CONTENT_TYPE' => $type, 'HTTP_ACCEPT' => 'application/ld+json'], content: null === $corps ? null : json_encode($corps));
+
+        return json_decode((string) $this->client->getResponse()->getContent(), true) ?? [];
+    }
+
     protected function iri(string $sql): string
     {
         return (string) $this->connection->fetchOne($sql);

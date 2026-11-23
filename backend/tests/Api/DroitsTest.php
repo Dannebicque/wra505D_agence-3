@@ -12,7 +12,7 @@ class DroitsTest extends ApiTestCase
 {
     public static function ressources(): iterable
     {
-        foreach (['departements', 'diplomes', 'annees', 'annee_universitaires', 'semestres', 'groupes', 'parcours', 'etudiants', 'enseignants'] as $ressource) {
+        foreach (['departements', 'diplomes', 'annees', 'annee_universitaires', 'semestres', 'groupes', 'parcours', 'etudiants', 'enseignants', 'referentiels', 'traces'] as $ressource) {
             yield $ressource => ["/api/$ressource"];
         }
         yield 'me' => ['/api/me'];
@@ -81,11 +81,13 @@ class DroitsTest extends ApiTestCase
             yield "$methode étudiant" => [$methode, "SELECT '/api/etudiants/' || id FROM etudiant WHERE username = 'etudiant'"];
             yield "$methode utilisateur" => [$methode, "SELECT '/api/users/' || id FROM users WHERE username = 'etudiant'"];
             yield "$methode département" => [$methode, "SELECT '/api/departements/' || id FROM departement LIMIT 1"];
+            yield "$methode référentiel" => [$methode, "SELECT '/api/referentiels/' || id FROM apc_referentiel LIMIT 1"];
+            yield "$methode niveau" => [$methode, "SELECT '/api/niveaux/' || id FROM apc_niveau LIMIT 1"];
         }
     }
 
     #[DataProvider('ecritures')]
-    public function testAucuneEcritureAuSprint0(string $methode, string $sql): void
+    public function testAucuneEcritureSurLesDonneesSynchronisees(string $methode, string $sql): void
     {
         $this->connecter('admin');
 

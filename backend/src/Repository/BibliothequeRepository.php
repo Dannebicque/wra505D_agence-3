@@ -8,6 +8,7 @@
 namespace App\Repository;
 
 use App\Entity\Bibliotheque;
+use App\Entity\Etudiant;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -33,6 +34,21 @@ class BibliothequeRepository extends ServiceEntityRepository
         if ($flush) {
             $this->getEntityManager()->flush();
         }
+    }
+
+    /**
+     * Bibliothèque qui reçoit les nouvelles traces de l'étudiant, créée au besoin.
+     * shortcut: la plus récente fait foi ; à revoir si l'étudiant doit choisir l'année de ses traces.
+     */
+    public function courante(Etudiant $etudiant): Bibliotheque
+    {
+        $bibliotheque = $this->findOneBy(['etudiant' => $etudiant], ['id' => 'DESC']) ?? (new Bibliotheque())->setEtudiant($etudiant);
+        // Bibliothèques créées par la synchro sans année : complétées depuis la fiche de l'étudiant
+        $bibliotheque->setAnnee($bibliotheque->getAnnee() ?? $etudiant->getSemestre()?->getAnnee());
+        $bibliotheque->setAnneeUniversitaire($bibliotheque->getAnneeUniversitaire() ?? $etudiant->getAnneeUniversitaire());
+        $this->getEntityManager()->persist($bibliotheque);
+
+        return $bibliotheque;
     }
 
     public function remove(Bibliotheque $entity, bool $flush = false): void
