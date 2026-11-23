@@ -66,14 +66,14 @@ const resultLabel = computed(() =>
         Évaluer à la suite
       </UButton>
     </div>
-    <p class="mt-3 text-muted">
+    <p class="mt-2 max-w-mesure text-muted">
       Les plus anciennes d’abord. « Évaluer à la suite » ouvre la première trace de la liste, puis
       passe aux suivantes.
     </p>
 
-    <section aria-labelledby="filtres" class="mt-8 rounded-panneau bg-muted p-5 lg:p-6">
+    <section aria-labelledby="filtres" class="mt-8 rounded-panneau bg-muted p-4 sm:p-6">
       <h2 id="filtres" class="sr-only">Filtres</h2>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <UFormField label="Rechercher" class="sm:col-span-2 lg:col-span-1">
           <UInput
             v-model="criteria.recherche"
@@ -86,11 +86,22 @@ const resultLabel = computed(() =>
         <UFormField label="Statut">
           <USelect v-model="criteria.statut" :items="statutItems" class="w-full" />
         </UFormField>
+        <!-- Listes longues, où l'on cherche un nom : liste avec recherche (combobox) -->
         <UFormField label="Étudiant">
-          <USelect v-model="criteria.etudiant" :items="etudiantItems" class="w-full" />
+          <USelectMenu
+            v-model="criteria.etudiant"
+            :items="etudiantItems"
+            value-key="value"
+            class="w-full"
+          />
         </UFormField>
         <UFormField label="Groupe">
-          <USelect v-model="criteria.groupe" :items="groupeItems" class="w-full" />
+          <USelectMenu
+            v-model="criteria.groupe"
+            :items="groupeItems"
+            value-key="value"
+            class="w-full"
+          />
         </UFormField>
         <UFormField label="Compétence">
           <USelect v-model="criteria.competence" :items="competenceItems" class="w-full" />
@@ -121,14 +132,21 @@ const resultLabel = computed(() =>
         class="mt-3 divide-y divide-default rounded-panneau bg-muted"
         aria-label="Traces"
       >
+        <!-- Toute la ligne mène à l'évaluation (lien étendu du bouton) : survol et focus soulignent le titre -->
         <li
           v-for="trace in traces"
           :key="trace.id"
-          class="grid gap-x-6 gap-y-2 px-5 py-4 md:grid-cols-[1fr_auto] md:items-center"
+          class="group relative grid gap-x-6 gap-y-2 p-4 md:grid-cols-[1fr_auto] md:items-center"
         >
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
-              <h3 class="font-medium text-highlighted">{{ trace.titre }}</h3>
+              <!-- Élément partagé avec le titre de l'écran d'évaluation (transition de vue) -->
+              <h3
+                class="leading-titre font-medium text-highlighted underline-offset-4 group-hover:underline group-has-focus-visible:underline"
+                :style="{ viewTransitionName: `trace-${trace.id}` }"
+              >
+                {{ trace.titre }}
+              </h3>
               <EvaluationTraceStatutBadge :en-attente="isTracePending(trace)" />
             </div>
             <p class="mt-1 text-sm text-muted">
@@ -150,7 +168,7 @@ const resultLabel = computed(() =>
             color="neutral"
             variant="outline"
             size="sm"
-            class="justify-self-start"
+            class="justify-self-start after:absolute after:inset-0"
             trailing-icon="i-lucide-arrow-right"
           >
             {{ isTracePending(trace) ? 'Évaluer' : 'Modifier l’évaluation'
