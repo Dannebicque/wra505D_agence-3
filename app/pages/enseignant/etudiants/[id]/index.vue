@@ -59,7 +59,13 @@ const breadcrumb = [{ label: 'Étudiants', to: '/enseignant/etudiants' }, { labe
 
     <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">{{ nom }}</h1>
+        <!-- Élément partagé avec le nom de la carte ou de la ligne d'où l'on vient (transition de vue) -->
+        <h1
+          class="font-titre text-2xl text-highlighted sm:text-3xl"
+          :style="{ viewTransitionName: `etudiant-${etudiant.id}` }"
+        >
+          {{ nom }}
+        </h1>
         <p class="mt-2 text-muted">
           {{ etudiant.annee }} · parcours {{ etudiant.parcours }} · groupe {{ etudiant.groupe }}
         </p>
@@ -70,7 +76,7 @@ const breadcrumb = [{ label: 'Étudiants', to: '/enseignant/etudiants' }, { labe
 
     <EnseignantStatTiles :tiles="tiles" title="En chiffres" class="mt-8" />
 
-    <section aria-labelledby="progression" class="mt-3 rounded-panneau bg-muted p-5 lg:mt-4 lg:p-6">
+    <section aria-labelledby="progression" class="mt-3 rounded-panneau bg-muted p-4 sm:p-6 lg:mt-4">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h2 id="progression" class="text-sm font-semibold text-highlighted">
           Progression par compétence
@@ -85,19 +91,26 @@ const breadcrumb = [{ label: 'Étudiants', to: '/enseignant/etudiants' }, { labe
     </section>
 
     <div class="mt-3 grid gap-3 lg:mt-4 lg:grid-cols-[3fr_1fr] lg:gap-4">
-      <section aria-labelledby="traces" class="rounded-panneau bg-muted p-5 lg:p-6">
+      <section aria-labelledby="traces" class="rounded-panneau bg-muted p-4 sm:p-6">
         <h2 id="traces" class="text-sm font-semibold text-highlighted">
           Dernières traces déposées
         </h2>
         <ul v-if="traces.length" class="mt-4 divide-y divide-default">
+          <!-- Toute la ligne mène à l'évaluation (lien étendu du bouton) : survol et focus soulignent le titre -->
           <li
             v-for="trace in traces"
             :key="trace.id"
-            class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0"
+            class="group relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0 last:pb-0"
           >
             <div class="min-w-0">
-              <p class="font-medium text-highlighted">{{ trace.titre }}</p>
-              <p class="text-sm text-muted">
+              <!-- Élément partagé avec le titre de l'écran d'évaluation (transition de vue) -->
+              <p
+                class="w-fit leading-titre font-medium text-highlighted underline-offset-4 group-hover:underline group-has-focus-visible:underline"
+                :style="{ viewTransitionName: `trace-${trace.id}` }"
+              >
+                {{ trace.titre }}
+              </p>
+              <p class="mt-1 text-sm text-muted">
                 {{ TRACE_TYPE_LIBELLES[trace.type] }} · déposée le {{ formatDate(trace.date) }}
               </p>
             </div>
@@ -108,6 +121,7 @@ const breadcrumb = [{ label: 'Étudiants', to: '/enseignant/etudiants' }, { labe
                 color="neutral"
                 variant="outline"
                 size="sm"
+                class="after:absolute after:inset-0"
               >
                 {{ isTracePending(trace) ? 'Évaluer' : 'Voir l’évaluation'
                 }}<span class="sr-only"> « {{ trace.titre }} »</span>
@@ -118,17 +132,19 @@ const breadcrumb = [{ label: 'Étudiants', to: '/enseignant/etudiants' }, { labe
         <p v-else class="mt-4 text-muted">Aucune trace finalisée pour l’instant.</p>
       </section>
 
-      <section aria-labelledby="portfolios" class="rounded-panneau bg-muted p-5 lg:p-6">
+      <section aria-labelledby="portfolios" class="rounded-panneau bg-muted p-4 sm:p-6">
         <h2 id="portfolios" class="text-sm font-semibold text-highlighted">Portfolios</h2>
         <ul v-if="portfolios.length" class="mt-4 space-y-4">
           <li v-for="portfolio in portfolios" :key="portfolio.id">
+            <!-- Élément partagé avec le titre de l'écran du portfolio (transition de vue) -->
             <NuxtLink
               :to="`/enseignant/etudiants/${etudiant.id}/portfolios/${portfolio.id}`"
-              class="font-medium text-highlighted underline-offset-4 hover:underline"
+              class="inline-block leading-titre font-medium text-highlighted underline underline-offset-4"
+              :style="{ viewTransitionName: `portfolio-${portfolio.id}` }"
             >
               {{ portfolio.intitule }}
             </NuxtLink>
-            <p class="text-xs text-muted">
+            <p class="mt-1 text-xs text-muted">
               {{ portfolio.annee }} ·
               {{ portfolio.visibilite === 'publique' ? 'public' : 'privé' }} ·
               {{ portfolio.pages.length }} {{ portfolio.pages.length > 1 ? 'pages' : 'page' }}
