@@ -46,7 +46,7 @@ class ApcNiveau
     #[ORM\ManyToOne(inversedBy: 'apcNiveaux')]
     private ?Annee $annees = null;
 
-    #[ORM\OneToMany(mappedBy: 'apcNiveau', targetEntity: Validation::class, cascade: ['persist'])]
+    #[ORM\OneToMany(mappedBy: 'niveau', targetEntity: Validation::class, cascade: ['persist'])]
     private Collection $validation;
 
     #[ORM\ManyToMany(targetEntity: ApcParcours::class, inversedBy: 'apcNiveaux')]
@@ -171,7 +171,7 @@ class ApcNiveau
     {
         if (!$this->validation->contains($validation)) {
             $this->validation->add($validation);
-            $validation->setApcNiveau($this);
+            $validation->setNiveau($this);
         }
 
         return $this;
@@ -181,8 +181,8 @@ class ApcNiveau
     {
         if ($this->validation->removeElement($validation)) {
             // set the owning side to null (unless already changed)
-            if ($validation->getApcNiveau() === $this) {
-                $validation->setApcNiveau(null);
+            if ($validation->getNiveau() === $this) {
+                $validation->setNiveau(null);
             }
         }
 

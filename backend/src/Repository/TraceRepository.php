@@ -50,7 +50,7 @@ class TraceRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('t')
             ->join('t.validations', 'v')
-            ->join('v.apcNiveau', 'c')
+            ->join('v.niveau', 'c')
             ->where('c.id IN (:competences)')
             ->setParameter('competences', $competences)
             ->getQuery()
@@ -63,7 +63,7 @@ class TraceRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('t')
             ->join('t.validations', 'v')
-            ->join('v.apcNiveau', 'c')
+            ->join('v.niveau', 'c')
             ->join('t.bibliotheque', 'b')
             ->join('b.etudiant', 'e')
             ->where('c.id IN (:competences)')
@@ -80,7 +80,7 @@ class TraceRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('t')
             ->innerJoin('t.validations', 'v')
-            ->innerJoin('v.apcNiveau', 'c')
+            ->innerJoin('v.niveau', 'c')
             ->join('t.bibliotheque', 'b')
             ->join('b.etudiant', 'e')
             ->join('e.groupe', 'g')

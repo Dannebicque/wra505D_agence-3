@@ -465,7 +465,7 @@ class Trace
     }
 
     /**
-     * Espaces Unicode retirés autour, comme trim() de JavaScript (espace insécable compris), et caractère NUL
+     * Espaces Unicode retirés autour (mb_trim, proche de trim() de JavaScript : espace insécable compris), et caractère NUL
      * supprimé : PostgreSQL tronquerait le texte en silence.
      */
     private static function nettoyer(string $texte): string

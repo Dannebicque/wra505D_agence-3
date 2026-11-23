@@ -1,0 +1,61 @@
+<?php
+
+namespace App\DataFixtures;
+
+use App\Entity\Trace;
+use App\Entity\Validation;
+use App\Repository\ApcNiveauRepository;
+use App\Repository\BibliothequeRepository;
+use App\Repository\EnseignantRepository;
+use App\Repository\EtudiantRepository;
+use Doctrine\Bundle\FixturesBundle\Fixture;
+use Doctrine\Common\DataFixtures\OrderedFixtureInterface;
+use Doctrine\Persistence\ObjectManager;
+
+/**
+ * Traces de démonstration du compte « etudiant » : une par état utile au front (lien finalisé et évalué,
+ * vidéo en attente d'évaluation, brouillon d'image sans fichier). « etudiant2 » n'a aucune trace.
+ */
+class TraceFixture extends Fixture implements OrderedFixtureInterface
+{
+    public function __construct(
+        private readonly EtudiantRepository $etudiants,
+        private readonly BibliothequeRepository $bibliotheques,
+        private readonly ApcNiveauRepository $niveaux,
+        private readonly EnseignantRepository $enseignants,
+    ) {
+    }
+
+    public function getOrder(): int
+    {
+        return 13;
+    }
+
+    public function load(ObjectManager $manager): void
+    {
+        $bibliotheque = $this->bibliotheques->courante($this->etudiants->findOneBy(['username' => 'etudiant']));
+        [$niveau1, $niveau2] = $this->niveaux->findBy(['ordre' => 1], ['id' => 'ASC'], 2);
+
+        $site = $this->trace($bibliotheque, 'Site vitrine d’une association', 'lien', ['https://exemple.fr'], 'finalisee')
+            ->setDescription('Conception et intégration d’un site responsive pour une association locale.')
+            ->setContexte('SAÉ 1.05');
+        $video = $this->trace($bibliotheque, 'Motion design du festival', 'video', ['https://www.youtube.com/watch?v=dQw4w9WgXcQ'], 'finalisee');
+        $brouillon = $this->trace($bibliotheque, 'Affiche en cours', 'image', [], 'brouillon');
+
+        $evaluee = (new Validation())->setTrace($site)->setNiveau($niveau1)->setEtat(3)
+            ->setEnseignant($this->enseignants->findOneBy(['username' => 'enseignant']))
+            ->setDateCreation(new \DateTime('-10 days'))->setDateModification(new \DateTime('-3 days'));
+        $enAttente = (new Validation())->setTrace($video)->setNiveau($niveau2)->setEtat(0)->setDateCreation(new \DateTime('-2 days'));
+
+        foreach ([$site, $video, $brouillon, $evaluee, $enAttente] as $entite) {
+            $manager->persist($entite);
+        }
+        $manager->flush();
+    }
+
+    private function trace($bibliotheque, string $titre, string $type, array $contenu, string $statut): Trace
+    {
+        return (new Trace())->setBibliotheque($bibliotheque)->setTitre($titre)->setTypeTrace($type)
+            ->setContenu($contenu)->setStatut($statut)->setDateModification(new \DateTimeImmutable());
+    }
+}

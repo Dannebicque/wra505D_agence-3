@@ -46,9 +46,9 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
     // IRI d'une trace d'autrui, de la corbeille ou inexistante : 422 sur le champ, comme les autres erreurs de saisie
     collectDenormalizationErrors: true,
 )]
-#[UniqueEntity(fields: ['trace', 'apcNiveau'], message: 'Ce niveau de compétence est déjà associé à la trace.', errorPath: 'niveau')]
+#[UniqueEntity(fields: ['trace', 'niveau'], message: 'Ce niveau de compétence est déjà associé à la trace.', errorPath: 'niveau')]
 #[ORM\Entity(repositoryClass: ValidationRepository::class)]
-#[ORM\UniqueConstraint(fields: ['trace', 'apcNiveau'])]
+#[ORM\UniqueConstraint(fields: ['trace', 'niveau'])]
 class Validation
 {
     #[ORM\Id]
@@ -66,7 +66,8 @@ class Validation
     private ?int $etat = null;
 
     #[ORM\ManyToOne(inversedBy: 'validation')]
-    private ?ApcNiveau $apcNiveau = null;
+    #[ORM\JoinColumn(name: 'apc_niveau_id')]
+    private ?ApcNiveau $niveau = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $dateCreation = null;
@@ -88,14 +89,14 @@ class Validation
         if (null === $this->trace) {
             $context->buildViolation('Choisissez une trace.')->atPath('trace')->addViolation();
         }
-        if (null === $this->apcNiveau) {
+        if (null === $this->niveau) {
             $context->buildViolation('Choisissez un niveau de compétence.')->atPath('niveau')->addViolation();
 
             return;
         }
         // Le niveau doit venir du référentiel du département de l'étudiant
         $departement = $this->trace?->getBibliotheque()?->getEtudiant()?->getSemestre()?->getAnnee()?->getDiplome()?->getDepartement();
-        if (null !== $departement && $this->apcNiveau->getCompetences()?->getReferentiel()?->getDepartement() !== $departement) {
+        if (null !== $departement && $this->niveau->getCompetences()?->getReferentiel()?->getDepartement() !== $departement) {
             $context->buildViolation('Ce niveau ne fait pas partie du référentiel de votre formation.')->atPath('niveau')->addViolation();
         }
     }
@@ -146,17 +147,15 @@ class Validation
     }
 
     #[Groups(['validation:read', 'validation:write'])]
-    #[SerializedName('niveau')]
-    public function getApcNiveau(): ?ApcNiveau
+    public function getNiveau(): ?ApcNiveau
     {
-        return $this->apcNiveau;
+        return $this->niveau;
     }
 
     #[Groups(['validation:write'])]
-    #[SerializedName('niveau')]
-    public function setApcNiveau(?ApcNiveau $apcNiveau): static
+    public function setNiveau(?ApcNiveau $niveau): static
     {
-        $this->apcNiveau = $apcNiveau;
+        $this->niveau = $niveau;
 
         return $this;
     }

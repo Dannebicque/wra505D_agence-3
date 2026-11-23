@@ -83,15 +83,21 @@ final class FichierProcessor implements ProcessorInterface
         $fichier = new Fichier($user, Fichier::nomPropre($envoi->getClientOriginalName(), $mimeType), $mimeType, $taille);
 
         // Ligne de l'utilisateur verrouillée : deux envois simultanés ne lisent pas le même total et ne dépassent pas les plafonds
-        $this->em->wrapInTransaction(function () use ($user, $fichier, $taille): void {
+        // (refus levé hors de la transaction : une exception dedans fermerait l'EntityManager)
+        $accepte = $this->em->wrapInTransaction(function () use ($user, $fichier, $taille): bool {
             $this->em->getConnection()->executeQuery('SELECT id FROM users WHERE id = ? FOR UPDATE', [$user->getId()]);
             [$nombre, $octets] = $this->fichiers->utilisation($user);
             if ($nombre >= self::NOMBRE_MAX || $octets + $taille > self::ESPACE_MAX) {
-                throw self::refus('Vous avez atteint l’espace maximal de fichiers.');
+                return false;
             }
             $this->em->persist($fichier);
             $this->em->flush();
+
+            return true;
         });
+        if (!$accepte) {
+            throw self::refus('Vous avez atteint l’espace maximal de fichiers.');
+        }
 
         // Fichier rangé une fois la ligne enregistrée ; s'il ne peut pas l'être, la ligne est retirée (pas de fiche sans contenu)
         try {

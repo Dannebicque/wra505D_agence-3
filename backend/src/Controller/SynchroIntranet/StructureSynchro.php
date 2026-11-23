@@ -68,6 +68,12 @@ class StructureSynchro extends AbstractController
             try {
                 // Comptes de démo créés par les fixtures (UsersFixture)
                 foreach ($etudiantRepository->findBy(['username' => ['etudiant', 'etudiant2']]) as $etudiant) {
+                    // Traces de démo (TraceFixture) d'abord : elles retiennent la bibliothèque de l'étudiant
+                    foreach ($etudiant->getBibliotheques() as $bibliotheque) {
+                        foreach ($bibliotheque->getTraces() as $trace) {
+                            $entityManager->remove($trace);
+                        }
+                    }
                     $etudiantRepository->remove($etudiant, true);
                 }
                 foreach ($enseignantRepository->findBy(['username' => ['enseignant']]) as $enseignant) {

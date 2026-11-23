@@ -54,6 +54,16 @@ class ValidationTest extends ApiTestCase
         self::assertSame([['niveau', 'Choisissez un niveau de compétence.']], $this->violations($sansNiveau));
     }
 
+    public function testNiveauInconnuSignaleSurLeChampNiveau(): void
+    {
+        $this->connecter('etudiant');
+
+        $reponse = $this->envoyer('POST', '/api/validations', ['trace' => $this->trace(), 'niveau' => '/api/niveaux/999999']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('niveau', $reponse['violations'][0]['propertyPath']);
+    }
+
     public function testRefuseUnNiveauDUnAutreReferentiel(): void
     {
         $this->connecter('etudiant');
