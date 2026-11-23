@@ -36,12 +36,12 @@ const totalEvaluations = totaux.acquired + totaux.inProgress + totaux.notAcquire
 <template>
   <div>
     <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mes compétences</h1>
-    <p v-if="etudiant" class="mt-3 text-muted">
+    <p v-if="etudiant" class="mt-2 max-w-mesure text-muted">
       Référentiel du {{ etudiant.annee }}, parcours {{ etudiant.parcours }}.
       <template v-if="niveau"> Niveau travaillé cette année : {{ niveau }}. </template>
     </p>
 
-    <section aria-labelledby="progression-globale" class="mt-8 rounded-panneau bg-muted p-5 lg:p-6">
+    <section aria-labelledby="progression-globale" class="mt-8 rounded-panneau bg-muted p-4 sm:p-6">
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h2 id="progression-globale" class="text-sm font-semibold text-highlighted">
           Progression globale
@@ -49,7 +49,7 @@ const totalEvaluations = totaux.acquired + totaux.inProgress + totaux.notAcquire
         <TableauDeBordProgressionLegend />
       </div>
 
-      <p class="mt-4 text-3xl text-highlighted">
+      <p class="mt-4 text-3xl text-highlighted tabular-nums">
         {{ acquises }}
         <span class="text-base text-muted">
           {{ acquises > 1 ? 'compétences acquises' : 'compétence acquise' }} sur
@@ -65,22 +65,22 @@ const totalEvaluations = totaux.acquired + totaux.inProgress + totaux.notAcquire
           :pending="totaux.pending"
           :max="Math.max(1, totalEvaluations)"
         />
-        <p class="mt-2 text-xs text-muted">
+        <p class="mt-2 text-xs text-muted tabular-nums">
           {{ totalEvaluations }} évaluations : {{ progressionSummary(totaux) }}
         </p>
       </div>
 
-      <dl class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <dl class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div
           v-for="item in parStatut"
           :key="item.statut"
           class="flex flex-col gap-2 rounded-feuille bg-default p-4"
         >
-          <dt class="flex items-center gap-1.5 text-sm text-muted">
+          <dt class="flex items-center gap-1 text-sm text-muted">
             <UIcon :name="item.icon" class="size-4 shrink-0" aria-hidden="true" />
             {{ item.labelPluriel }}
           </dt>
-          <dd class="text-2xl text-highlighted">{{ item.count }}</dd>
+          <dd class="text-2xl text-highlighted tabular-nums">{{ item.count }}</dd>
         </div>
       </dl>
     </section>
