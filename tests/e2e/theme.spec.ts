@@ -32,6 +32,16 @@ test.describe('thème du style éditorial', () => {
     expect(thirdPartyRequests).toEqual([])
   })
 
+  // Police de secours aux métriques ajustées (size-adjust…) : le texte ne bouge pas quand Instrument
+  // Sans arrive. @nuxt/fonts ne la génère que si la famille est déclarée hors de `@theme`.
+  test('prévoit une police de secours aux métriques ajustées', async ({ page }) => {
+    await gotoHydrated(page, '/')
+
+    const fontFamily = await page.evaluate(() => getComputedStyle(document.body).fontFamily)
+
+    expect(fontFamily).toMatch(/Instrument Sans Fallback/)
+  })
+
   test.describe('bouton d’action en mode clair', () => {
     test.beforeEach(async ({ page }) => {
       await page.emulateMedia({ colorScheme: 'light' })
