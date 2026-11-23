@@ -31,7 +31,8 @@ useSeoMeta({ title })
 </script>
 
 <template>
-  <UApp :locale="fr">
+  <!-- scroll-body=false : voir app.vue -->
+  <UApp :locale="fr" :scroll-body="false">
     <LayoutSkipLink />
     <NuxtLayout name="default">
       <div class="mx-auto flex max-w-2xl flex-col gap-4 px-4 py-16 sm:py-24">

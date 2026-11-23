@@ -11,7 +11,11 @@ const locale = extendLocale(fr, {
 </script>
 
 <template>
-  <UApp :locale="locale">
+  <!--
+    scroll-body=false : à l'ouverture d'une fenêtre, pas de marge ajoutée à la place de la barre de
+    défilement, déjà réservée par scrollbar-gutter (main.css) : le contenu ne se décale pas.
+  -->
+  <UApp :locale="locale" :scroll-body="false">
     <LayoutSkipLink />
     <NuxtRouteAnnouncer />
     <NuxtLayout>

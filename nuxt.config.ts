@@ -5,6 +5,9 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'fr' },
+      // viewport-fit=cover : la page occupe tout l'écran (encoche comprise) ; les mises en page
+      // gardent leur contenu dans la zone sûre (utilitaire `zone-sure` de main.css)
+      viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
       titleTemplate: '%s %separator %siteName',
       templateParams: { separator: '·', siteName: 'UniFolio' },
     },
@@ -30,6 +33,11 @@ export default defineNuxtConfig({
       // Origine de l'API : vide = routes Nitro locales ; URL d'ApiPlatform via NUXT_PUBLIC_API_BASE
       apiBase: '',
     },
+  },
+  experimental: {
+    // Fondu entre les pages (API View Transitions) ; Nuxt s'en passe si l'utilisateur a demandé
+    // de réduire les animations, et les navigateurs sans l'API naviguent normalement
+    viewTransition: true,
   },
   compatibilityDate: '2026-10-14',
   typescript: {

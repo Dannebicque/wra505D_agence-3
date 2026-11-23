@@ -156,8 +156,17 @@
 
 @layer base {
   html {
+    /* La gouttière de la barre de défilement prend la couleur du cadre */
+    background-color: var(--uf-cadre);
+    /* Place de la barre de défilement réservée : la page ne se décale pas quand elle apparaît */
+    scrollbar-gutter: stable;
     font-kerning: normal;
     font-optical-sizing: auto;
+  }
+
+  /* Espaces : la fenêtre ne défile pas (c'est le panneau principal, `gouttiere-stable`) */
+  html:has([data-mise-en-page='espace']) {
+    scrollbar-gutter: auto;
   }
 
   h1,
@@ -201,6 +210,19 @@
   text-box: trim-both cap alphabetic;
 }
 
+/* Élément collé aux bords de l'écran (mises en page, menu plein écran) : évite encoche et barres système */
+@utility zone-sure {
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+/* Zone qui défile : la place de la barre de défilement est réservée, le contenu ne se décale pas quand elle apparaît */
+@utility gouttiere-stable {
+  scrollbar-gutter: stable;
+}
+
 /*
  * Focus clavier net partout (C-11, WCAG 1.4.11) : le thème Nuxt UI trace un anneau à 25 % d'opacité,
  * trop pâle. Hors couche CSS, cette règle l'emporte sur les utilitaires Tailwind.
@@ -210,4 +232,39 @@
 :focus-visible:not([tabindex='-1']) {
   outline: 2px solid var(--ui-primary);
   outline-offset: 2px;
+}
+
+/*
+ * Navigation entre pages (API View Transitions, `experimental.viewTransition` de Nuxt) : fondu
+ * court. Un élément partagé (titre de carte → titre de page) porte le même `view-transition-name`
+ * sur les deux pages. Nuxt n'en lance pas avec « réduire les animations » ; les règles ci-dessous
+ * coupent aussi toute animation restante.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 150ms;
+  animation-timing-function: ease-out;
+}
+
+::view-transition-group(*) {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  /* Filet de sécurité : durées quasi nulles (les événements de fin d'animation partent toujours) */
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

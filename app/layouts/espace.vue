@@ -30,7 +30,11 @@ const items = computed(() =>
 </script>
 
 <template>
-  <UDashboardGroup unit="rem" class="bg-cadre">
+  <UDashboardGroup unit="rem" class="zone-sure bg-cadre" data-mise-en-page="espace">
+    <!--
+      zone-sure : rien sous l'encoche ni sous les barres système (viewport-fit=cover), ici et dans
+      le menu plein écran. data-mise-en-page : la fenêtre ne défile pas, main.css retire sa gouttière.
+    -->
     <UDashboardSidebar
       v-model:open="isMenuOpen"
       mode="modal"
@@ -38,7 +42,7 @@ const items = computed(() =>
       :min-size="14"
       :max-size="14"
       class="bg-cadre"
-      :ui="{ root: 'border-none', footer: 'border-none' }"
+      :ui="{ root: 'border-none', footer: 'border-none', content: 'zone-sure' }"
     >
       <template #header>
         <LayoutAppLogo :to="homePath" />
@@ -59,8 +63,10 @@ const items = computed(() =>
       </template>
     </UDashboardSidebar>
 
+    <!-- gouttiere-stable : la barre de défilement qui apparaît ne décale pas le contenu -->
     <UDashboardPanel
       class="bg-default lg:my-2 lg:mr-2 lg:min-h-0 lg:rounded-feuille lg:border lg:border-default"
+      :ui="{ body: 'gouttiere-stable' }"
     >
       <template #header>
         <!--
