@@ -17,6 +17,16 @@ export default defineAppConfig({
           'mt-[env(safe-area-inset-top)] mb-[env(safe-area-inset-bottom)] ms-[env(safe-area-inset-left)] me-[env(safe-area-inset-right)]',
       },
     },
+    // Contour des champs et des commandes à au moins 3:1 (WCAG 1.4.11) : `contour` (main.css) au
+    // lieu de `accented` (1,4 à 1,7:1), gardé pour les contours décoratifs (boutons « outline »…)
+    input: { variants: { variant: { outline: 'ring-contour', subtle: 'ring-contour' } } },
+    textarea: { variants: { variant: { outline: 'ring-contour', subtle: 'ring-contour' } } },
+    select: { variants: { variant: { outline: 'ring-contour', subtle: 'ring-contour' } } },
+    selectMenu: { variants: { variant: { outline: 'ring-contour', subtle: 'ring-contour' } } },
+    checkbox: { slots: { base: 'ring-contour' } },
+    radioGroup: { slots: { base: 'ring-contour' } },
+    // Interrupteur éteint : piste en contour (le curseur, bg-default, s'y détache à 3,7:1 au moins)
+    switch: { slots: { base: 'data-[state=unchecked]:bg-contour' } },
     button: {
       // Style éditorial : boutons en pilule
       slots: { base: 'rounded-full' },
