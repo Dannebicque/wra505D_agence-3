@@ -180,15 +180,26 @@
 
   /*
    * Texte courant : interlignage de lecture, sans mot seul en dernière ligne. Passer par
-   * `--tw-leading` fait aussi gagner `leading-corps` sur l'interlignage des tailles (text-sm…) ;
-   * une classe `leading-*` sur l'élément reste prioritaire.
+   * `--tw-leading` fait aussi gagner `leading-corps` sur l'interlignage des petites tailles
+   * (text-sm…) ; une classe `leading-*` sur l'élément reste prioritaire. Les grands corps (text-xl
+   * et plus : titres écrits en `p`, nombres des tuiles en `dd`) gardent l'interlignage serré de
+   * leur taille (@theme).
    */
+  :is(p, dd, blockquote, figcaption):not(
+    [class*='text-xl'],
+    [class*='text-2xl'],
+    [class*='text-3xl'],
+    [class*='text-4xl'],
+    [class*='text-5xl']
+  ) {
+    --tw-leading: var(--leading-corps);
+    line-height: var(--leading-corps);
+  }
+
   p,
   dd,
   blockquote,
   figcaption {
-    --tw-leading: var(--leading-corps);
-    line-height: var(--leading-corps);
     text-wrap: pretty;
   }
 
@@ -258,8 +269,12 @@
     animation: none !important;
   }
 
-  /* Filet de sécurité : durées quasi nulles (les événements de fin d'animation partent toujours) */
-  *,
+  /*
+   * Filet de sécurité : durées quasi nulles (les événements de fin d'animation partent toujours).
+   * Sauf l'icône de chargement (`animate-spin`) : sans rotation, elle ne signale plus le travail en
+   * cours, et une rotation lente sur place ne pose pas de problème vestibulaire.
+   */
+  *:not(.animate-spin),
   ::before,
   ::after {
     animation-duration: 0.01ms !important;
