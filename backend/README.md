@@ -54,9 +54,11 @@ Par cookie de session (HttpOnly, SameSite=Lax) : le front envoie ses requêtes a
 
 Comptes de démo (fixtures, dev et test uniquement), mot de passe `test` : `admin`, `enseignant`, `etudiant`, `etudiant2`. Charger les fixtures : `docker compose exec php bin/console doctrine:fixtures:load`.
 
-### Ressources (lecture seule au Sprint 0)
+### Ressources
 
-Toutes exigent d'être connecté (401 sinon). Collections paginées par 30 (`?page=`).
+Toutes exigent d'être connecté (401 sinon). Collections paginées par 30 (`?page=`). Formats : ceux de `shared/types/` côté front (JSON-LD, `Accept: application/ld+json`).
+
+#### Structure et utilisateurs (Sprint 0, lecture seule)
 
 | Ressource | Accès |
 |---|---|
@@ -66,12 +68,32 @@ Toutes exigent d'être connecté (401 sinon). Collections paginées par 30 (`?pa
 | `/api/users/{id}` | l'utilisateur lui-même ou un admin |
 | `/api/intranet/*` (synchro, POST en `Content-Type: application/json` uniquement, contre le CSRF) | admin |
 
+#### Référentiel, traces, fichiers, validations (Sprint 1)
+
+| Ressource | Opérations | Accès |
+|---|---|---|
+| `/api/referentiels`, `/api/referentiels/{id}` | lecture ; l'arbre compétences → niveaux → apprentissages critiques est embarqué (`/api/competences/{id}`, `/api/niveaux/{id}`, `/api/apprentissages_critiques/{id}` lisibles seuls) | toute personne connectée |
+| `/api/traces` | `GET` (liste, détail), `POST`, `PATCH` (`Content-Type: application/merge-patch+json`), `DELETE` (corbeille) | étudiant, sur ses seules traces |
+| `/api/bibliotheques/{id}` | `GET` | étudiant, la sienne |
+| `/api/fichiers` | `POST` multipart (`type` = `image` ou `pdf`, `fichier`), `GET /api/fichiers/{id}` renvoie le contenu | étudiant, ses seuls fichiers |
+| `/api/validations` | `GET`, `POST {trace, niveau}`, `DELETE` tant que non évaluée (409 sinon) | étudiant, sur ses traces |
+
+Règles à connaître côté front :
+
+- **Cloisonnement** : la trace, le fichier ou la validation d'un autre étudiant répond 404 (son existence ne se devine pas). Enseignants et admins reçoivent 403 sur ces ressources jusqu'au Sprint 3 (évaluation).
+- **Erreurs de saisie** : 422 avec `violations[]` (`propertyPath`, `message`), mêmes règles, même ordre et mêmes messages que `shared/utils/trace-validation.ts` et `shared/utils/fichier.ts`. Une valeur du mauvais type JSON (`titre: 12`, `statut: null`) donne un 422 sur le bon champ mais avec un message générique.
+- **Écart voulu avec le front** : une adresse web doit avoir un schéma http(s), un hôte et aucun espace ; `new URL()` accepte `https:exemple.fr` ou un espace dans le chemin, le serveur les refuse.
+- **Champs du serveur** : `bibliotheque`, `dateCreation`, `dateModification`, `dateSuppression` d'une trace, `etat` et `enseignant` d'une validation sont fixés par le serveur ; envoyés, ils sont ignorés.
+- **Corbeille** : une trace supprimée (`DELETE`, 204) disparaît de la lecture, de la liste et des validations, mais reste en base (restauration au Sprint 5, C-09).
+- **Fichiers** : format reconnu sur le contenu réel (JPEG, PNG, WebP, GIF jusqu'à 2 Mo, PDF jusqu'à 10 Mo, SVG refusé), nom nettoyé avec l'extension du type réel, 100 fichiers et 200 Mo au plus par étudiant. Ils sont rangés hors de `public/`, dans `var/fichiers/<env>/`. Une trace image ou PDF ne peut référencer que `/api/fichiers/<uuid>` déposé par son étudiant (ou garder un ancien fichier `/fichiers/…` inchangé).
+
 Le front autorisé à appeler l'API est fixé par `CORS_ALLOW_ORIGIN` (`.env`, par défaut `http://localhost:3000`).
 
 ### En production
 
 - `CORS_ALLOW_ORIGIN` : l'adresse du front de production (expression régulière, par ex. `'^https://portfolio\.exemple\.fr$'`).
 - `TRUSTED_PROXIES` : l'IP ou le sous-réseau exact du reverse proxy (sinon la limite de connexion compte tous les utilisateurs comme une seule IP). Jamais `REMOTE_ADDR` si l'API est joignable sans passer par le proxy.
+- Fichiers des traces : `var/fichiers/prod/` doit être un volume persistant et sauvegardé (les fiches sont en base, le contenu sur disque).
 - `APP_SECRET` : une vraie valeur secrète, dans `.env.local` ou les variables d'environnement du serveur.
 - Le cookie de session est toujours `Secure` en prod ; la documentation `/api/docs` y est désactivée.
 
