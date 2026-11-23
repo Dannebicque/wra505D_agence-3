@@ -7,7 +7,10 @@ export default defineNuxtConfig({
       htmlAttrs: { lang: 'fr' },
       // viewport-fit=cover : la page occupe tout l'écran (encoche comprise) ; les mises en page
       // gardent leur contenu dans la zone sûre (utilitaire `zone-sure` de main.css)
-      viewport: 'width=device-width, initial-scale=1, viewport-fit=cover',
+      // interactive-widget=resizes-content : le clavier virtuel réduit la fenêtre ; les hauteurs en
+      // dvh (recherche globale sur mobile) restent au-dessus de lui (Chrome Android)
+      viewport:
+        'width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content',
       titleTemplate: '%s %separator %siteName',
       templateParams: { separator: '·', siteName: 'UniFolio' },
     },
