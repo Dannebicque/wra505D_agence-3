@@ -61,13 +61,16 @@ const firstPending = pending[0]
 
 <template>
   <div>
-    <h1 class="font-titre text-2xl leading-tight text-highlighted sm:text-3xl">{{ greeting }}</h1>
-    <p class="mt-3 text-muted">{{ todayLabel }} · {{ ETUDIANTS.length }} étudiants suivis</p>
+    <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">{{ greeting }}</h1>
+    <p class="mt-2 text-muted">
+      {{ todayLabel }} · <span class="tabular-nums">{{ ETUDIANTS.length }}</span> étudiants suivis
+    </p>
 
-    <EnseignantStatTiles :tiles="tiles" title="En chiffres" class="mt-9" />
+    <EnseignantStatTiles :tiles="tiles" title="En chiffres" class="mt-8" />
 
+    <!-- Mosaïque de panneaux : même écart que les tuiles (3, puis 4 sur grand écran) -->
     <div class="mt-3 grid gap-3 lg:mt-4 lg:grid-cols-[3fr_1fr] lg:gap-4">
-      <section aria-labelledby="en-attente" class="rounded-panneau bg-muted p-5 lg:p-6">
+      <section aria-labelledby="en-attente" class="rounded-panneau bg-muted p-4 sm:p-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <h2 id="en-attente" class="text-sm font-semibold text-highlighted">
             Évaluations en attente
@@ -88,14 +91,21 @@ const firstPending = pending[0]
           class="mt-4 divide-y divide-default"
           aria-label="Traces en attente d’évaluation"
         >
+          <!-- Toute la ligne mène à l'évaluation (lien étendu du bouton) : survol et focus soulignent le titre -->
           <li
             v-for="trace in pending.slice(0, NB_EN_ATTENTE_AFFICHEES)"
             :key="trace.id"
-            class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0"
+            class="group relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3 first:pt-0"
           >
             <div class="min-w-0">
-              <p class="font-medium text-highlighted">{{ trace.titre }}</p>
-              <p class="text-sm text-muted">
+              <!-- Élément partagé avec le titre de l'écran d'évaluation (transition de vue) -->
+              <p
+                class="w-fit leading-titre font-medium text-highlighted underline-offset-4 group-hover:underline group-has-focus-visible:underline"
+                :style="{ viewTransitionName: `trace-${trace.id}` }"
+              >
+                {{ trace.titre }}
+              </p>
+              <p class="mt-1 text-sm text-muted">
                 {{ etudiantName(trace.etudiantId) }} · déposée le {{ formatDate(trace.date) }}
               </p>
             </div>
@@ -105,6 +115,7 @@ const firstPending = pending[0]
               variant="outline"
               size="sm"
               trailing-icon="i-lucide-arrow-right"
+              class="after:absolute after:inset-0"
             >
               Évaluer<span class="sr-only"> « {{ trace.titre }} »</span>
             </UButton>
@@ -127,7 +138,7 @@ const firstPending = pending[0]
         (date saisie par l'enseignant, calendrier fixe…) n'est pas tranchée par le client.
         Ce bloc ne fait que réserver la place de P-OR-06.
       -->
-      <section aria-labelledby="echeances" class="rounded-panneau bg-muted p-5 lg:p-6">
+      <section aria-labelledby="echeances" class="rounded-panneau bg-muted p-4 sm:p-6">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 id="echeances" class="text-sm font-semibold text-highlighted">
             Prochaines échéances
@@ -136,9 +147,12 @@ const firstPending = pending[0]
         </div>
         <ul class="mt-4 space-y-4">
           <li v-for="echeance in ECHEANCES_PROVISOIRES" :key="echeance.id">
-            <p class="font-medium text-highlighted">{{ echeance.libelle }}</p>
-            <p class="text-xs text-muted">
-              <time :datetime="echeance.date">{{ formatDate(echeance.date) }}</time>
+            <p class="leading-titre font-medium text-highlighted">{{ echeance.libelle }}</p>
+            <p class="mt-1 text-xs text-muted">
+              <!-- Dates en début de ligne, les unes sous les autres : chiffres tabulaires -->
+              <time :datetime="echeance.date" class="tabular-nums">{{
+                formatDate(echeance.date)
+              }}</time>
               · {{ echeance.public }}
             </p>
           </li>
@@ -148,7 +162,7 @@ const firstPending = pending[0]
 
     <section
       aria-labelledby="etudiants-a-suivre"
-      class="mt-3 rounded-panneau bg-muted p-5 lg:mt-4 lg:p-6"
+      class="mt-3 rounded-panneau bg-muted p-4 sm:p-6 lg:mt-4"
     >
       <div class="flex flex-wrap items-center justify-between gap-3">
         <h2 id="etudiants-a-suivre" class="text-sm font-semibold text-highlighted">
@@ -162,21 +176,24 @@ const firstPending = pending[0]
         </NuxtLink>
       </div>
       <ul v-if="studentsWithPending.length" class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <!-- Toute la carte mène à la fiche (lien étendu) : survol et focus la font ressortir -->
         <li
           v-for="{ etudiant, pendingTraces } in studentsWithPending"
           :key="etudiant.id"
-          class="flex items-center justify-between gap-3 rounded-feuille bg-default p-4"
+          class="relative flex items-center justify-between gap-3 rounded-feuille bg-default p-4 transition-colors hover:bg-elevated has-focus-visible:bg-elevated"
         >
           <div class="min-w-0">
+            <!-- Élément partagé avec le titre de la fiche de l'étudiant (transition de vue) -->
             <NuxtLink
               :to="`/enseignant/etudiants/${etudiant.id}`"
-              class="font-medium text-highlighted underline-offset-4 hover:underline"
+              class="inline-block leading-titre font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille hover:underline"
+              :style="{ viewTransitionName: `etudiant-${etudiant.id}` }"
             >
               {{ etudiant.prenom }} {{ etudiant.nom }}
             </NuxtLink>
-            <p class="text-xs text-muted">{{ etudiant.groupe }} · {{ etudiant.parcours }}</p>
+            <p class="mt-1 text-xs text-muted">{{ etudiant.groupe }} · {{ etudiant.parcours }}</p>
           </div>
-          <span class="shrink-0 text-sm font-semibold text-highlighted">
+          <span class="shrink-0 text-sm font-semibold text-highlighted tabular-nums">
             {{ pendingTraces }}
             <span class="font-normal text-muted">
               {{ pendingTraces > 1 ? 'traces' : 'trace' }}
