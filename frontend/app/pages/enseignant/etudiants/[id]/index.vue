@@ -135,7 +135,7 @@ const breadcrumb = [{ label: 'Étudiants', to: '/enseignant/etudiants' }, { labe
                 variant="ghost"
                 size="sm"
                 trailing-icon="i-lucide-arrow-right"
-                class="after:absolute after:inset-0 after:rounded-feuille"
+                class="after:absolute after:inset-0 after:rounded-feuille motion-safe:active:translate-none"
               >
                 {{ isTracePending(trace) ? 'Évaluer' : 'Voir l’évaluation'
                 }}<span class="sr-only"> « {{ trace.titre }} »</span>

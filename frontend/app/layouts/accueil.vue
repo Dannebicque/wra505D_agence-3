@@ -9,6 +9,18 @@ const SECTIONS = [
   { label: 'Pour qui', to: '#pour-qui' },
   { label: 'Démo', to: '#demo' },
 ]
+
+// Lien d'ancre (barre, « Essayer la démo ») : le routeur fait défiler sans déplacer le point de
+// départ de la navigation au clavier ; le focus va donc à la section visée (tabindex="-1").
+const route = useRoute()
+watch(
+  () => route.hash,
+  async (hash) => {
+    if (!hash) return
+    await nextTick()
+    document.getElementById(decodeURIComponent(hash.slice(1)))?.focus({ preventScroll: true })
+  },
+)
 </script>
 
 <template>

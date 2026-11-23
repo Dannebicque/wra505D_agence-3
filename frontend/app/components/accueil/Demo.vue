@@ -36,7 +36,7 @@ const ACCES = [
           <UIcon
             name="i-lucide-arrow-right"
             aria-hidden="true"
-            class="size-6 shrink-0 text-highlighted motion-safe:transition-transform group-hover:translate-x-1"
+            class="size-6 shrink-0 text-highlighted motion-safe:transition-transform motion-safe:group-hover:translate-x-1"
           />
         </NuxtLink>
       </li>

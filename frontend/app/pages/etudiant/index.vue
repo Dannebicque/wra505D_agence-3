@@ -3,7 +3,8 @@ import { RETOURS } from '~/demo/base'
 
 useSeoMeta({ title: ESPACE_LABELS.etudiant })
 
-const { data, status, error, refresh, counters, progression, drafts } = useTableauDeBordEtudiant()
+const { data, status, error, refresh, counters, progression, drafts, draftCompetences } =
+  useTableauDeBordEtudiant()
 
 const greeting = computed(() =>
   data.value ? `Bonjour ${data.value.etudiant.prenom}` : ESPACE_LABELS.etudiant,
@@ -48,6 +49,7 @@ const nextActions = computed(() =>
     drafts: drafts.value,
     unreadRetours,
     progression: progression.value,
+    draftCompetences: draftCompetences.value,
     formatDay: (iso) => `le ${dayMonth.format(new Date(iso))}`,
   }),
 )
@@ -63,11 +65,12 @@ const rows = computed(() =>
   })),
 )
 
-// Dates sans heure (AAAA-MM-JJ) : lues en UTC pour ne pas reculer d'un jour selon le fuseau
+// Date de modification : jour (AAAA-MM-JJ, lu à minuit UTC) ou horodatage (modification dans la
+// session) ; affichée à l'heure de Paris, comme partout dans l'application
 const dayMonth = new Intl.DateTimeFormat('fr-FR', {
   day: 'numeric',
   month: 'long',
-  timeZone: 'UTC',
+  timeZone: 'Europe/Paris',
 })
 </script>
 
@@ -128,15 +131,16 @@ const dayMonth = new Intl.DateTimeFormat('fr-FR', {
               </div>
               <UButton
                 :to="item.to"
+                :aria-label="item.label"
                 color="neutral"
                 :variant="index === 0 ? 'solid' : 'outline'"
                 :class="[
-                  'shrink-0 after:absolute after:inset-0',
+                  'shrink-0 after:absolute after:inset-0 motion-safe:active:translate-none',
                   index === 0 &&
                     'bg-or-400 text-prune-950 shadow-touche hover:bg-or-300 active:bg-or-300 active:shadow-none',
                 ]"
               >
-                {{ item.action }}<span class="sr-only"> : {{ item.title }}</span>
+                {{ item.action }}
               </UButton>
             </li>
           </ul>

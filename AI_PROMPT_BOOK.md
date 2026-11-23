@@ -27,3 +27,42 @@ Usage de l'IA sur le projet (voir `AGENTS.md` §9) : une entrée par tâche sign
 - **Corrigé grâce aux relectures et à l'audit** : interlignage qui écrasait celui des grands nombres ; icône de chargement figée sous « réduire les animations » ; valeur des filtres non annoncée (bloquant) ; contours des champs à 1,4:1 portés à 4,8:1 ; option active des listes invisible au clavier ; groupe « Type de trace » sans nom ; page courante peu visible ; astérisque lu « étoile » ; « acquis » moins marqué que « en cours » en mode sombre ; taux étudiant faussé par les évaluations en attente ; squelettes de chargement qui ne correspondaient plus au contenu.
 - **Écarté** : stagger (retarde la lecture) ; replier la déclaration d'IA à l'évaluation ; couleur par compétence dans les graphiques.
 - **Laissé ouvert** (voir `docs/DECISIONS.md`) : panneau de répartition ajouté au tableau de bord enseignant, brouillons devenus des liens et définition du taux, à confirmer par le PO ; zones sûres non testées sur un vrai iPhone ; lecture avec un vrai lecteur d'écran.
+
+## 2026-11-23 — Passe UI/UX : landing, hiérarchie des actions et profondeur (#32)
+
+- **Auteur** : Enzo
+- **Outil** : Claude Code (Claude Opus 5.5) en orchestrateur, avec deux agents en parallèle (page d'accueil dans un worktree séparé, écrans des espaces) et un agent neuf pour la relecture croisée. Skill `taste-skill:design-taste-frontend` pour la direction de l'accueil (« Type and nothing else », adaptée pour garder les couleurs minoritaires) et les règles des écrans d'application.
+- **Objectif** : une interface moins plate, des actions compréhensibles et ordonnées, des boutons travaillés, une vraie page d'accueil, des tableaux de bord qui disent quoi faire.
+- **Déroulé** :
+  - captures « avant » sur le build de production ;
+  - design écrit (`docs/superpowers/specs/2026-11-23-passe-ui-ux-design.md`) ;
+  - socle (boutons, relief, en-tête de page, états vides) ;
+  - tableaux de bord par l'orchestrateur, en parallèle de l'accueil et des autres écrans par les agents ;
+  - intégration, puis vérification sur le build de production.
+- **Retenu** :
+  - hiérarchie des boutons et en-tête de page commun ;
+  - bloc « À faire maintenant » en aplat prune, avec le bouton or sur l'action la plus pressante ;
+  - indicateur en compte plutôt qu'en pourcentage nu ;
+  - accueil avec aperçu à bascule de la vraie interface et parcours d'une trace en bordereau ;
+  - cartes de trace avec type, compétences et chevron.
+- **Corrigé à l'intégration** :
+  - nom de transition et focus du titre déplacés dans `UiEnTetePage` (les écrans passaient par un `span` et par `querySelector`) ;
+  - actions empilées sur téléphone ;
+  - tests de l'accueil et du thème mis à jour ;
+  - lignes d'action qui écrasaient leur texte sur téléphone ;
+  - taille fluide du titre de l'accueil, pour tenir à 320 px.
+- **Corrigé grâce à la relecture croisée** :
+  - **bloquant** : un clic sur le texte d'une ligne d'action ne menait nulle part. Le décalage du bouton à l'appui faisait de lui le bloc conteneur du lien étendu. Reproduit dans un navigateur, puis corrigé ;
+  - « Aucune trace pour Entreprendre » s'affichait alors qu'un brouillon visait cette compétence ;
+  - noms accessibles des boutons d'action ;
+  - contraste de l'état choisi de la bascule de l'accueil (1,4:1) ;
+  - focus après un lien d'ancre ;
+  - ordre de lecture des échéances ;
+  - aperçu enseignant aligné sur la démo ;
+  - dates à l'heure de Paris ;
+  - commentaires périmés.
+- **Écarté** : aplats pleine page sur l'accueil (couleurs devenues majoritaires) ; animations au défilement.
+- **Laissé ouvert** (voir `docs/DECISIONS.md`) :
+  - actions à confirmer par le PO ;
+  - données de démo incohérentes entre `app/demo/base.ts` et `server/data/validations.ts` ;
+  - rendu serveur sans données de la page-projet (déjà présent avant cette passe).

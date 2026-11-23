@@ -18,15 +18,15 @@ test.describe('tableau de bord étudiant', () => {
 
   test('commence par ce qu’il y a à faire, le plus pressant d’abord', async ({ page }) => {
     const todo = page.getByRole('region', { name: 'À faire maintenant' }).getByRole('listitem')
-    // 2 retours non lus (démo), 2 brouillons du plus récent au plus ancien, 1 compétence sans trace
-    await expect(todo).toHaveCount(4)
+    // 2 retours non lus (démo), 2 brouillons du plus récent au plus ancien ; Entreprendre n'a pas
+    // de trace finalisée, mais un brouillon la vise déjà : rien à déposer
+    await expect(todo).toHaveCount(3)
     await expect(todo.nth(0)).toContainText('2 nouveaux retours de vos enseignants')
     await expect(todo.nth(1)).toContainText(
       'Terminer « Business model d’une appli de covoiturage »',
     )
-    await expect(todo.nth(3)).toContainText('Aucune trace pour Entreprendre')
     await expect(
-      todo.nth(1).getByRole('link', { name: /^Reprendre : Terminer « Business model/ }),
+      todo.nth(1).getByRole('link', { name: /^Reprendre le brouillon « Business model/ }),
     ).toHaveAttribute('href', /\/etudiant\/traces\/\d+$/)
   })
 

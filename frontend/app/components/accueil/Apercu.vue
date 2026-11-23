@@ -17,7 +17,7 @@ const VUES: { value: Vue; label: string; espace: string; personne: string; salut
     label: 'Vue enseignant',
     espace: 'Espace enseignant',
     personne: 'Claire Dupont',
-    salut: 'Bonjour Claire. Quatre traces à évaluer.',
+    salut: 'Bonjour Claire. 12 traces à évaluer.',
   },
 ]
 
@@ -33,14 +33,14 @@ const vue = ref<Vue>('etudiant')
         aria-label="Vue de l’aperçu"
         class="inline-flex gap-1 rounded-full bg-muted p-1"
       >
-        <!-- Vue choisie : fond de la feuille, contour et ombre (pas seulement la couleur) -->
+        <!-- Vue choisie : pastille pleine (encre sur fond), bien plus qu'une nuance de gris (WCAG 1.4.11) -->
         <UButton
           v-for="option in VUES"
           :key="option.value"
           color="neutral"
-          :variant="vue === option.value ? 'outline' : 'ghost'"
+          :variant="vue === option.value ? 'solid' : 'ghost'"
           :aria-pressed="vue === option.value"
-          :class="vue === option.value ? 'text-highlighted' : 'text-muted'"
+          :class="vue === option.value ? '' : 'text-muted'"
           @click="vue = option.value"
         >
           {{ option.label }}

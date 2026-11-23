@@ -11,7 +11,8 @@
  * - Couleurs : les neutres (`gris`, jetons `--ui-*` : bg-default, bg-muted, text-muted…) portent
  *   l'essentiel. `primary` (= prune) est réservé à l'action principale, aux liens, au focus et aux
  *   éléments actifs. `or` est un accent décoratif, très rare : jamais de texte or, jamais
- *   d'information portée par l'or seul. Seule nuance utilisée : `or-400` (#F7B000), en fond sous un
+ *   d'information portée par l'or seul. Nuance utilisée : `or-400` (#F7B000, `or-300` au survol des
+ *   boutons or, 12,1:1), en fond sous un
  *   texte `text-prune-950` (9,6:1) ou en décor (trait de la navigation active en mode sombre, logo).
  *   Contour d'un champ ou d'une commande (≥ 3:1) : `ring-contour` / `border-contour`, déjà posé
  *   par le thème (`app.config.ts`) sur les champs, listes, cases, radios et l'interrupteur.
@@ -19,7 +20,8 @@
  *   valeur arbitraire). 1 : icône ↔ texte, titre ↔ sous-ligne ; 2 : éléments d'un groupe ;
  *   3 : lignes d'une liste de cartes ; 4 : titre de section → contenu ; 6 : champs d'un formulaire,
  *   colonnes ; 8 : h1 + chapeau → premier bloc ; 12 : entre deux sections.
- *   Panneau : `rounded-panneau bg-muted p-4 sm:p-6`. Carte de liste : `rounded-feuille border
+ *   Panneau : `rounded-panneau bg-muted p-4 sm:p-6` (blocs d'un tableau de bord, aplat
+ *   `champ-fort`, état vide : `p-6 sm:p-8`). Carte de liste : `rounded-feuille border
  *   border-default p-4`.
  * - Texte courant (descriptions, aide, chapeaux) : `max-w-mesure` (≈ 65 caractères). Les
  *   paragraphes ont déjà l'interlignage `leading-corps` et `text-wrap: pretty` ; les titres,

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 // Aperçu « vue enseignant » de la page d'accueil : la file des évaluations en attente de Claire
-// Dupont, les plus anciennes d'abord, en lecture seule (aucun lien ni bouton). Traces et dates de
-// la démo ; celles de Léa Martin sont ses deux traces encore en attente dans la vue étudiant.
+// Dupont, les plus anciennes d'abord, en lecture seule (aucun lien ni bouton) : les quatre premières
+// de la file de la démo (app/demo/enseignant.ts), qui en compte douze.
 const EN_ATTENTE = [
   {
     titre: 'Podcast « Métiers du web »',
@@ -11,18 +11,18 @@ const EN_ATTENTE = [
     dateLabel: '11 oct.',
   },
   {
+    titre: 'Newsletter du club de basket',
+    etudiant: 'Yanis Richard',
+    competences: 'Exprimer',
+    date: '2026-10-16',
+    dateLabel: '16 oct.',
+  },
+  {
     titre: 'Charte graphique du BDE',
     etudiant: 'Yanis Richard',
     competences: 'Exprimer, Concevoir',
     date: '2026-10-19',
     dateLabel: '19 oct.',
-  },
-  {
-    titre: 'Étude UX de l’appli Fil Bleu',
-    etudiant: 'Léa Martin',
-    competences: 'Comprendre',
-    date: '2026-10-21',
-    dateLabel: '21 oct.',
   },
   {
     titre: 'Générique des portes ouvertes',

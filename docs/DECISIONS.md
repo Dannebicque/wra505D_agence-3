@@ -198,3 +198,38 @@ Format : date, décision, alternatives écartées, raison.
 - **Alternatives écartées** : tout mettre dans `frontend/`, docs et règles IA comprises (ces documents concernent tout le projet, back compris) ; déplacer `server/` vers `backend/` (impossible sans sortir les routes de l'application Nuxt).
 - **Conséquence pour l'équipe** : chaque branche créée avant ce déplacement doit être mise à jour (Git suit les fichiers renommés) ; les commandes se lancent depuis `frontend/`, et `npm ci` y est à refaire une fois.
 - **Raison** : séparer clairement le front du back sur GitHub, à la demande de l'équipe.
+
+## 2026-11-23 — Passe UI/UX : landing, hiérarchie des actions et profondeur (#32)
+
+Design : `docs/superpowers/specs/2026-11-23-passe-ui-ux-design.md`.
+
+- **Décision** :
+  - **Hiérarchie des actions**, fixée dans `app.config.ts` :
+    - principale : bouton plein prune, une seule par écran, placée en dernier ;
+    - secondaire : `neutral` `outline` ;
+    - tertiaire : `neutral` `ghost` ;
+    - destructive : `error`, pleine seulement dans la confirmation.
+    - Tous les boutons sont en demi-gras et s'enfoncent d'un pixel à l'appui. Les boutons pleins ont un reflet et une ombre courte (`shadow-touche`).
+  - **En-tête de page commun** (`UiEnTetePage`) : fil d'Ariane, titre, chapeau factuel, puis les actions dans un ordre fixe (secondaires, puis principale). Sur téléphone, les actions s'empilent et la principale est en bas. Le composant porte aussi le nom de transition du titre et le remet en focus (`focusTitle`).
+  - **Relief** : rien n'a d'ombre au repos, sauf ce qu'on presse et ce qui flotte (`shadow-flottant`). Un écran peut avoir au plus un aplat prune (`champ-fort`, prune 900), où les jetons `--ui-*` sont redéfinis. Contrastes mesurés sur prune 900 : texte 15,7:1, texte discret 10,4:1, contour 5,4:1, bouton or 8,3:1 (texte prune 950 sur or : 9,6:1).
+  - **Tableaux de bord** : ils commencent par « À faire maintenant » (étudiant) ou « À évaluer maintenant » (enseignant), en aplat prune. Chaque ligne a un verbe et son bouton ; la plus pressante porte le bouton or.
+    - Côté étudiant, l'ordre est : retours non lus, brouillons du plus récent au plus ancien, première compétence sans trace (`studentNextActions`).
+    - L'indicateur devient un compte (« 3 sur 6 évaluations rendues sont acquises, soit 50 % »).
+    - Le bloc « En chiffres » est retiré : ses valeurs sont dans la barre de synthèse ou dans les blocs.
+  - **États vides** : `UiAsyncState` reçoit `empty-title` et un slot `empty-action`, qui propose l'étape suivante.
+  - **Accueil `/`** : une mise en page dédiée (`layouts/accueil.vue`). La page comprend :
+    - un grand titre ;
+    - un aperçu de l'interface en HTML avec une bascule étudiant / enseignant ;
+    - le parcours d'une trace en bordereau ;
+    - « Pour qui » en aplat prune ;
+    - les trois accès de démo.
+    - Aucun chiffre ni témoignage n'est inventé.
+- **Alternatives écartées** :
+  - des aplats de couleur pleine page sur l'accueil (le prune serait devenu majoritaire) ;
+  - un stagger au défilement (il retarde la lecture, déjà écarté en #24) ;
+  - deux boutons pleins prune sur un tableau de bord (l'action du bloc prune est en or, l'en-tête garde la seule principale prune).
+- **À confirmer par le PO** :
+  - l'action « Évaluer ses traces », ajoutée à la fiche d'un étudiant ;
+  - « Télécharger en PDF » (CV) et « Exporter en PDF » (bilans), mis en action principale alors qu'ils restent sans effet en maquette ;
+  - des écrans sans action principale : portfolio publié, liste des étudiants, corbeille, retours.
+- **Raison** : l'interface était jugée plate et ses actions sans ordre. Chaque écran dit maintenant ce qu'on y fait, et l'action principale est toujours au même endroit.

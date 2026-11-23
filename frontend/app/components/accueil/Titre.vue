@@ -24,9 +24,10 @@ withDefaults(
 
 <style scoped>
 /*
- * Corps fluide (hors échelle, comme tout titre d'affiche) : 56 px dès 560 px de large, 104 px au
- * plus sur ordinateur. En dessous, le corps suit la largeur de l'écran pour que chaque
- * ligne tienne sur une seule ligne jusqu'à 320 px (WCAG 1.4.10 : pas de défilement horizontal).
+ * Corps fluide (hors échelle, comme tout titre d'affiche) : 10 % de la largeur de l'écran, entre
+ * 30 px (sous 300 px de large) et 104 px (dès 1040 px), soit 56 px à 560 px et 39 px à 390 px.
+ * Chaque ligne du titre tient ainsi sur une seule ligne jusqu'à 320 px (WCAG 1.4.10 : pas de
+ * défilement horizontal).
  */
 .accueil-titre {
   font-size: clamp(1.875rem, 10vw, 6.5rem);

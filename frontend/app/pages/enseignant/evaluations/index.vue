@@ -165,7 +165,7 @@ const resultLabel = computed(() =>
             :to="{ path: `/enseignant/evaluations/${trace.id}`, query }"
             color="neutral"
             variant="ghost"
-            class="justify-self-start after:absolute after:inset-0 after:rounded-feuille"
+            class="justify-self-start after:absolute after:inset-0 after:rounded-feuille motion-safe:active:translate-none"
             trailing-icon="i-lucide-arrow-right"
           >
             {{ isTracePending(trace) ? 'Évaluer' : 'Modifier l’évaluation'

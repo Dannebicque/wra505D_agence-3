@@ -91,9 +91,10 @@ function formatDayMonth(iso: string): string {
     </UiEnTetePage>
 
     <!--
-      Grille : sur ordinateur, la file d'évaluation (3 colonnes sur 5) à côté des échéances, puis la
-      répartition à côté des étudiants à suivre. Sur téléphone, l'ordre du document : la file
-      d'abord, les échéances (provisoires) en dernier.
+      Grille : sur ordinateur, la file d'évaluation (3 colonnes sur 5) à côté des échéances, placées
+      en ligne 1 par la grille, puis la répartition à côté des étudiants à suivre. Les échéances
+      (provisoires) sont en dernier dans le document : c'est l'ordre de lecture et l'ordre sur
+      téléphone.
     -->
     <div class="mt-8 grid gap-6 lg:grid-cols-5">
       <section
@@ -135,7 +136,7 @@ function formatDayMonth(iso: string): string {
               color="neutral"
               :variant="index === 0 ? 'solid' : 'outline'"
               :class="[
-                'shrink-0 after:absolute after:inset-0',
+                'shrink-0 after:absolute after:inset-0 motion-safe:active:translate-none',
                 index === 0 &&
                   'bg-or-400 text-prune-950 shadow-touche hover:bg-or-300 active:bg-or-300 active:shadow-none',
               ]"
@@ -156,37 +157,6 @@ function formatDayMonth(iso: string): string {
         >
           Voir les {{ pending.length }} traces à évaluer
         </UButton>
-      </section>
-
-      <!--
-        PROVISOIRE (point ouvert n° 1 de docs/FONCTIONNALITES.md) : l'origine des échéances
-        (date saisie par l'enseignant, calendrier fixe…) n'est pas tranchée par le client.
-        Ce bloc ne fait que réserver la place de P-OR-06.
-      -->
-      <section
-        aria-labelledby="echeances"
-        class="rounded-panneau bg-muted p-6 sm:p-8 max-lg:order-last lg:col-span-2"
-      >
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <h2 id="echeances" class="text-xl font-semibold text-highlighted">
-            Prochaines échéances
-          </h2>
-          <UBadge color="neutral" variant="outline" class="rounded-full" label="Provisoire" />
-        </div>
-        <ul class="mt-6 space-y-4">
-          <li v-for="echeance in ECHEANCES_PROVISOIRES" :key="echeance.id" class="flex gap-4">
-            <!-- Date en tête de ligne, les unes sous les autres : chiffres tabulaires -->
-            <time
-              :datetime="echeance.date"
-              class="w-16 shrink-0 text-sm leading-titre font-semibold text-highlighted tabular-nums"
-              >{{ formatDayMonth(echeance.date) }}</time
-            >
-            <div class="min-w-0">
-              <p class="leading-titre font-medium text-highlighted">{{ echeance.libelle }}</p>
-              <p class="mt-1 text-sm text-muted">{{ echeance.public }}</p>
-            </div>
-          </li>
-        </ul>
       </section>
 
       <section
@@ -285,6 +255,36 @@ function formatDayMonth(iso: string): string {
           </li>
         </ul>
         <p v-else class="mt-4 text-muted">Aucun étudiant n’a de travail en attente.</p>
+      </section>
+      <!--
+        PROVISOIRE (point ouvert n° 1 de docs/FONCTIONNALITES.md) : l'origine des échéances
+        (date saisie par l'enseignant, calendrier fixe…) n'est pas tranchée par le client.
+        Ce bloc ne fait que réserver la place de P-OR-06.
+      -->
+      <section
+        aria-labelledby="echeances"
+        class="rounded-panneau bg-muted p-6 sm:p-8 lg:col-span-2 lg:col-start-4 lg:row-start-1"
+      >
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h2 id="echeances" class="text-xl font-semibold text-highlighted">
+            Prochaines échéances
+          </h2>
+          <UBadge color="neutral" variant="outline" class="rounded-full" label="Provisoire" />
+        </div>
+        <ul class="mt-6 space-y-4">
+          <li v-for="echeance in ECHEANCES_PROVISOIRES" :key="echeance.id" class="flex gap-4">
+            <!-- Date en tête de ligne, les unes sous les autres : chiffres tabulaires -->
+            <time
+              :datetime="echeance.date"
+              class="w-16 shrink-0 text-sm leading-titre font-semibold text-highlighted tabular-nums"
+              >{{ formatDayMonth(echeance.date) }}</time
+            >
+            <div class="min-w-0">
+              <p class="leading-titre font-medium text-highlighted">{{ echeance.libelle }}</p>
+              <p class="mt-1 text-sm text-muted">{{ echeance.public }}</p>
+            </div>
+          </li>
+        </ul>
       </section>
     </div>
   </div>

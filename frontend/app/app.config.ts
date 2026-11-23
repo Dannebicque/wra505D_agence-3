@@ -60,6 +60,10 @@ export default defineAppConfig({
      * - destructive : `color="error"`, pleine seulement dans la confirmation.
      * Relief : les boutons pleins ont un reflet en haut et une ombre portée courte (ils se lisent
      * comme des touches), le secondaire une ombre d'un pixel ; à l'appui, le bouton s'enfonce.
+     * Bouton qui porte le lien étendu d'une ligne (`after:absolute after:inset-0`) : ajouter
+     * `motion-safe:active:translate-none`. Le décalage ferait du bouton le bloc conteneur de son
+     * `::after` : l'overlay se réduirait au bouton entre l'appui et le relâchement, et un clic sur le
+     * texte de la ligne ne mènerait nulle part.
      */
     button: {
       // Style éditorial : boutons en pilule

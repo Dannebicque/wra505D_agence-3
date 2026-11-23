@@ -52,16 +52,16 @@ const errorMessage = computed(() => {
 
       <!--
         Tableau de bord (/etudiant) : « À faire maintenant » (3 colonnes sur 5) et « Où vous en
-        êtes » (2 sur 5) côte à côte, puis la progression sur toute la largeur. Hauteurs mesurées :
-        voir le commentaire de chaque bloc
+        êtes » (2 sur 5) côte à côte, puis la progression sur toute la largeur. Hauteurs mesurées sur la
+        démo : ≈ 467 / 467 / 455 px sur ordinateur, ≈ 690 / 450 / 520 px sur téléphone (390 px)
       -->
       <div v-else-if="skeleton === 'tuiles'" class="grid gap-6 lg:grid-cols-5">
         <!-- À faire maintenant -->
-        <USkeleton class="h-96 rounded-panneau lg:col-span-3" />
+        <USkeleton class="h-172 rounded-panneau lg:col-span-3 lg:h-116" />
         <!-- Où vous en êtes -->
-        <USkeleton class="h-96 rounded-panneau lg:col-span-2" />
+        <USkeleton class="h-112 rounded-panneau lg:col-span-2 lg:h-116" />
         <!-- Progression par compétence -->
-        <USkeleton class="h-120 rounded-panneau lg:col-span-5" />
+        <USkeleton class="h-128 rounded-panneau lg:col-span-5 lg:h-116" />
       </div>
       <!-- Formulaire : libellé puis champ (hauteur d'un UInput), champs espacés de 6 pas -->
       <div v-else-if="skeleton === 'formulaire'" class="max-w-2xl space-y-6">

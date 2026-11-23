@@ -11,7 +11,16 @@ defineProps<{
 </script>
 
 <template>
-  <section :id="id" :aria-labelledby="titreId">
+  <!--
+    tabindex="-1" (avec une ancre seulement) : la mise en page y met le focus quand on suit un lien
+    d'ancre, pour que la touche Tab reparte de la section et non du lien
+  -->
+  <section
+    :id="id"
+    :aria-labelledby="titreId"
+    :tabindex="id ? -1 : undefined"
+    class="focus:outline-none"
+  >
     <div class="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-12">
       <slot />
     </div>

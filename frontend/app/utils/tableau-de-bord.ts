@@ -86,6 +86,26 @@ export function computeProgression(
   })
 }
 
+/**
+ * Compétences visées par au moins un brouillon (hors corbeille) : elles ont déjà une trace en
+ * chemin, même si aucune validation n'est encore comptée.
+ */
+export function draftCompetenceIds(
+  referentiel: Referentiel,
+  traces: readonly Trace[],
+  validations: readonly Validation[],
+): Set<string> {
+  const drafts = new Set(draftTraces(traces).map((t) => t['@id']))
+  const niveaux = new Set(
+    validations.filter((v) => drafts.has(v.trace)).map((v) => v.niveau as string),
+  )
+  return new Set(
+    referentiel.competences
+      .filter((c) => c.niveaux.some((n) => niveaux.has(n['@id'])))
+      .map((c) => c['@id']),
+  )
+}
+
 export function draftTraces(traces: readonly Trace[]): Trace[] {
   return traces.filter((t) => isActive(t) && t.statut === 'brouillon')
 }
@@ -155,8 +175,10 @@ export interface NextAction {
   id: string
   title: string
   detail: string
-  /** Libellé du bouton : un verbe. */
+  /** Libellé visible du bouton : un verbe. */
   action: string
+  /** Nom accessible du bouton : commence par le verbe visible (WCAG 2.5.3) et dit sur quoi il agit. */
+  label: string
   to: string
   icon: string
 }
@@ -170,7 +192,9 @@ export function studentNextActions(input: {
   drafts: readonly Trace[]
   unreadRetours: number
   progression: readonly CompetenceProgression[]
-  /** Date AAAA-MM-JJ → « 30 octobre » (le format reste à la page). */
+  /** Compétences déjà visées par un brouillon (`draftCompetenceIds`) : pas de « Aucune trace ». */
+  draftCompetences?: ReadonlySet<string>
+  /** Date ou horodatage ISO → « le 30 octobre » (le format reste à la page). */
   formatDay: (iso: string) => string
   max?: number
 }): NextAction[] {
@@ -182,6 +206,7 @@ export function studentNextActions(input: {
       title: `${input.unreadRetours} nouveau${plural ? 'x' : ''} retour${plural ? 's' : ''} de vos enseignants`,
       detail: 'Évaluations et commentaires sur vos traces',
       action: 'Lire',
+      label: `Lire ${plural ? `les ${input.unreadRetours} nouveaux retours` : 'le nouveau retour'}`,
       to: '/etudiant/retours',
       icon: 'i-lucide-message-square-text',
     })
@@ -197,17 +222,21 @@ export function studentNextActions(input: {
         ? `Brouillon modifié ${input.formatDay(draft.dateModification)}`
         : 'Brouillon',
       action: 'Reprendre',
+      label: `Reprendre le brouillon « ${draft.titre} »`,
       to: `/etudiant/traces/${idFromIri(draft['@id'])}`,
       icon: 'i-lucide-file-pen-line',
     })
   }
-  const withoutTrace = input.progression.find((p) => p.total === 0)
+  const withoutTrace = input.progression.find(
+    (p) => p.total === 0 && !input.draftCompetences?.has(p.competence['@id']),
+  )
   if (withoutTrace) {
     actions.push({
       id: withoutTrace.competence['@id'],
       title: `Aucune trace pour ${withoutTrace.competence.nomCourt}`,
       detail: 'Déposez une trace qui montre cette compétence',
       action: 'Déposer',
+      label: `Déposer une trace pour ${withoutTrace.competence.nomCourt}`,
       to: '/etudiant/traces/nouvelle',
       icon: 'i-lucide-file-plus-2',
     })

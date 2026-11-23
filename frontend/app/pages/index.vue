@@ -17,6 +17,11 @@ const TITRE = ['Vos compétences,', 'trace après trace.']
 
 <template>
   <div>
+    <!--
+      Espacement : les sections sont séparées de 24 pas sur ordinateur (12 sur téléphone), hors de
+      l'échelle 1/2/3/4/6/8/12 des espaces : une page d'affiche se lit par blocs bien séparés (120 à
+      240 px entre sections sur les pages d'accueil étudiées), là où une page d'application en a 48.
+    -->
     <AccueilSection titre-id="accueil-titre" class="pt-12 pb-12 sm:pt-24 sm:pb-24">
       <AccueilTitre id="accueil-titre" :lignes="TITRE" revele />
       <div class="mt-8 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">

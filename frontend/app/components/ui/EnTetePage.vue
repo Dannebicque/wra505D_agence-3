@@ -23,17 +23,13 @@ defineProps<{
   transitionName?: string
 }>()
 
+/**
+ * Titre, exposé pour y rendre le focus (après la suppression de l'élément qui l'avait, par
+ * exemple) : il n'est focalisable que par programme (tabindex="-1"), hors de l'ordre de tabulation.
+ */
 const heading = useTemplateRef<HTMLHeadingElement>('heading')
 
-/**
- * Rend le focus au titre (après la suppression de l'élément qui l'avait, par exemple). Le titre
- * n'est focalisable que par programme (tabindex="-1") : il n'entre pas dans l'ordre de tabulation.
- */
-function focusTitle() {
-  heading.value?.focus()
-}
-
-defineExpose({ focusTitle, heading })
+defineExpose({ heading })
 </script>
 
 <template>
