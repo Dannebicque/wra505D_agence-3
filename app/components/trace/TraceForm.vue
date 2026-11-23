@@ -229,8 +229,15 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
       />
     </UFormField>
 
-    <UFormField label="Type de trace" name="type">
-      <URadioGroup v-model="state.type" :items="TYPE_ITEMS" orientation="horizontal" />
+    <!-- Le groupe est nommé par sa légende (un libellé de UFormField ne vise aucun champ ici) ;
+         UFormField garde l'erreur du champ, liée au groupe (aria-describedby) -->
+    <UFormField name="type">
+      <URadioGroup
+        v-model="state.type"
+        legend="Type de trace"
+        :items="TYPE_ITEMS"
+        orientation="horizontal"
+      />
     </UFormField>
 
     <TraceFileField
