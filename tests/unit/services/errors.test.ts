@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ApiError, toApiError } from '../../../app/services/errors'
+import { ApiError, errorMessage, toApiError } from '../../../app/services/errors'
 
 describe('toApiError', () => {
   it('reprend le message d’une erreur de validation au format Nitro', () => {
@@ -77,5 +77,17 @@ describe('toApiError', () => {
       violations,
     )
     expect(toApiError({ statusCode: 500 }).violations).toEqual([])
+  })
+})
+
+describe('errorMessage', () => {
+  it('reprend le message d’une ApiError, déjà rédigé pour l’utilisateur', () => {
+    expect(errorMessage(new ApiError(422, 'Ordre refusé.'))).toBe('Ordre refusé.')
+  })
+
+  it('remplace le message d’une autre erreur, souvent technique ou en anglais', () => {
+    expect(errorMessage(new TypeError('Cannot read properties of undefined'))).toBe(
+      'Une erreur est survenue. Réessayez plus tard.',
+    )
   })
 })

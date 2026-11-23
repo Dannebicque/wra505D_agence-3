@@ -83,3 +83,10 @@ export function toApiError(error: unknown): ApiError {
     isRecord(error) ? readViolations(error) : [],
   )
 }
+
+const MESSAGE_INCONNU = 'Une erreur est survenue. Réessayez plus tard.'
+
+/** Message à montrer pour une erreur quelconque (celui d'une `ApiError` est déjà en français). */
+export function errorMessage(error: unknown): string {
+  return error instanceof ApiError ? error.message : MESSAGE_INCONNU
+}
