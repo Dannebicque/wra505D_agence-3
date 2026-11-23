@@ -82,7 +82,12 @@ const items = computed(() =>
           elle est transparente en haut de la feuille (le logo est dans la barre latérale).
           Chaque outil n'existe qu'une fois : un seul raccourci Ctrl + K, une seule fenêtre.
         -->
-        <UDashboardNavbar class="bg-cadre lg:bg-transparent" :ui="{ root: 'border-none' }">
+        <!-- En-tête de l'espace (repère « banner », comme le <header> de la mise en page publique) -->
+        <UDashboardNavbar
+          as="header"
+          class="bg-cadre lg:bg-transparent"
+          :ui="{ root: 'border-none' }"
+        >
           <template #left>
             <LayoutAppLogo :to="homePath" class="lg:hidden" />
           </template>
