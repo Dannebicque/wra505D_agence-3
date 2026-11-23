@@ -1,11 +1,11 @@
-<script setup lang="ts" generic="T extends { id: number }">
+<script setup lang="ts" generic="T extends { id: number | string }">
 // Liste réordonnable (pages d'un portfolio E-PG-04, traces d'une page E-TR-08).
 //
 // Deux façons de déplacer un élément :
 // - glisser-déposer à la souris (poignée visuelle, toute la ligne se saisit) ;
 // - boutons « Monter » / « Descendre », l'alternative clavier et tactile (WCAG 2.5.7) : le focus
 //   suit l'élément déplacé et une zone vivante annonce sa nouvelle position.
-// Maquette : l'ordre ne vit que dans l'état local du parent (v-model), rien n'est enregistré.
+// Le composant ne fait qu'émettre le nouvel ordre (v-model) : le parent décide de l'enregistrer.
 const props = defineProps<{
   /** Nom accessible de la liste (« Pages du portfolio »). */
   label: string
@@ -54,6 +54,44 @@ async function moveBy(index: number, delta: -1 | 1) {
   focusTarget?.focus()
 }
 
+// L'ordre peut aussi changer sans action ici : le parent annule un déplacement refusé par le
+// serveur. Le navigateur peut alors perdre le focus : la ligne focalisée est déplacée dans le DOM,
+// ou sa flèche devient inactive (bout de liste). On le rend à la même flèche, ou à l'autre.
+const lastArrowId = ref<string | null>(null)
+const isArrowId = (id: string) => id.startsWith(listId) && /-(up|down)$/.test(id)
+
+function onFocusIn(event: FocusEvent) {
+  const target = event.target
+  lastArrowId.value = target instanceof HTMLElement && isArrowId(target.id) ? target.id : null
+}
+
+/** Le focus part vers un autre élément de la page : on cesse de le suivre. */
+function onFocusOut(event: FocusEvent) {
+  const next = event.relatedTarget
+  if (next instanceof Node && !(event.currentTarget as Node).contains(next))
+    lastArrowId.value = null
+}
+
+const enabledButton = (id: string) => {
+  const element = document.getElementById(id)
+  return element instanceof HTMLButtonElement && !element.disabled ? element : null
+}
+
+watch(
+  items,
+  () => {
+    const id = lastArrowId.value
+    const arrow = id ? document.getElementById(id) : null
+    if (!id || !arrow) return
+    const isLost = document.activeElement === document.body || document.activeElement === arrow
+    if (!isLost) return
+    const sibling = id.replace(/-(up|down)$/, (_, d) => (d === 'up' ? '-down' : '-up'))
+    const target = enabledButton(id) ?? enabledButton(sibling)
+    if (target && document.activeElement !== target) target.focus()
+  },
+  { flush: 'post' },
+)
+
 // Glisser-déposer (souris) : simple état local, l'indicateur montre où l'élément sera posé
 const draggedIndex = ref<number | null>(null)
 const overIndex = ref<number | null>(null)
@@ -94,7 +132,7 @@ function onDragEnd() {
 
 <template>
   <div>
-    <ol :aria-label="label" class="space-y-2">
+    <ol :aria-label="label" class="space-y-2" @focusin="onFocusIn" @focusout="onFocusOut">
       <li
         v-for="(item, index) in items"
         :key="item.id"

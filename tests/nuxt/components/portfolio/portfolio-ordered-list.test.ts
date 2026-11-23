@@ -93,4 +93,51 @@ describe('PortfolioOrderedList', () => {
     expect(order(wrapper)).toEqual(['Alpha', 'Bêta', 'Gamma'])
     expect(wrapper.emitted('update:modelValue')).toBeUndefined()
   })
+
+  it('quand le parent annule un déplacement, le focus passe sur la flèche restée active', async () => {
+    const wrapper = await mountList()
+
+    // Alpha descend en 2ᵉ position ; l'étudiant se place sur « Monter « Alpha » »
+    await arrow(wrapper, 'Descendre « Alpha »').trigger('click')
+    await flushPromises()
+    arrow(wrapper, 'Monter « Alpha »').element.focus()
+
+    // Envoi refusé : le parent remet l'ordre initial, Alpha revient en tête et « Monter » devient inactif
+    await wrapper.setProps({ modelValue: [...ITEMS] })
+    await flushPromises()
+
+    expect(order(wrapper)).toEqual(['Alpha', 'Bêta', 'Gamma'])
+    expect(arrow(wrapper, 'Monter « Alpha »').element.disabled).toBe(true)
+    expect(document.activeElement).toBe(arrow(wrapper, 'Descendre « Alpha »').element)
+  })
+
+  it('quand le parent annule un déplacement et que le focus est perdu, il revient sur la même flèche', async () => {
+    const wrapper = await mountList()
+
+    await arrow(wrapper, 'Descendre « Alpha »').trigger('click')
+    await flushPromises()
+    expect(document.activeElement).toBe(arrow(wrapper, 'Descendre « Alpha »').element)
+
+    // Chrome fait perdre le focus à une ligne déplacée dans le DOM : on le simule
+    ;(document.activeElement as HTMLElement).blur()
+    await wrapper.setProps({ modelValue: [...ITEMS] })
+    await flushPromises()
+
+    expect(order(wrapper)).toEqual(['Alpha', 'Bêta', 'Gamma'])
+    expect(document.activeElement).toBe(arrow(wrapper, 'Descendre « Alpha »').element)
+  })
+
+  it('ne reprend pas le focus parti vers un autre élément de la page', async () => {
+    const wrapper = await mountList()
+    const outside = document.createElement('button')
+    document.body.append(outside)
+
+    await arrow(wrapper, 'Descendre « Alpha »').trigger('click')
+    await flushPromises()
+    outside.focus()
+    await wrapper.setProps({ modelValue: [...ITEMS] })
+    await flushPromises()
+
+    expect(document.activeElement).toBe(outside)
+  })
 })

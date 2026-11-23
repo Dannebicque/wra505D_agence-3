@@ -1,17 +1,19 @@
 <script setup lang="ts">
-import type { DemoPageProjet } from '~/demo/base'
+import { PAGE_LIMITS, validatePage } from '#shared/utils/page-validation'
+import type { PageItem } from '~/composables/usePagesProjets'
 import { formatDate } from '~/demo/base'
 import {
   isPubliclyVisible,
   numericParam,
-  PORTFOLIO_LIMITS,
   portfolioById,
   publicPath,
   type DemoPortfolioForm,
 } from '~/demo/portfolio'
+import { ApiError, errorMessage } from '~/services/errors'
 
-// MAQUETTE (E-PF-02, E-PF-03, E-PF-05, E-PF-06, E-PG-01, E-PG-02, E-PG-04) : tout se passe dans
-// l'état local de la page (ordre des pages, publication, ajouts, suppressions), rien n'est enregistré.
+// Pages-projets (E-PG-01, E-PG-02, E-PG-04) : enregistrées par l'API.
+// MAQUETTE pour le reste (E-PF-02, E-PF-03, E-PF-05, E-PF-06, lot de Solène) : informations et
+// publication ne vivent que dans l'état local de la page, rien n'est enregistré.
 const route = useRoute()
 const found = portfolioById(numericParam(route.params.id))
 if (!found) {
@@ -90,16 +92,42 @@ async function copyLink() {
   }
 }
 
-// --- Pages-projets (E-PG-01, E-PG-02, E-PG-04) ---
-type EditablePage = DemoPageProjet & {
-  /** Ajoutée pendant cette visite (maquette) : pas encore de page d'édition. */
-  isNew?: boolean
-}
-const pages = ref<EditablePage[]>(portfolio.pages.map((page) => ({ ...page })))
-const pagesMessage = ref('')
+// --- Pages-projets (E-PG-01, E-PG-02, E-PG-04) : branchées sur l'API ---
+const {
+  pages,
+  status: pagesStatus,
+  error: pagesLoadError,
+  refresh: refreshPages,
+  orderStatus,
+  orderError,
+  reorder,
+  create,
+  remove,
+} = usePagesProjets(String(portfolio.id))
+/** Échec d'une suppression, affiché et annoncé ; effacé par l'action suivante. */
+const actionError = ref('')
+const pagesOrder = computed({
+  get: () => pages.value,
+  set: (next) => {
+    actionError.value = ''
+    void reorder(next)
+  },
+})
+
+const { message: pagesMessage, announce: announcePages } = useStatusMessage()
+/** Échecs à montrer : l'ordre refusé et la suppression refusée peuvent coexister. */
+const pagesAlerts = computed(() => [
+  ...(orderStatus.value === 'error'
+    ? [
+        `L’ordre des pages n’a pas été enregistré : ${errorMessage(orderError.value)} Les pages ont repris leur ordre précédent.`,
+      ]
+    : []),
+  ...(actionError.value ? [actionError.value] : []),
+])
 const pagesHeading = useTemplateRef('pagesHeading')
 
 const isAdding = ref(false)
+const isCreating = ref(false)
 const newTitle = ref('')
 const newTitleError = ref('')
 const newTitleInput = useTemplateRef('newTitleInput')
@@ -118,49 +146,63 @@ function cancelAdd() {
   nextTick(() => addButton.value?.$el?.focus())
 }
 
-function addPage() {
-  const title = newTitle.value.trim()
-  if (!title) {
-    newTitleError.value = 'Donnez un intitulé à la page.'
+async function addPage() {
+  if (isCreating.value) return
+  // Mêmes règles que l'écran de la page et que le serveur
+  const result = validatePage({ intitule: newTitle.value, description: null })
+  if (!result.ok) {
+    newTitleError.value = result.violations[0]?.message ?? ''
     newTitleInput.value?.inputRef?.focus()
     return
   }
-  const nextId = Math.max(0, ...pages.value.map((p) => p.id)) + 1000
-  pages.value = [
-    ...pages.value,
-    { id: nextId, intitule: title, description: '', traceIds: [], isNew: true },
-  ]
-  pagesMessage.value = `Page « ${title} » ajoutée en fin de liste.`
-  cancelAdd()
+  isCreating.value = true
+  actionError.value = ''
+  try {
+    const page = await create(result.value)
+    void announcePages(`Page « ${page.intitule} » ajoutée en fin de liste.`)
+    cancelAdd()
+  } catch (cause) {
+    // Erreur sous le champ (intitulé refusé par le serveur, panne réseau…), focus au champ
+    const violation = cause instanceof ApiError ? cause.violations[0] : undefined
+    newTitleError.value = violation?.message ?? errorMessage(cause)
+    newTitleInput.value?.inputRef?.focus()
+  } finally {
+    isCreating.value = false
+  }
 }
 
 // Suppression : confirmation obligatoire (action destructive, C-08)
-const pageToDelete = ref<EditablePage | null>(null)
+const pageToDelete = ref<PageItem | null>(null)
 // Gardé après la fermeture : le titre de la fenêtre ne se vide pas pendant son animation
 const deleteLabel = ref('')
 const isDeleteOpen = ref(false)
-function askDelete(page: EditablePage) {
+function askDelete(page: PageItem) {
   deleteLabel.value = page.intitule
   pageToDelete.value = page
   isDeleteOpen.value = true
 }
 
-function confirmDelete() {
+async function confirmDelete() {
   const page = pageToDelete.value
   if (!page) return
-  pages.value = pages.value.filter((p) => p.id !== page.id)
-  pagesMessage.value = `Page « ${page.intitule} » supprimée.`
   pageToDelete.value = null
+  actionError.value = ''
+  try {
+    await remove(page)
+    void announcePages(`Page « ${page.intitule} » supprimée.`)
+  } catch (cause) {
+    actionError.value = `La page « ${page.intitule} » n’a pas été supprimée : ${errorMessage(cause)}`
+  }
 }
 
 /** Après suppression, le bouton qui a ouvert la confirmation n'existe plus : focus au titre. */
 const deleteReturnFocus = (reason: 'confirm' | 'cancel') =>
   reason === 'confirm' ? pagesHeading.value : undefined
 
-const traceCount = (page: EditablePage) =>
-  page.traceIds.length === 0
+const traceCount = (page: PageItem) =>
+  page.traces.length === 0
     ? 'Aucune trace'
-    : `${page.traceIds.length} trace${page.traceIds.length > 1 ? 's' : ''}`
+    : `${page.traces.length} trace${page.traces.length > 1 ? 's' : ''}`
 </script>
 
 <template>
@@ -228,11 +270,11 @@ const traceCount = (page: EditablePage) =>
               </h2>
               <p class="mt-1 text-sm text-muted">
                 Une page par projet, affichées dans cet ordre. Glissez-déposez une page ou utilisez
-                les flèches pour la déplacer.
+                les flèches pour la déplacer : l’ordre est enregistré à chaque déplacement.
               </p>
             </div>
             <UButton
-              v-if="!isAdding"
+              v-if="!isAdding && pagesStatus === 'success'"
               ref="addButton"
               icon="i-lucide-plus"
               color="neutral"
@@ -258,58 +300,73 @@ const traceCount = (page: EditablePage) =>
               <UInput
                 ref="newTitleInput"
                 v-model="newTitle"
-                :maxlength="PORTFOLIO_LIMITS.pageIntitule"
+                :maxlength="PAGE_LIMITS.intitule"
                 autocomplete="off"
                 class="w-full"
                 @update:model-value="newTitleError = ''"
               />
             </UFormField>
             <div class="mt-4 flex flex-wrap justify-end gap-2">
-              <UButton color="neutral" variant="ghost" @click="cancelAdd">Annuler</UButton>
-              <UButton type="submit" icon="i-lucide-plus">Ajouter la page</UButton>
+              <!-- Pendant l'envoi, annuler ferait perdre son résultat (page créée ou erreur) -->
+              <UButton color="neutral" variant="ghost" :disabled="isCreating" @click="cancelAdd">
+                Annuler
+              </UButton>
+              <UButton type="submit" icon="i-lucide-plus" :loading="isCreating">
+                Ajouter la page
+              </UButton>
             </div>
           </form>
 
-          <p v-if="pages.length === 0" class="mt-4 rounded-panneau bg-muted p-5 text-muted">
-            Aucune page pour l’instant. Ajoutez une page pour chacun de vos projets.
-          </p>
-          <PortfolioOrderedList
-            v-else
-            v-model="pages"
+          <!-- Zone d'alerte permanente : l'échec d'un enregistrement est annoncé dès qu'il s'affiche -->
+          <div role="alert" class="mt-4 space-y-2 empty:hidden">
+            <UAlert
+              v-for="alert in pagesAlerts"
+              :key="alert"
+              color="error"
+              variant="subtle"
+              icon="i-lucide-circle-alert"
+              :description="alert"
+            />
+          </div>
+
+          <UiAsyncState
+            :status="pagesStatus"
+            :error="pagesLoadError"
+            :empty="pages.length === 0"
+            empty-message="Aucune page pour l’instant. Ajoutez une page pour chacun de vos projets."
             class="mt-4"
-            label="Pages du portfolio"
-            :item-label="(page) => page.intitule"
+            @retry="refreshPages()"
           >
-            <template #item="{ item }">
-              <p class="flex flex-wrap items-center gap-2 font-medium text-highlighted">
-                <span class="break-words">{{ item.intitule }}</span>
-                <UBadge v-if="item.isNew" color="warning" variant="subtle" class="rounded-full">
-                  Non enregistrée
-                </UBadge>
-              </p>
-              <p class="text-sm text-muted">
-                {{ traceCount(item)
-                }}<template v-if="item.description"> · {{ item.description }}</template>
-              </p>
-            </template>
-            <template #actions="{ item }">
-              <UButton
-                v-if="!item.isNew"
-                :to="`/etudiant/portfolios/${portfolio.id}/pages/${item.id}`"
-                icon="i-lucide-pencil"
-                color="neutral"
-                variant="ghost"
-                :aria-label="`Modifier la page « ${item.intitule} »`"
-              />
-              <UButton
-                icon="i-lucide-trash-2"
-                color="error"
-                variant="ghost"
-                :aria-label="`Supprimer la page « ${item.intitule} »`"
-                @click="askDelete(item)"
-              />
-            </template>
-          </PortfolioOrderedList>
+            <PortfolioOrderedList
+              v-model="pagesOrder"
+              label="Pages du portfolio"
+              :item-label="(page) => page.intitule"
+            >
+              <template #item="{ item }">
+                <p class="font-medium break-words text-highlighted">{{ item.intitule }}</p>
+                <p class="text-sm break-words text-muted">
+                  {{ traceCount(item)
+                  }}<template v-if="item.description"> · {{ item.description }}</template>
+                </p>
+              </template>
+              <template #actions="{ item }">
+                <UButton
+                  :to="`/etudiant/portfolios/${portfolio.id}/pages/${item.id}`"
+                  icon="i-lucide-pencil"
+                  color="neutral"
+                  variant="ghost"
+                  :aria-label="`Modifier la page « ${item.intitule} »`"
+                />
+                <UButton
+                  icon="i-lucide-trash-2"
+                  color="error"
+                  variant="ghost"
+                  :aria-label="`Supprimer la page « ${item.intitule} »`"
+                  @click="askDelete(item)"
+                />
+              </template>
+            </PortfolioOrderedList>
+          </UiAsyncState>
           <p role="status" class="sr-only">{{ pagesMessage }}</p>
         </section>
       </div>
