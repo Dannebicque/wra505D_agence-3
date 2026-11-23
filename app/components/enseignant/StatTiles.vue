@@ -16,10 +16,11 @@ const titleId = useId()
       <div
         v-for="tile in tiles"
         :key="tile.label"
-        class="flex min-h-24 flex-col justify-between gap-3 rounded-panneau bg-muted p-4 lg:min-h-28 lg:p-5"
+        class="flex min-h-24 flex-col justify-between gap-3 rounded-panneau bg-muted p-4 sm:p-6 lg:min-h-28"
       >
         <dt class="text-sm text-muted">{{ tile.label }}</dt>
-        <dd class="text-3xl text-highlighted">
+        <!-- Chiffres tabulaires : les valeurs des tuiles s'alignent et ne bougent pas en changeant -->
+        <dd class="text-3xl text-highlighted tabular-nums">
           {{ tile.value }}
           <span v-if="tile.suffix" class="text-base text-muted">{{ tile.suffix }}</span>
         </dd>

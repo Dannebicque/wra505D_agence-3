@@ -26,7 +26,7 @@ const max = computed(() => Math.max(1, ...props.repartition.map((r) => r.total))
         :pending="r.pending"
         :max="max"
       />
-      <span class="col-span-2 text-xs text-muted sm:col-span-1 sm:text-right">
+      <span class="col-span-2 text-xs text-muted tabular-nums sm:col-span-1 sm:text-right">
         {{ progressionSummary(r) }}
       </span>
     </li>
