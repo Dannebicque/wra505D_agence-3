@@ -2,9 +2,14 @@
 
 namespace App\Validator;
 
+use App\Entity\Fichier;
 use App\Entity\Trace;
+use App\Entity\Users;
 use App\Enum\ConceptionIaEnum;
 use App\Enum\RealisationIaEnum;
+use App\Repository\FichierRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 
@@ -16,6 +21,13 @@ final class TraceValideValidator extends ConstraintValidator
 {
     /** Fichier déposé (/api/fichiers/<uuid>) ou fichier repris de l'ancienne version (/fichiers/…). */
     private const CHEMIN_FICHIER = '#^/api/fichiers/[0-9a-f-]{36}$|^/fichiers/[\w.-]+$#';
+
+    public function __construct(
+        private readonly Security $security,
+        private readonly FichierRepository $fichiers,
+        private readonly EntityManagerInterface $em,
+    ) {
+    }
 
     public function validate(mixed $trace, Constraint $constraint): void
     {
@@ -81,6 +93,31 @@ final class TraceValideValidator extends ConstraintValidator
         } elseif ($trace->getDateRealisationJour() > $aujourdhui) {
             $echec('dateRealisation', 'La date de réalisation ne peut pas être dans le futur.');
         }
+
+        // Comme fileFieldViolations() côté Nitro, une fois la saisie valide : une image ou un PDF doit être un fichier
+        // déposé par CET étudiant et du bon format, sinon n'importe quel chemin ou le fichier d'un autre y serait glissé.
+        // Un fichier inchangé reste accepté (fichiers repris de l'ancienne version), un brouillon sans fichier aussi.
+        if (0 === \count($this->context->getViolations()) && \in_array($type, ['image', 'pdf'], true) && [] !== $contenu
+            && !$this->fichierInchange($trace) && !$this->fichierDeLEtudiant($contenu[0], $type)) {
+            $echec('contenu', 'Déposez un fichier du bon format avant de l’associer.');
+        }
+    }
+
+    private function fichierInchange(Trace $trace): bool
+    {
+        $origine = $this->em->getUnitOfWork()->getOriginalEntityData($trace);
+
+        return [] !== $origine && $origine['type_trace'] === $trace->getTypeTrace() && ($origine['contenu'] ?? []) === $trace->getContenu();
+    }
+
+    private function fichierDeLEtudiant(string $chemin, string $type): bool
+    {
+        $user = $this->security->getUser();
+        $fichier = $user instanceof Users && preg_match('#^/api/fichiers/([0-9a-f-]{36})$#', $chemin, $id)
+            ? $this->fichiers->duProprietaire($id[1], $user)
+            : null;
+
+        return null !== $fichier && \in_array($fichier->getMimeType(), Fichier::REGLES[$type]['types'], true);
     }
 
     /** Comme `new URL()` du navigateur limité à http(s) : un schéma web et un hôte, sans espace. */

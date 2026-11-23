@@ -6,6 +6,8 @@
 parameters:
     api_key: '%env(resolve:API_KEY)%'
     files_directory: '%kernel.project_dir%/public/upload/files'
+    # Fichiers des traces, hors de public/ : servis seulement par GET /api/fichiers/{id}, après contrôle d'accès
+    fichiers_dir: '%kernel.project_dir%/var/fichiers/%kernel.environment%'
 
 services:
 #    request_stack:
