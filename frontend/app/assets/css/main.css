@@ -1,0 +1,297 @@
+@import 'tailwindcss';
+@import '@nuxt/ui';
+
+/*
+ * Thème UniFolio : style A éditorial (docs/superpowers/specs/2026-11-02-charpente-visuelle-design.md)
+ * aux couleurs de l'IUT (docs/superpowers/specs/2026-11-23-identite-iut-design.md).
+ * Seul endroit où sont fixées les couleurs, polices, formes et règles typographiques globales :
+ * les composants n'utilisent que ces jetons.
+ *
+ * Mode d'emploi
+ * - Couleurs : les neutres (`gris`, jetons `--ui-*` : bg-default, bg-muted, text-muted…) portent
+ *   l'essentiel. `primary` (= prune) est réservé à l'action principale, aux liens, au focus et aux
+ *   éléments actifs. `or` est un accent décoratif, très rare : jamais de texte or, jamais
+ *   d'information portée par l'or seul. Seule nuance utilisée : `or-400` (#F7B000), en fond sous un
+ *   texte `text-prune-950` (9,6:1) ou en décor (trait de la navigation active en mode sombre, logo).
+ *   Contour d'un champ ou d'une commande (≥ 3:1) : `ring-contour` / `border-contour`, déjà posé
+ *   par le thème (`app.config.ts`) sur les champs, listes, cases, radios et l'interrupteur.
+ * - Espacements : pas Tailwind 1, 2, 3, 4, 6, 8, 12 seulement (pas de 0.5, 1.5, 2.5, 5, 10 ni de
+ *   valeur arbitraire). 1 : icône ↔ texte, titre ↔ sous-ligne ; 2 : éléments d'un groupe ;
+ *   3 : lignes d'une liste de cartes ; 4 : titre de section → contenu ; 6 : champs d'un formulaire,
+ *   colonnes ; 8 : h1 + chapeau → premier bloc ; 12 : entre deux sections.
+ *   Panneau : `rounded-panneau bg-muted p-4 sm:p-6`. Carte de liste : `rounded-feuille border
+ *   border-default p-4`.
+ * - Texte courant (descriptions, aide, chapeaux) : `max-w-mesure` (≈ 65 caractères). Les
+ *   paragraphes ont déjà l'interlignage `leading-corps` et `text-wrap: pretty` ; les titres,
+ *   `text-wrap: balance`. Interlignage et interlettrage des grands corps (text-xl et plus) suivent la
+ *   taille : rien à ajouter sur un titre.
+ * - Nombres qui s'alignent ou changent (compteurs, tuiles de statistiques, positions, dates et
+ *   notes en colonne) : `tabular-nums`. Chiffre centré dans une pastille : `centre-optique`.
+ */
+@theme static {
+  /* Famille déclarée dans `:root` (plus bas) : @nuxt/fonts ne lit pas l'intérieur de `@theme` */
+  --font-sans: var(--font-instrument);
+
+  /*
+   * Palettes en OKLCH : teinte constante, clarté régulière, chroma réduite aux extrémités.
+   * Prune (violet de l'IUT, ancre : 700 = #4D3677) : couleur d'action (`primary`).
+   */
+  --color-prune-50: oklch(97% 0.014 297.55);
+  --color-prune-100: oklch(93.5% 0.03 297.55);
+  --color-prune-200: oklch(87% 0.056 297.55);
+  --color-prune-300: oklch(79% 0.085 297.55);
+  --color-prune-400: oklch(69% 0.11 297.55);
+  --color-prune-500: oklch(59% 0.125 297.55);
+  --color-prune-600: oklch(49% 0.125 297.55);
+  --color-prune-700: oklch(39.21% 0.1075 297.55);
+  --color-prune-800: oklch(32.5% 0.09 297.55);
+  --color-prune-900: oklch(26.5% 0.075 297.55);
+  --color-prune-950: oklch(20.5% 0.055 297.55);
+
+  /* Or (jaune de l'IUT, ancre : 400 = #F7B000) : accent décoratif, jamais en texte */
+  --color-or-50: oklch(98.5% 0.0133 79.41);
+  --color-or-100: oklch(96% 0.0359 79.41);
+  --color-or-200: oklch(92.5% 0.0685 79.41);
+  --color-or-300: oklch(87% 0.1222 79.41);
+  --color-or-400: oklch(80.35% 0.1667 79.41);
+  --color-or-500: oklch(72% 0.1494 79.41);
+  --color-or-600: oklch(62% 0.1286 79.41);
+  --color-or-700: oklch(52% 0.1079 79.41);
+  --color-or-800: oklch(44% 0.0913 79.41);
+  --color-or-900: oklch(37% 0.0768 79.41);
+  --color-or-950: oklch(28% 0.0581 79.41);
+
+  /* Gris (`neutral`) : très légèrement teinté vers le prune (chroma ≤ 0,01) */
+  --color-gris-50: oklch(98.4% 0.002 297.55);
+  --color-gris-100: oklch(96.7% 0.003 297.55);
+  --color-gris-200: oklch(92.9% 0.005 297.55);
+  --color-gris-300: oklch(86.9% 0.007 297.55);
+  --color-gris-400: oklch(71.1% 0.009 297.55);
+  --color-gris-500: oklch(55.4% 0.01 297.55);
+  --color-gris-600: oklch(44.6% 0.01 297.55);
+  --color-gris-700: oklch(37.2% 0.009 297.55);
+  --color-gris-800: oklch(27.9% 0.008 297.55);
+  --color-gris-900: oklch(20.8% 0.007 297.55);
+  --color-gris-950: oklch(12.9% 0.005 297.55);
+
+  /* Fond du cadre (barre latérale, barre haute) : classe `bg-cadre` */
+  --color-cadre: var(--uf-cadre);
+  /* Contour des champs (saisie, listes, cases, radios, interrupteur éteint) : `ring-contour` */
+  --color-contour: var(--uf-contour);
+
+  /* Rayons : `rounded-feuille` (contenu), `rounded-panneau` (aplats) */
+  --radius-feuille: 16px;
+  --radius-panneau: 22px;
+
+  /*
+   * Interlignage : `leading-corps` (texte courant, déjà appliqué aux paragraphes),
+   * `leading-interface` (textes courts d'interface : pastilles, étiquettes maison),
+   * `leading-titre` (titre écrit dans une petite taille, text-lg ou moins).
+   */
+  --leading-corps: 1.6;
+  --leading-interface: 1.25;
+  --leading-titre: 1.25;
+
+  /* Grands corps (titres) : l'interlignage se resserre et l'interlettrage négatif croît avec la taille */
+  --text-xl--line-height: 1.25;
+  --text-xl--letter-spacing: -0.01em;
+  --text-2xl--line-height: 1.2;
+  --text-2xl--letter-spacing: -0.01em;
+  --text-3xl--line-height: 1.15;
+  --text-3xl--letter-spacing: -0.02em;
+  --text-4xl--line-height: 1.15;
+  --text-4xl--letter-spacing: -0.02em;
+  --text-5xl--line-height: 1.15;
+  --text-5xl--letter-spacing: -0.02em;
+
+  /* Longueur de ligne du texte courant : `max-w-mesure` (45 à 75 caractères) */
+  --container-mesure: 65ch;
+}
+
+/*
+ * Surfaces et textes : mêmes clartés que le thème précédent (contrastes déjà validés par axe),
+ * dans la teinte du gris. Contrastes mesurés : docs/DECISIONS.md, entrée du 2026-11-23.
+ */
+:root {
+  /*
+   * @nuxt/fonts télécharge Instrument Sans au build et ajoute ici une police de secours aux
+   * métriques ajustées (« Instrument Sans Fallback: Arial », size-adjust…) : le texte ne bouge pas
+   * quand la police arrive.
+   */
+  --font-instrument: 'Instrument Sans', system-ui, sans-serif;
+  --uf-cadre: oklch(95.7% 0.005 297.55);
+  /*
+   * Contour des champs (WCAG 1.4.11, ≥ 3:1) : gris 500 sur bg-default / bg-muted 4,79 / 4,46:1.
+   * `--ui-border-accented` (gris 300, 1,49:1) reste aux contours décoratifs (boutons et badges
+   * « outline », séparateurs), qu'un gris 500 alourdirait sans rien apporter.
+   */
+  --uf-contour: var(--color-gris-500);
+  /* Fond de la sélection de texte (sous un texte prune-950) */
+  --uf-selection: var(--color-or-200);
+  /* 700 : texte blanc lisible sur les boutons (9,9:1) */
+  --ui-primary: var(--ui-color-primary-700);
+  /*
+   * Couleurs d'état assez foncées pour un texte AA sur leur fond teinté (pastilles « Brouillon »,
+   * « Finalisée ») : en 500 (défaut Nuxt UI), le jaune tombait à 1,7:1 ; en 700, le vert à 4,0:1.
+   */
+  --ui-success: var(--ui-color-success-800);
+  --ui-warning: var(--ui-color-warning-800);
+  --ui-error: var(--ui-color-error-700);
+  --ui-bg: #fff;
+  --ui-bg-muted: oklch(97.6% 0.003 297.55);
+  --ui-bg-elevated: oklch(92.1% 0.007 297.55);
+  --ui-text: oklch(24.1% 0.007 297.55);
+  --ui-text-highlighted: var(--ui-text);
+  --ui-text-muted: oklch(49.9% 0.008 297.55);
+  --ui-border: oklch(92.4% 0.006 297.55);
+}
+
+.dark {
+  --uf-cadre: oklch(18% 0.007 297.55);
+  /* Gris 500 sur bg-default / bg-muted : 3,69 / 3,35:1 (gris 400, à 6,9:1, découperait trop) */
+  --uf-contour: var(--color-gris-500);
+  --uf-selection: var(--color-or-400);
+  /* 400 : prune éclairci, texte foncé (gris-900) sur les boutons (6,2:1) */
+  --ui-primary: var(--ui-color-primary-400);
+  /* États clairs sur fond sombre (les valeurs du mode clair ne s'appliquent pas ici) */
+  --ui-success: var(--ui-color-success-400);
+  --ui-warning: var(--ui-color-warning-400);
+  --ui-error: var(--ui-color-error-400);
+  --ui-bg: oklch(21.2% 0.008 297.55);
+  --ui-bg-muted: oklch(25% 0.009 297.55);
+  --ui-bg-elevated: oklch(28.6% 0.01 297.55);
+  --ui-text: oklch(93.6% 0.004 297.55);
+  --ui-text-highlighted: var(--ui-text);
+  --ui-text-muted: oklch(72.2% 0.01 297.55);
+  --ui-border: oklch(28.3% 0.009 297.55);
+}
+
+@layer base {
+  html {
+    /* La gouttière de la barre de défilement prend la couleur du cadre */
+    background-color: var(--uf-cadre);
+    /* Place de la barre de défilement réservée : la page ne se décale pas quand elle apparaît */
+    scrollbar-gutter: stable;
+    font-kerning: normal;
+    font-optical-sizing: auto;
+  }
+
+  /* Espaces : la fenêtre ne défile pas (c'est le panneau principal, `gouttiere-stable`) */
+  html:has([data-mise-en-page='espace']) {
+    scrollbar-gutter: auto;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    text-wrap: balance;
+  }
+
+  /*
+   * Texte courant : interlignage de lecture, sans mot seul en dernière ligne. Passer par
+   * `--tw-leading` fait aussi gagner `leading-corps` sur l'interlignage des petites tailles
+   * (text-sm…) ; une classe `leading-*` sur l'élément reste prioritaire. Les grands corps (text-xl
+   * et plus : titres écrits en `p`, nombres des tuiles en `dd`) gardent l'interlignage serré de
+   * leur taille (@theme).
+   */
+  :is(p, dd, blockquote, figcaption):not(
+    [class*='text-xl'],
+    [class*='text-2xl'],
+    [class*='text-3xl'],
+    [class*='text-4xl'],
+    [class*='text-5xl']
+  ) {
+    --tw-leading: var(--leading-corps);
+    line-height: var(--leading-corps);
+  }
+
+  p,
+  dd,
+  blockquote,
+  figcaption {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--uf-selection);
+    color: var(--color-prune-950);
+  }
+}
+
+/* Titres (h1 des pages, accueil) : Instrument Sans en gras ; l'interlettrage suit la taille (@theme) */
+@utility font-titre {
+  font-family: var(--font-sans);
+  font-weight: 600;
+}
+
+/* Chiffre ou icône seul dans une pastille : centré sur la hauteur des capitales, pas sur la ligne */
+@utility centre-optique {
+  line-height: 1;
+  text-box: trim-both cap alphabetic;
+}
+
+/* Élément collé aux bords de l'écran (mises en page, menu plein écran) : évite encoche et barres système */
+@utility zone-sure {
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+}
+
+/* Zone qui défile : la place de la barre de défilement est réservée, le contenu ne se décale pas quand elle apparaît */
+@utility gouttiere-stable {
+  scrollbar-gutter: stable;
+}
+
+/*
+ * Focus clavier net partout (C-11, WCAG 1.4.11) : le thème Nuxt UI trace un anneau à 25 % d'opacité,
+ * trop pâle. Hors couche CSS, cette règle l'emporte sur les utilitaires Tailwind.
+ * Les éléments focalisables seulement par script (tabindex="-1") n'en ont pas besoin. La zone
+ * principale des espaces (main#contenu, tabindex="0" pour défiler au clavier) garde le sien.
+ */
+:focus-visible:not([tabindex='-1']) {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+
+/*
+ * Navigation entre pages (API View Transitions, `experimental.viewTransition` de Nuxt) : fondu
+ * court. Un élément partagé (titre de carte → titre de page) porte le même `view-transition-name`
+ * sur les deux pages. Nuxt n'en lance pas avec « réduire les animations » ; les règles ci-dessous
+ * coupent aussi toute animation restante.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 150ms;
+  animation-timing-function: ease-out;
+}
+
+::view-transition-group(*) {
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+
+  /*
+   * Filet de sécurité : durées quasi nulles (les événements de fin d'animation partent toujours).
+   * Sauf l'icône de chargement (`animate-spin`) : sans rotation, elle ne signale plus le travail en
+   * cours, et une rotation lente sur place ne pose pas de problème vestibulaire.
+   */
+  *:not(.animate-spin),
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

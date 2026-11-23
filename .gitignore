@@ -31,6 +31,7 @@ npm-debug.log*
 
 # IDE
 .idea/
+.fleet/
 .vscode/*
 !.vscode/extensions.json
 *.swp
@@ -41,5 +42,13 @@ Thumbs.db
 desktop.ini
 
 # Outils IA locaux
+.worktrees/
 .claude/worktrees/
 .claude/settings.local.json
+CLAUDE.local.md
+# Remplacerait AGENTS.md en silence pour Codex
+AGENTS.override.md
+
+# Dossiers de travail des skills IA (maquettes, fiches, registres)
+.superpowers/
+.taste-skill/

@@ -1,0 +1,12 @@
+.nuxt/
+.output/
+.data/
+coverage/
+playwright-report/
+test-results/
+package-lock.json
+*.md
+
+# Dossiers de travail des skills IA (maquettes, fiches, registres)
+.superpowers/
+.taste-skill/
