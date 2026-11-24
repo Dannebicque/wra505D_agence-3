@@ -15,7 +15,8 @@ services:
       API_KEY: ${API_KEY:-}
       MAILER_DSN: ${MAILER_DSN:-null://null}
     ports:
-      - "${API_PORT:-8000}:80"
+      # Joignable seulement depuis l'hôte (le front ou le reverse proxy), jamais en HTTP clair depuis l'extérieur
+      - "${API_BIND:-127.0.0.1}:${API_PORT:-8000}:80"
     volumes:
       # Fichiers des traces : à sauvegarder avec la base (fiches en base, contenu ici)
       - fichiers:/app/var/fichiers/prod

@@ -2,6 +2,10 @@ vendor/
 var/
 .env.local
 .env.*.local
+# Secrets de production : jamais dans l'image (lus au démarrage par compose)
+.env.prod
+.env.prod.*
+!.env.prod.example
 tests/
 compose*.yaml
 .git

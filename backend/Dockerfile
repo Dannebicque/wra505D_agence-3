@@ -38,7 +38,8 @@ COPY composer.json composer.lock symfony.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
 
 COPY . .
-RUN rm -rf tests var .env.local .env.*.local \
+# Aucun fichier de secrets ne doit être figé par dump-env (ceinture et bretelles avec .dockerignore)
+RUN rm -rf tests var .env.local .env.*.local .env.prod .env.prod.* \
     && composer dump-autoload --classmap-authoritative --no-dev \
     && composer dump-env prod \
     && bin/console cache:warmup \

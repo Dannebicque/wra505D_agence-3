@@ -14,7 +14,8 @@ cd frontend && NUXT_API_PROXY=http://localhost:8000 npm run dev
   ([`server/middleware/api-proxy.ts`](../frontend/server/middleware/api-proxy.ts)). Le navigateur et le rendu serveur
   restent sur l'origine du front : le cookie de session, les fichiers (`/api/fichiers/…`) et les erreurs passent sans
   CORS. Laisser `NUXT_PUBLIC_API_BASE` **vide**.
-- Sans `NUXT_API_PROXY`, rien ne change : les routes Nitro factices de `server/api/` répondent, comme avant.
+- C'est **tout ou rien** sur `/api/**` : avec `NUXT_API_PROXY`, plus aucune route factice ne répond. Sans, rien ne change : les routes Nitro factices de `server/api/` répondent, comme avant. Les écrans qui lisent encore `app/demo/` (sans appel à l'API) restent en démo dans les deux cas.
+- Le relais ne sort jamais de `/api/` (chemin normalisé, `server/utils/api-proxy-url.ts`), transmet `Accept`, relaie le corps au fil de l'eau et refuse en 413 un envoi de plus de 11 Mo.
 - Comptes de démo (fixtures), mot de passe `test` : `etudiant`, `etudiant2`, `enseignant`, `enseignant2` (autre
   département), `enseignant3` (même département), `admin`. Recharger les données :
   `docker compose exec php bin/console doctrine:fixtures:load -n`.
@@ -87,6 +88,10 @@ le PO).
 ## 6. Production
 
 - API : `backend/compose.prod.yaml` (voir `backend/README.md`, § Production).
-- Front : `NUXT_API_PROXY` pointe vers l'API (réseau interne) ; l'API déclare l'IP du serveur Nuxt dans
-  `TRUSTED_PROXIES`, pour que la limite de connexion compte les visiteurs et non le serveur Nuxt.
+- Front : `NUXT_API_PROXY` pointe vers l'API (`http://127.0.0.1:8000` si elle tourne sur le même hôte) ; l'API déclare
+  l'IP du serveur Nuxt dans `TRUSTED_PROXIES`, pour que la limite de connexion compte les visiteurs et non Nuxt.
   `CORS_ALLOW_ORIGIN` reste l'origine du front.
+- **Limite connue** : le relais transmet l'IP et le protocole de la connexion qu'il reçoit. Si Nuxt est lui-même derrière
+  un reverse proxy HTTPS, l'API verrait l'IP de ce proxy pour tous les visiteurs (limite de connexion commune) :
+  exposer Nuxt directement, ou adapter `api-proxy.ts` pour faire confiance à ce proxy (dernière adresse de
+  `X-Forwarded-For` seulement).

@@ -136,7 +136,7 @@ Image et compose dédiés (cible `prod` du `Dockerfile`, code et dépendances da
     cp .env.prod.example .env.prod   # puis remplir les secrets (openssl rand -hex 32)
     docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
 
-Le démarrage refuse un `APP_SECRET` absent ou laissé à sa valeur par défaut. La base n'est pas publiée hors de Docker ; les fichiers des traces sont dans le volume `fichiers`, à sauvegarder avec la base. Le front relaie `/api/**` vers l'API ([`docs/BASCULE-API.md`](../docs/BASCULE-API.md)).
+Le démarrage refuse un `APP_SECRET` absent, par défaut ou de moins de 32 caractères. `.env.prod` n'entre jamais dans l'image (`.dockerignore`). L'API n'est publiée que sur `127.0.0.1` (le front ou le reverse proxy la joint depuis l'hôte) et la base pas du tout ; les fichiers des traces sont dans le volume `fichiers`, à sauvegarder avec la base. Une seule instance de l'API : les migrations sont appliquées à chaque démarrage, sans verrou. Les sessions sont des fichiers du conteneur : un redéploiement déconnecte les utilisateurs. Le front relaie `/api/**` vers l'API ([`docs/BASCULE-API.md`](../docs/BASCULE-API.md)).
 
 - `CORS_ALLOW_ORIGIN` : l'adresse du front de production (expression régulière, par ex. `'^https://portfolio\.exemple\.fr$'`).
 - `TRUSTED_PROXIES` : l'IP ou le sous-réseau exact du reverse proxy, ou du serveur Nuxt qui relaie `/api/**` (sinon la limite de connexion compte tous les utilisateurs comme une seule IP). Jamais `REMOTE_ADDR` si l'API est joignable sans passer par le proxy.

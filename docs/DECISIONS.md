@@ -201,7 +201,7 @@ Format : date, décision, alternatives écartées, raison.
 
 ## 2026-11-24 — Bascule vers ApiPlatform par un relais même origine (Sprint 4)
 
-- **Décision** (PO, Mathéo) : le front relaie `/api/**` vers l'API (`frontend/server/middleware/api-proxy.ts`, variable `NUXT_API_PROXY`), au lieu d'appeler une autre origine. Sans la variable, les routes Nitro factices répondent : chaque écran bascule à son rythme. Guide : `docs/BASCULE-API.md`.
+- **Décision** (PO, Mathéo) : le front relaie `/api/**` vers l'API (`frontend/server/middleware/api-proxy.ts`, variable `NUXT_API_PROXY`), au lieu d'appeler une autre origine. C'est tout ou rien sur `/api/**` ; sans la variable, les routes Nitro factices répondent. Les écrans encore sur `app/demo/` basculent un par un. Guide : `docs/BASCULE-API.md`.
 - **Alternatives écartées** : appeler l'API sur son origine (`NUXT_PUBLIC_API_BASE`) : il faudrait `credentials: 'include'` sur chaque appel, et en production des cookies `SameSite=None; Secure` si les domaines diffèrent ; les liens `/api/fichiers/…` des traces seraient à réécrire.
 - **Raison** : même origine en dev et en prod, donc cookie de session, fichiers et rendu serveur sans réglage ; le relais transmet l'IP du visiteur (`X-Forwarded-For`) pour la limite de connexion de l'API (`TRUSTED_PROXIES`).
 
