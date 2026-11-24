@@ -29,12 +29,13 @@ class FichierTest extends ApiTestCase
         self::assertMatchesRegularExpression('#^/api/fichiers/[0-9a-f-]{36}$#', $fichier['@id']);
         self::assertSame('Photo du café_script_.png', $fichier['nom']);
         self::assertSame('image/png', $fichier['mimeType']);
-        self::assertSame(\strlen(base64_decode(self::PNG)), $fichier['taille']);
 
         $this->client->request('GET', $fichier['@id']);
         $reponse = $this->client->getInternalResponse();
         self::assertResponseIsSuccessful();
-        self::assertSame(base64_decode(self::PNG), $this->client->getInternalResponse()->getContent());
+        // Image réencodée (métadonnées retirées) : la taille annoncée est celle du fichier servi
+        self::assertStringStartsWith("\x89PNG", $reponse->getContent());
+        self::assertSame(\strlen($reponse->getContent()), $fichier['taille']);
         self::assertSame('image/png', $reponse->getHeader('Content-Type'));
         self::assertSame('nosniff', $reponse->getHeader('X-Content-Type-Options'));
         self::assertSame('same-site', $reponse->getHeader('Cross-Origin-Resource-Policy'));
@@ -70,7 +71,8 @@ class FichierTest extends ApiTestCase
         // Sans cookie de session : visiteur anonyme
         $this->client->getCookieJar()->clear();
         $this->client->request('GET', $iri);
-        self::assertResponseStatusCodeSame(401);
+        // Visiteur anonyme : 404, comme un fichier qui n'existe pas (seuls ceux d'un portfolio public sont ouverts)
+        self::assertResponseStatusCodeSame(404);
     }
 
     public static function envoisRefuses(): iterable
@@ -145,6 +147,38 @@ class FichierTest extends ApiTestCase
 
         $this->client->request('POST', '/api/fichiers', ['type' => 'pdf'], [], ['HTTP_ACCEPT' => 'application/ld+json', 'HTTP_CONTENT_LENGTH' => (string) (11 * 1024 * 1024)]);
         self::assertResponseStatusCodeSame(413);
+    }
+
+    public function testPhotoSansSesMetadonnees(): void
+    {
+        $this->connecter('etudiant');
+        $image = imagecreatetruecolor(4, 4);
+        ob_start();
+        imagejpeg($image);
+        $jpeg = (string) ob_get_clean();
+        // Bloc EXIF (APP1) glissé après le marqueur de début, avec une « position » repérable
+        $exif = "Exif\0\0MM\0*\0\0\0\x08GPSsecret-48.29N-4.07E";
+        $photo = substr($jpeg, 0, 2) . "\xFF\xE1" . pack('n', \strlen($exif) + 2) . $exif . substr($jpeg, 2);
+
+        $fichier = $this->deposer('image', $photo, 'photo.jpg');
+        self::assertResponseStatusCodeSame(201);
+
+        $this->client->request('GET', $fichier['@id']);
+        self::assertStringStartsWith("\xFF\xD8\xFF", $this->client->getInternalResponse()->getContent());
+        self::assertStringNotContainsString('GPSsecret', $this->client->getInternalResponse()->getContent());
+    }
+
+    public function testRefuseUneImageDemesuree(): void
+    {
+        $this->connecter('etudiant');
+        // En-tête PNG annonçant 10 000 × 10 000 pixels (100 mégapixels), sans les données
+        $png = base64_decode(self::PNG);
+        $enorme = substr($png, 0, 16) . pack('NN', 10000, 10000) . substr($png, 24);
+
+        $reponse = $this->deposer('image', $enorme, 'enorme.png');
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('L’image est trop grande (16 mégapixels au plus).', $reponse['violations'][0]['message']);
     }
 
     public function testEnseignantNeDeposePas(): void

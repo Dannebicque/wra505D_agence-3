@@ -35,6 +35,12 @@ final class FichierProcessor implements ProcessorInterface
     private const ESPACE_MAX = 200 * 1024 * 1024;
     private const NOMBRE_MAX = 100;
 
+    /**
+     * Au-delà, l'image décompressée saturerait la mémoire (bombe de décompression) : GD prend 4 octets par pixel,
+     * et la rotation une copie de plus, soit 128 Mo à 16 Mpx (memory_limit à 256M dans l'image Docker).
+     */
+    private const PIXELS_MAX = 16_000_000;
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly FichierRepository $fichiers,
@@ -77,6 +83,12 @@ final class FichierProcessor implements ProcessorInterface
         if ($taille > $regles['max']) {
             throw self::refus(self::tropGros($regles['max']));
         }
+        if (\in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+            $taille = self::nettoyerImage($envoi->getPathname(), $mimeType, $regles['mauvaisFormat']);
+            if ($taille > $regles['max']) {
+                throw self::refus(self::tropGros($regles['max']));
+            }
+        }
 
         $user = $this->security->getUser();
         \assert($user instanceof Users);
@@ -109,6 +121,44 @@ final class FichierProcessor implements ProcessorInterface
         }
 
         return $fichier;
+    }
+
+    /**
+     * Réencode l'image pour en retirer les métadonnées (position GPS, appareil…) avant qu'un portfolio public ne
+     * la montre, en appliquant d'abord l'orientation de l'appareil photo. Le GIF n'est pas réencodé (animation).
+     */
+    private static function nettoyerImage(string $chemin, string $mimeType, string $illisible): int
+    {
+        $dimensions = @getimagesize($chemin);
+        if (false === $dimensions) {
+            throw self::refus($illisible);
+        }
+        if ($dimensions[0] * $dimensions[1] > self::PIXELS_MAX) {
+            throw self::refus('L’image est trop grande (16 mégapixels au plus).');
+        }
+        $image = @imagecreatefromstring((string) file_get_contents($chemin));
+        if (false === $image) {
+            throw self::refus($illisible);
+        }
+        if ('image/jpeg' === $mimeType) {
+            $angle = match ((int) (@exif_read_data($chemin)['Orientation'] ?? 1)) {
+                3 => 180,
+                6 => -90,
+                8 => 90,
+                default => 0,
+            };
+            $image = 0 === $angle ? $image : imagerotate($image, $angle, 0);
+        } else {
+            imagesavealpha($image, true);
+        }
+        match ($mimeType) {
+            'image/jpeg' => imagejpeg($image, $chemin, 90),
+            'image/png' => imagepng($image, $chemin),
+            'image/webp' => imagewebp($image, $chemin, 90),
+        };
+        clearstatcache(true, $chemin);
+
+        return (int) filesize($chemin);
     }
 
     private static function tropGros(int $max): string

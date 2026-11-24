@@ -17,7 +17,7 @@ export function useTableauDeBordEtudiant() {
       getEtudiant(DEMO_ETUDIANT_ID, requestOptions),
       listTraces(requestOptions),
       listValidations(requestOptions),
-      listReferentiels(),
+      listReferentiels(requestOptions),
     ])
     return { etudiant, traces, validations, referentiel: referentiels[0] ?? null }
   })

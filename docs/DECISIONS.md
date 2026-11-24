@@ -240,3 +240,16 @@ Design : `docs/superpowers/specs/2026-11-23-passe-ui-ux-design.md`.
 - **Décision** : changer les clartés des jetons (`app/assets/css/main.css`) plutôt qu'ajouter des ombres partout. Paliers, clair / sombre : panneau 1,13 / 1,16, bordure 1,41 / 1,44, cadre 1,18 / 1,09 ; la piste sur le panneau reste à 1,17 en clair (le panneau a foncé avec elle) et passe à 1,15 en sombre ; `--ui-bg-accented` redéfini sous `bg-elevated` pour que le survol des boutons neutres « soft » fonce ; `--ui-border-accented` foncé pour que le survol d'une carte se voie encore. Les cartes cliquables d'une liste (traces, portfolios, traces à évaluer, bilans individuels, accès de démonstration) prennent `shadow-carte`, renforcée au survol et au focus (`shadow-carte-survol`), en noir avec un liseré clair en sombre, où une ombre prune ne se voyait pas.
 - **Écartés** : des ombres sur tous les panneaux (tout aurait l'air de flotter, et l'ombre ne dirait plus « cliquable ») ; un gris encore plus foncé (l'écran s'alourdit sans mieux séparer).
 - **Contraintes vérifiées** : texte discret sur `bg-elevated` 4,56:1 (clair), contour des champs sur le panneau 4,23 / 3,17:1, segments des barres de progression 3,17:1 au moins. Le contour des champs tombe à 2,76:1 sur `bg-elevated` en sombre : aucune commande n'y est posée (garde-fou écrit dans `main.css`).
+
+## 2026-11-24 — Bascule vers ApiPlatform par un relais même origine (Sprint 4)
+
+- **Décision** (PO, Mathéo) : le front relaie `/api/**` vers l'API (`frontend/server/middleware/api-proxy.ts`, variable `NUXT_API_PROXY`), au lieu d'appeler une autre origine. C'est tout ou rien sur `/api/**` ; sans la variable, les routes Nitro factices répondent. Les écrans encore sur `app/demo/` basculent un par un. Guide : `docs/BASCULE-API.md`.
+- **Alternatives écartées** : appeler l'API sur son origine (`NUXT_PUBLIC_API_BASE`) : il faudrait `credentials: 'include'` sur chaque appel, et en production des cookies `SameSite=None; Secure` si les domaines diffèrent ; les liens `/api/fichiers/…` des traces seraient à réécrire.
+- **Raison** : même origine en dev et en prod, donc cookie de session, fichiers et rendu serveur sans réglage ; le relais transmet l'IP du visiteur (`X-Forwarded-For`) pour la limite de connexion de l'API (`TRUSTED_PROXIES`).
+
+## 2026-11-24 — Image de production du back (Sprint 4)
+
+- **Décision** : une seule `backend/Dockerfile` à deux cibles (`dev`, `prod`) et `backend/compose.prod.yaml` : code et dépendances sans dev dans l'image, php.ini de production, opcache sans relecture des fichiers, migrations au démarrage, secrets par variables (`.env.prod`, jamais versionné), refus de démarrer avec l'`APP_SECRET` par défaut.
+- **Alternatives écartées** : un second Dockerfile (extensions et réglages PHP dupliqués) ; le mode worker de FrankenPHP (plus rapide, mais l'état partagé entre requêtes demande une revue du code repris de l'ancienne version).
+- **Raison** : la roadmap prévoit l'API sous Docker pour le Sprint 4 ; la même base d'image en dev et en prod évite les écarts d'extensions.
+

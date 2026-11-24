@@ -7,15 +7,58 @@
  */
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
 use App\Repository\PortfolioRepository;
+use App\State\PortfolioProcessor;
+use App\State\PortfolioPublicProvider;
+use App\Validator\PortfolioValide;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Attribute\Groups;
+use Symfony\Component\Serializer\Attribute\SerializedName;
 
+/**
+ * Portfolio d'un étudiant, au format de shared/types/portfolio.ts : un par année (E-PF-10).
+ * Public (`visibilite: publique`), il se lit sans connexion à /api/portfolios/{id}/public (E-PF-06).
+ * L'étudiant ne voit que ses portfolios hors corbeille (App\Doctrine\ProprietaireExtension).
+ */
+#[ApiResource(
+    operations: [
+        new GetCollection(),
+        new Get(),
+        new Post(processor: PortfolioProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
+        new Patch(processor: PortfolioProcessor::class, denormalizationContext: ['groups' => ['portfolio:write', 'portfolio:ordre']], security: "is_granted('ROLE_ETUDIANT')"),
+        new Delete(processor: PortfolioProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
+        new Get(
+            uriTemplate: '/portfolios/{id}/public',
+            provider: PortfolioPublicProvider::class,
+            normalizationContext: ['groups' => ['portfolio:public']],
+            security: 'true',
+            name: 'portfolio_public',
+        ),
+    ],
+    normalizationContext: ['groups' => ['portfolio:read']],
+    denormalizationContext: ['groups' => ['portfolio:write']],
+    order: ['id' => 'ASC'],
+    // Lecture : l'étudiant (ses données) et l'enseignant (ses départements), cf. App\Doctrine\ProprietaireExtension
+    security: "is_granted('ROLE_ETUDIANT') or is_granted('ROLE_ENSEIGNANT')",
+    collectDenormalizationErrors: true,
+)]
+#[PortfolioValide]
 #[ORM\Entity(repositoryClass: PortfolioRepository::class)]
+// Un portfolio par étudiant et par année, hors corbeille
+#[ORM\UniqueConstraint(name: 'portfolio_unique_par_annee', fields: ['etudiant', 'annee'], options: ['where' => '(date_suppression IS NULL)'])]
 class Portfolio
 {
+    public const VISIBILITES = ['publique', 'privee'];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -27,10 +70,15 @@ class Portfolio
     #[ORM\Column(type: Types::DATETIME_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $date_modification = null;
 
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE, nullable: true)]
+    private ?\DateTimeImmutable $date_suppression = null;
+
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $intitule = null;
 
-    #[ORM\ManyToMany(targetEntity: Page::class, mappedBy: 'portfolio')]
+    /** @var Collection<int, Page> */
+    #[ORM\OneToMany(mappedBy: 'portfolio', targetEntity: Page::class)]
+    #[ORM\OrderBy(['ordre' => \SortDirection::Ascending, 'id' => \SortDirection::Ascending])]
     private Collection $pages;
 
     #[ORM\ManyToOne(inversedBy: 'portfolios')]
@@ -39,14 +87,16 @@ class Portfolio
     #[ORM\OneToMany(mappedBy: 'portfolio', targetEntity: Commentaire::class, cascade: ['persist', 'remove'])]
     private Collection $commentaires;
 
+    /** true = public (lien public actif), false = privé. */
     #[ORM\Column]
-    private ?bool $visibilite = null;
+    private ?bool $visibilite = false;
 
+    /** Valeur reçue hors de VISIBILITES, signalée par App\Validator\PortfolioValide. */
+    private ?string $visibiliteInvalide = null;
+
+    /** IRI d'une image déposée par l'étudiant (/api/fichiers/<uuid>), ou null. */
     #[ORM\Column(length: 255, nullable: true)]
-    private ?string $banniere = '/files_directory/banniere.jpg';
-
-    #[ORM\OneToMany(mappedBy: 'portfolio', targetEntity: OrdrePage::class, cascade: ['persist', 'remove'])]
-    private Collection $ordrePages;
+    private ?string $banniere = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     private ?string $description = null;
@@ -57,16 +107,17 @@ class Portfolio
     #[ORM\ManyToOne(inversedBy: 'portfolio')]
     private ?Cv $cv = null;
 
+    /** Visible par les recruteurs. */
     #[ORM\Column]
-    private ?bool $opt_search = null;
+    private ?bool $opt_search = false;
+
+    /** Ordre de pages envoyé par l'étudiant, contrôlé par App\Validator\PortfolioValide. */
+    private ?array $pagesDemandees = null;
 
     public function __construct()
     {
-        $this->date_creation = new \DateTime();
-        $this->date_modification = null;
         $this->pages = new ArrayCollection();
         $this->commentaires = new ArrayCollection();
-        $this->ordrePages = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -74,6 +125,7 @@ class Portfolio
         return $this->id;
     }
 
+    #[Groups(['portfolio:read'])]
     public function getDateCreation(): ?\DateTimeInterface
     {
         return $this->date_creation;
@@ -86,6 +138,7 @@ class Portfolio
         return $this;
     }
 
+    #[Groups(['portfolio:read'])]
     public function getDateModification(): ?\DateTimeInterface
     {
         return $this->date_modification;
@@ -98,21 +151,68 @@ class Portfolio
         return $this;
     }
 
+    #[Groups(['portfolio:read'])]
+    public function getDateSuppression(): ?\DateTimeImmutable
+    {
+        return $this->date_suppression;
+    }
+
+    public function setDateSuppression(?\DateTimeImmutable $date_suppression): self
+    {
+        $this->date_suppression = $date_suppression;
+
+        return $this;
+    }
+
+    #[Groups(['portfolio:read', 'portfolio:public'])]
     public function getIntitule(): ?string
     {
         return $this->intitule;
     }
 
+    #[Groups(['portfolio:write'])]
     public function setIntitule(?string $intitule): self
     {
-        $this->intitule = $intitule;
+        $this->intitule = null === $intitule ? null : mb_trim($intitule);
 
         return $this;
     }
 
     /**
-     * @return Collection<int, Page>
+     * Pages hors corbeille, dans l'ordre d'affichage.
+     *
+     * @return list<Page>
      */
+    #[Groups(['portfolio:read', 'portfolio:public'])]
+    #[SerializedName('pages')]
+    public function getPagesVisibles(): array
+    {
+        return array_values($this->pages->filter(static fn (Page $page): bool => null === $page->getDateSuppression())->toArray());
+    }
+
+    /**
+     * Nouvel ordre des pages : appliqué tel quel, puis contrôlé (il doit reprendre exactement les pages).
+     *
+     * @param list<Page> $pages
+     */
+    #[Groups(['portfolio:ordre'])]
+    #[SerializedName('pages')]
+    public function setPagesVisibles(array $pages): self
+    {
+        $this->pagesDemandees = $pages;
+        foreach (array_values($pages) as $rang => $page) {
+            $page->setOrdre($rang + 1);
+        }
+
+        return $this;
+    }
+
+    public function getPagesDemandees(): ?array
+    {
+        return $this->pagesDemandees;
+    }
+
+    /** @return Collection<int, Page> */
     public function getPages(): Collection
     {
         return $this->pages;
@@ -122,21 +222,13 @@ class Portfolio
     {
         if (!$this->pages->contains($page)) {
             $this->pages->add($page);
-            $page->addPortfolio($this);
+            $page->setPortfolio($this);
         }
 
         return $this;
     }
 
-    public function removePage(Page $page): self
-    {
-        if ($this->pages->removeElement($page)) {
-            $page->removePortfolio($this);
-        }
-
-        return $this;
-    }
-
+    #[Groups(['portfolio:read', 'portfolio:public'])]
     public function getEtudiant(): ?Etudiant
     {
         return $this->etudiant;
@@ -196,60 +288,61 @@ class Portfolio
         return $this->visibilite;
     }
 
+    #[Groups(['portfolio:read'])]
+    #[SerializedName('visibilite')]
+    public function getVisibiliteApi(): string
+    {
+        return $this->visibilite ? 'publique' : 'privee';
+    }
+
+    #[Groups(['portfolio:write'])]
+    #[SerializedName('visibilite')]
+    public function setVisibiliteApi(?string $visibilite): self
+    {
+        $this->visibiliteInvalide = \in_array($visibilite, self::VISIBILITES, true) ? null : (string) $visibilite;
+        if (null === $this->visibiliteInvalide) {
+            $this->visibilite = 'publique' === $visibilite;
+        }
+
+        return $this;
+    }
+
+    public function getVisibiliteInvalide(): ?string
+    {
+        return $this->visibiliteInvalide;
+    }
+
+    #[Groups(['portfolio:read', 'portfolio:public'])]
     public function getBanniere(): ?string
     {
         return $this->banniere;
     }
 
+    #[Groups(['portfolio:write'])]
     public function setBanniere(?string $banniere): self
     {
-        $this->banniere = $banniere;
+        $banniere = null === $banniere ? null : mb_trim($banniere);
+        $this->banniere = '' === $banniere ? null : $banniere;
 
         return $this;
     }
 
-    /**
-     * @return Collection<int, OrdrePage>
-     */
-    public function getOrdrePages(): Collection
-    {
-        return $this->ordrePages;
-    }
-
-    public function addOrdrePage(OrdrePage $ordrePage): static
-    {
-        if (!$this->ordrePages->contains($ordrePage)) {
-            $this->ordrePages->add($ordrePage);
-            $ordrePage->setPortfolio($this);
-        }
-
-        return $this;
-    }
-
-    public function removeOrdrePage(OrdrePage $ordrePage): static
-    {
-        if ($this->ordrePages->removeElement($ordrePage)) {
-            // set the owning side to null (unless already changed)
-            if ($ordrePage->getPortfolio() === $this) {
-                $ordrePage->setPortfolio(null);
-            }
-        }
-
-        return $this;
-    }
-
+    #[Groups(['portfolio:read', 'portfolio:public'])]
     public function getDescription(): ?string
     {
         return $this->description;
     }
 
+    #[Groups(['portfolio:write'])]
     public function setDescription(?string $description): static
     {
-        $this->description = $description;
+        $description = null === $description ? null : mb_trim($description);
+        $this->description = '' === $description ? null : $description;
 
         return $this;
     }
 
+    #[Groups(['portfolio:read'])]
     public function getAnnee(): ?Annee
     {
         return $this->annee;
@@ -280,6 +373,22 @@ class Portfolio
     public function setOptSearch(bool $opt_search): static
     {
         $this->opt_search = $opt_search;
+
+        return $this;
+    }
+
+    #[Groups(['portfolio:read'])]
+    #[SerializedName('visibleRecruteurs')]
+    public function isVisibleRecruteurs(): bool
+    {
+        return (bool) $this->opt_search;
+    }
+
+    #[Groups(['portfolio:write'])]
+    #[SerializedName('visibleRecruteurs')]
+    public function setVisibleRecruteurs(bool $visible): self
+    {
+        $this->opt_search = $visible;
 
         return $this;
     }

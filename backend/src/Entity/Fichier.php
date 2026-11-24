@@ -19,11 +19,14 @@ use Symfony\Component\Uid\Uuid;
  */
 #[ApiResource(
     operations: [
-        new Get(provider: FichierProvider::class),
+        // Lecture ouverte : FichierProvider sert le propriétaire ou un fichier d'un portfolio public, 404 sinon
+        new Get(provider: FichierProvider::class, security: 'true'),
         new Post(inputFormats: ['multipart' => ['multipart/form-data']], deserialize: false, processor: FichierProcessor::class),
     ],
     normalizationContext: ['groups' => ['fichier:read']],
     security: "is_granted('ROLE_ETUDIANT')",
+    // Identifiant UUID (la contrainte par défaut d'api_platform.yaml vise les entiers)
+    requirements: ['id' => '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'],
 )]
 #[ORM\Entity(repositoryClass: FichierRepository::class)]
 class Fichier

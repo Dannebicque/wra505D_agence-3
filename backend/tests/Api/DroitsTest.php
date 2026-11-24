@@ -33,8 +33,9 @@ class DroitsTest extends ApiTestCase
         $this->lire($this->ficheEtudiant('etudiant'));
         self::assertResponseIsSuccessful();
 
+        // Fiche d'un autre : 404, son existence ne se devine pas (ProprietaireExtension)
         $this->lire($this->ficheEtudiant('etudiant2'));
-        self::assertResponseStatusCodeSame(403);
+        self::assertResponseStatusCodeSame(404);
     }
 
     public function testEtudiantNeVoitPasLaListeDesEtudiants(): void
@@ -96,16 +97,21 @@ class DroitsTest extends ApiTestCase
         self::assertResponseStatusCodeSame(405);
     }
 
-    public function testEnseignantVoitTousLesEtudiants(): void
+    public function testEnseignantVoitLesEtudiantsDeSonDepartement(): void
     {
         $this->connecter('enseignant');
 
         $liste = $this->lire('/api/etudiants');
         self::assertResponseIsSuccessful();
         self::assertSame(2, $liste['totalItems']);
-
         $this->lire($this->ficheEtudiant('etudiant2'));
         self::assertResponseIsSuccessful();
+
+        // Enseignant d'un autre département : aucun étudiant, fiche introuvable
+        $this->connecter('enseignant2');
+        self::assertSame(0, $this->lire('/api/etudiants')['totalItems']);
+        $this->lire($this->ficheEtudiant('etudiant2'));
+        self::assertResponseStatusCodeSame(404);
     }
 
     public function testAdminVoitTousLesEtudiants(): void

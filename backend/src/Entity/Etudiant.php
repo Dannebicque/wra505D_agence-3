@@ -114,7 +114,7 @@ class Etudiant
         return $this->id;
     }
 
-    #[Groups(['etudiant:read'])]
+    #[Groups(['etudiant:read', 'portfolio:public'])]
     public function getPrenom(): ?string
     {
         return $this->prenom;
@@ -127,7 +127,7 @@ class Etudiant
         return $this;
     }
 
-    #[Groups(['etudiant:read'])]
+    #[Groups(['etudiant:read', 'portfolio:public'])]
     public function getNom(): ?string
     {
         return $this->nom;

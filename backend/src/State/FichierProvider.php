@@ -11,9 +11,12 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Uid\Uuid;
 
 /**
- * GET /api/fichiers/{id} : le contenu du fichier, à son seul propriétaire (404 pour les autres étudiants, 403 sinon).
+ * GET /api/fichiers/{id} : le contenu du fichier, à son propriétaire, à un enseignant du département si une trace
+ * finalisée l'utilise, ou à tous s'il est montré par un portfolio public (FichierRepository). 404 sinon, connecté ou
+ * non : son existence ne se devine pas.
  * Les en-têtes empêchent le navigateur d'interpréter le fichier autrement que son type réel.
  *
  * @implements ProviderInterface<BinaryFileResponse>
@@ -30,8 +33,17 @@ final class FichierProvider implements ProviderInterface
 
     public function provide(Operation $operation, array $uriVariables = [], array $context = []): BinaryFileResponse
     {
+        $id = (string) ($uriVariables['id'] ?? '');
         $user = $this->security->getUser();
-        $fichier = $user instanceof Users ? $this->fichiers->duProprietaire((string) ($uriVariables['id'] ?? ''), $user) : null;
+        $fichier = $user instanceof Users ? $this->fichiers->duProprietaire($id, $user) : null;
+        if (null === $fichier && Uuid::isValid($id)) {
+            $autre = $this->fichiers->find(Uuid::fromString($id));
+            $departements = $user instanceof Users && null !== $user->getEnseignant()
+                ? array_map(static fn ($departement): int => (int) $departement->getId(), $user->getEnseignant()->getDepartements())
+                : [];
+            $lisible = null !== $autre && ($this->fichiers->lisibleParEnseignant($autre, $departements) || $this->fichiers->estPublic($autre));
+            $fichier = $lisible ? $autre : null;
+        }
         $chemin = $this->dossier . '/' . $fichier?->getId();
         if (null === $fichier || !is_file($chemin)) {
             throw new NotFoundHttpException('Fichier introuvable.');

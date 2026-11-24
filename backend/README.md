@@ -80,19 +80,66 @@ Toutes exigent d'être connecté (401 sinon). Collections paginées par 30 (`?pa
 
 Règles à connaître côté front :
 
-- **Cloisonnement** : la trace, le fichier ou la validation d'un autre étudiant répond 404 (son existence ne se devine pas). Enseignants et admins reçoivent 403 sur ces ressources jusqu'au Sprint 3 (évaluation).
+- **Cloisonnement** : la trace, le fichier ou la validation d'un autre étudiant répond 404 (son existence ne se devine pas). Les admins reçoivent 403 ; les enseignants lisent selon les règles du Sprint 3 ci-dessous.
 - **Erreurs de saisie** : 422 avec `violations[]` (`propertyPath`, `message`), mêmes règles, même ordre et mêmes messages que `shared/utils/trace-validation.ts` et `shared/utils/fichier.ts`. Une valeur du mauvais type JSON (`titre: 12`, `statut: null`) donne un 422 sur le bon champ mais avec un message générique.
 - **Écart voulu avec le front** : une adresse web doit avoir un schéma http(s), un hôte et aucun espace ; `new URL()` accepte `https:exemple.fr` ou un espace dans le chemin, le serveur les refuse.
 - **Champs du serveur** : `bibliotheque`, `dateCreation`, `dateModification`, `dateSuppression` d'une trace, `etat` et `enseignant` d'une validation sont fixés par le serveur ; envoyés, ils sont ignorés.
 - **Corbeille** : une trace supprimée (`DELETE`, 204) disparaît de la lecture, de la liste et des validations, mais reste en base (restauration au Sprint 5, C-09).
 - **Fichiers** : format reconnu sur le contenu réel (JPEG, PNG, WebP, GIF jusqu'à 2 Mo, PDF jusqu'à 10 Mo, SVG refusé), nom nettoyé avec l'extension du type réel, 100 fichiers et 200 Mo au plus par étudiant. Ils sont rangés hors de `public/`, dans `var/fichiers/<env>/`. Une trace image ou PDF ne peut référencer que `/api/fichiers/<uuid>` déposé par son étudiant (ou garder un ancien fichier `/fichiers/…` inchangé).
 
+#### Portfolios et pages-projets (Sprint 2)
+
+| Ressource | Opérations | Accès |
+|---|---|---|
+| `/api/portfolios` | `GET`, `POST {intitule, description, visibilite, visibleRecruteurs, banniere}`, `PATCH` (mêmes champs + `pages` : nouvel ordre), `DELETE` (corbeille) | étudiant, ses portfolios |
+| `/api/pages` (`?portfolio=/api/portfolios/1`) | `GET` (dans l'ordre), `POST {portfolio, intitule, description}` (en fin de portfolio), `PATCH {intitule, description, traces}`, `DELETE` (corbeille) | étudiant, ses pages |
+| `/api/portfolios/{id}/public` | `GET` : portfolio, prénom et nom de l'étudiant, pages et traces finalisées embarquées | **sans connexion**, portfolio `publique` hors corbeille (404 sinon) |
+
+Règles à connaître côté front :
+
+- **Un portfolio par année** (E-PF-10) : l'étudiant et l'année (celle de son semestre) sont fixés par le serveur ; un second POST la même année répond 422 « Vous avez déjà un portfolio pour cette année. ». Un portfolio de la corbeille ne compte plus.
+- **Visibilité** : un seul réglage (`publique` / `privee`), `publique` active le lien public (point ouvert n° 14 tranché par le PO).
+- **Bannière** : l'IRI d'une image déposée par l'étudiant (`POST /api/fichiers`, type `image`) ; elle se lit sans connexion tant que le portfolio est public.
+- **Ordre des pages** : `PATCH /api/portfolios/{id}` avec `pages` reprenant exactement les pages actuelles, sinon 422.
+- **Traces d'une page** : `PATCH /api/pages/{id}` avec `traces` dans l'ordre voulu ; une trace ajoutée doit être finalisée et absente des autres pages du portfolio (mêmes messages que `page-rules.ts`). Une trace mise à la corbeille est masquée de `traces` mais garde sa place (elle reviendra si elle est restaurée). Une IRI de trace introuvable est signalée sur `traces[0]`, `traces[1]`…
+- **Corbeille** : une page supprimée disparaît de `pages` et libère ses traces pour d'autres pages ; un portfolio supprimé emporte ses pages.
+- **Lien public** : seules les traces finalisées s'affichent ; leurs fichiers se lisent sans connexion, tout autre fichier répond 404 au visiteur.
+- **Images** : JPEG, PNG et WebP sont réencodés à l'envoi (métadonnées et position GPS retirées, photo remise dans le bon sens) ; au-delà de 16 mégapixels, l'image est refusée. La taille renvoyée est celle du fichier réencodé.
+- **Limites proposées** (à valider avec Solène) : intitulé d'un portfolio obligatoire, 100 caractères ; description 2 000 caractères.
+
+#### Évaluation, commentaires et notifications (Sprint 3)
+
+Comptes de démo en plus : `enseignant2` (département CJ, ne voit aucun étudiant des fixtures) et `enseignant3` (MMI, collègue de `enseignant`).
+
+| Ressource | Opérations | Accès |
+|---|---|---|
+| Lecture enseignant | `GET` sur `/api/etudiants`, `/api/traces`, `/api/validations`, `/api/bibliotheques/{id}`, `/api/portfolios`, `/api/pages`, `/api/fichiers/{id}` | enseignant : étudiants de **ses départements**, traces **finalisées**, portfolios **publics** (choix du PO) ; le reste répond 404 |
+| `/api/validations/{id}` | `PATCH {etat: 1, 2 ou 3}` (merge-patch) ; filtres `?etat=0`, `?trace=` | enseignant du département |
+| `/api/commentaires` | `GET` (`?trace=`, `?portfolio=`), `POST {trace ou portfolio, contenu, visibleEtudiant}`, `PATCH {contenu, visibleEtudiant}`, `DELETE` | enseignant (auteur seul pour modifier ou supprimer) ; étudiant : lecture de ses commentaires visibles |
+| `/api/notifications` | `GET` (plus récentes d'abord), `PATCH {lu}` | étudiant, les siennes |
+
+Règles à connaître côté front :
+
+- **Évaluer** : seul `etat` change ; l'enseignant et `dateModification` sont fixés par le serveur. Chaque niveau s'évalue à part (point ouvert n° 16 : évaluation partielle permise). 422 « Choisissez un niveau d’acquisition… » hors de 1 à 3. `etat` est obligatoire ; l'étudiant reçoit une notification `evaluation` quand l'état change (pas pour une réévaluation au même niveau).
+- **Commentaire** : une trace finalisée **ou** un portfolio public, jamais les deux (422 « Commentez une trace ou un portfolio. ») ; 2 000 caractères au plus. Non visible, c'est une note entre enseignants ; l'étudiant est notifié la première fois qu'il lui devient visible.
+- **Page lue par un enseignant** : `traces` ne liste que les traces finalisées.
+- **Notification** : celle d'un commentaire repassé en note privée disparaît avec lui. `destinataire` est l'IRI de l'étudiant ; `trace` est la trace à ouvrir (E-EV-07), celle de l'évaluation ou du commentaire (null pour un commentaire de portfolio).
+- **Filtres** : une valeur inconnue ou mal formée donne une liste vide. Les autres filtres enseignant (groupe, année, étudiants ayant des travaux en attente) se calculent dans le navigateur à partir de ces collections.
+- `/api/etudiants` est désormais limité au département de l'enseignant ; la fiche d'un autre étudiant répond 404 (au lieu de 403).
+
 Le front autorisé à appeler l'API est fixé par `CORS_ALLOW_ORIGIN` (`.env`, par défaut `http://localhost:3000`).
 
 ### En production
 
+Image et compose dédiés (cible `prod` du `Dockerfile`, code et dépendances dans l'image, opcache, migrations au démarrage) :
+
+    cp .env.prod.example .env.prod   # puis remplir les secrets (openssl rand -hex 32)
+    docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
+
+Le démarrage refuse un `APP_SECRET` absent, par défaut ou de moins de 32 caractères. `.env.prod` n'entre jamais dans l'image (`.dockerignore`). L'API n'est publiée que sur `127.0.0.1` (le front ou le reverse proxy la joint depuis l'hôte) et la base pas du tout ; les fichiers des traces sont dans le volume `fichiers`, à sauvegarder avec la base. Une seule instance de l'API : les migrations sont appliquées à chaque démarrage, sans verrou. Les sessions sont des fichiers du conteneur : un redéploiement déconnecte les utilisateurs. Le front relaie `/api/**` vers l'API ([`docs/BASCULE-API.md`](../docs/BASCULE-API.md)).
+
 - `CORS_ALLOW_ORIGIN` : l'adresse du front de production (expression régulière, par ex. `'^https://portfolio\.exemple\.fr$'`).
-- `TRUSTED_PROXIES` : l'IP ou le sous-réseau exact du reverse proxy (sinon la limite de connexion compte tous les utilisateurs comme une seule IP). Jamais `REMOTE_ADDR` si l'API est joignable sans passer par le proxy.
+- `TRUSTED_PROXIES` : l'IP ou le sous-réseau exact du reverse proxy, ou du serveur Nuxt qui relaie `/api/**` (sinon la limite de connexion compte tous les utilisateurs comme une seule IP). Jamais `REMOTE_ADDR` si l'API est joignable sans passer par le proxy.
 - Fichiers des traces : `var/fichiers/prod/` doit être un volume persistant et sauvegardé (les fiches sont en base, le contenu sur disque).
 - `APP_SECRET` : une vraie valeur secrète, dans `.env.local` ou les variables d'environnement du serveur.
 - Le cookie de session est toujours `Secure` en prod ; la documentation `/api/docs` y est désactivée.

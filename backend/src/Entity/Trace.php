@@ -33,15 +33,16 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
     operations: [
         new GetCollection(),
         new Get(),
-        new Post(processor: TraceProcessor::class),
-        new Patch(processor: TraceProcessor::class),
+        new Post(processor: TraceProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
+        new Patch(processor: TraceProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
         // Suppression douce : la trace part dans la corbeille (dateSuppression), C-09
-        new Delete(processor: TraceProcessor::class),
+        new Delete(processor: TraceProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
     ],
     normalizationContext: ['groups' => ['trace:read']],
     denormalizationContext: ['groups' => ['trace:write']],
     order: ['id' => 'ASC'],
-    security: "is_granted('ROLE_ETUDIANT')",
+    // Lecture : l'étudiant (ses données) et l'enseignant (ses départements), cf. App\Doctrine\ProprietaireExtension
+    security: "is_granted('ROLE_ETUDIANT') or is_granted('ROLE_ENSEIGNANT')",
     // Valeur du mauvais type (titre: 12…) : 422 avec le champ en cause, comme les autres erreurs de saisie
     collectDenormalizationErrors: true,
 )]
@@ -72,9 +73,6 @@ class Trace
 
     #[ORM\OneToMany(mappedBy: 'trace', targetEntity: Validation::class, cascade: ['persist', 'remove'])]
     private Collection $validations;
-
-    #[ORM\ManyToMany(targetEntity: Page::class, mappedBy: 'trace')]
-    private Collection $pages;
 
     #[ORM\OneToMany(mappedBy: 'trace', targetEntity: Commentaire::class, cascade: ['persist', 'remove'])]
     private Collection $commentaires;
@@ -124,7 +122,6 @@ class Trace
         $this->date_creation = new \DateTimeImmutable();
         $this->date_modification = null;
         $this->validations = new ArrayCollection();
-        $this->pages = new ArrayCollection();
         $this->commentaires = new ArrayCollection();
     }
 
@@ -218,33 +215,6 @@ class Trace
     }
 
     /**
-     * @return Collection<int, Page>
-     */
-    public function getPages(): Collection
-    {
-        return $this->pages;
-    }
-
-    public function addPage(Page $page): self
-    {
-        if (!$this->pages->contains($page)) {
-            $this->pages->add($page);
-            $page->addTrace($this);
-        }
-
-        return $this;
-    }
-
-    public function removePage(Page $page): self
-    {
-        if ($this->pages->removeElement($page)) {
-            $page->removeTrace($this);
-        }
-
-        return $this;
-    }
-
-    /**
      * @return Collection<int, Commentaire>
      */
     public function getCommentaires(): Collection
@@ -274,7 +244,7 @@ class Trace
         return $this;
     }
 
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     #[SerializedName('type')]
     public function getTypeTrace(): ?string
     {
@@ -291,7 +261,7 @@ class Trace
     }
 
     /** @return string[] */
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     public function getContenu(): array
     {
         return $this->contenu ?? [];
@@ -307,7 +277,7 @@ class Trace
         return $this;
     }
 
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     public function getTitre(): ?string
     {
         return $this->titre;
@@ -321,7 +291,7 @@ class Trace
         return $this;
     }
 
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     public function getDescription(): ?string
     {
         return $this->description;
@@ -347,7 +317,7 @@ class Trace
         return $this;
     }
 
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     public function getLegende(): ?string
     {
         return $this->legende;
@@ -375,7 +345,7 @@ class Trace
     }
 
     /** Jour seul (AAAA-MM-JJ), comme le champ date du formulaire. */
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     #[SerializedName('dateRealisation')]
     public function getDateRealisationJour(): ?string
     {
@@ -402,7 +372,7 @@ class Trace
         return $this->dateRealisationInvalide;
     }
 
-    #[Groups(['trace:read'])]
+    #[Groups(['trace:read', 'portfolio:public'])]
     public function getContexte(): ?string
     {
         return $this->contexte;

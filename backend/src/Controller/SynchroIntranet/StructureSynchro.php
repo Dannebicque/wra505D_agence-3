@@ -68,7 +68,11 @@ class StructureSynchro extends AbstractController
             try {
                 // Comptes de démo créés par les fixtures (UsersFixture)
                 foreach ($etudiantRepository->findBy(['username' => ['etudiant', 'etudiant2']]) as $etudiant) {
-                    // Traces de démo (TraceFixture) d'abord : elles retiennent la bibliothèque de l'étudiant
+                    // Portfolios et traces de démo (TraceFixture) d'abord : ils retiennent l'étudiant et sa bibliothèque
+                    // (les pages et leurs liens aux traces partent avec, en ON DELETE CASCADE)
+                    foreach ($etudiant->getPortfolios() as $portfolio) {
+                        $entityManager->remove($portfolio);
+                    }
                     foreach ($etudiant->getBibliotheques() as $bibliotheque) {
                         foreach ($bibliotheque->getTraces() as $trace) {
                             $entityManager->remove($trace);
@@ -76,7 +80,7 @@ class StructureSynchro extends AbstractController
                     }
                     $etudiantRepository->remove($etudiant, true);
                 }
-                foreach ($enseignantRepository->findBy(['username' => ['enseignant']]) as $enseignant) {
+                foreach ($enseignantRepository->findBy(['username' => ['enseignant', 'enseignant2', 'enseignant3']]) as $enseignant) {
                     $enseignantRepository->remove($enseignant, true);
                 }
 
