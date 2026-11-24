@@ -3,6 +3,7 @@
 namespace App\DataFixtures;
 
 use App\Entity\Commentaire;
+use App\Entity\Cv;
 use App\Entity\Echeance;
 use App\Entity\Notification;
 use App\Entity\Page;
@@ -21,7 +22,7 @@ use Doctrine\Persistence\ObjectManager;
  * Traces de démonstration du compte « etudiant » : une par état utile au front (lien finalisé et évalué,
  * vidéo en attente d'évaluation, brouillon d'image sans fichier), et son portfolio public de l'année avec deux
  * pages-projets ; un commentaire visible de « enseignant » sur le site, et les notifications de l'évaluation et du
- * commentaire (une lue, une non lue) ; trois échéances de « enseignant » (année, groupe, une passée).
+ * commentaire (une lue, une non lue) ; trois échéances de « enseignant » (année, groupe, une passée) ; un CV.
  * « etudiant2 » n'a ni trace ni portfolio.
  */
 class TraceFixture extends Fixture implements OrderedFixtureInterface
@@ -80,7 +81,15 @@ class TraceFixture extends Fixture implements OrderedFixtureInterface
             (new Echeance())->setLibelle('Jury de mi-parcours')->setAnnee($etudiant->getSemestre()?->getAnnee())->setDate(new \DateTimeImmutable('-5 days'))->setEnseignant($evaluee->getEnseignant()),
         ];
 
-        foreach ([$site, $video, $brouillon, $evaluee, $enAttente, $portfolio, $web, $motion, $commentaire, $notifEvaluation, $notifCommentaire, ...$echeances] as $entite) {
+        $cv = (new Cv())->setEtudiant($etudiant)->setTitre('Étudiante en BUT MMI')->setEmail('etudiant@exemple.fr')->setVille('Troyes')
+            ->setAccroches(['stage' => 'Je recherche un stage de 10 semaines en développement web.', 'alternance' => 'Je recherche une alternance en développement web.'])
+            ->setExperiencesCv([['poste' => 'Développeuse web (projet tutoré)', 'structure' => 'BDE de l’IUT', 'periode' => '2026', 'description' => 'Refonte du site du BDE.']])
+            ->setFormationsCv([['diplome' => 'BUT MMI', 'etablissement' => 'IUT de Troyes', 'periode' => '2025 à 2028']])
+            ->setLanguesCv([['langue' => 'Anglais', 'niveau' => 'B2 : avancé']])
+            ->setCompetencesCv(['Vue et Nuxt', 'Accessibilité numérique']);
+        $cv->setDateCreation(new \DateTimeImmutable())->setDateModification(new \DateTimeImmutable());
+
+        foreach ([$site, $video, $brouillon, $evaluee, $enAttente, $portfolio, $web, $motion, $commentaire, $notifEvaluation, $notifCommentaire, ...$echeances, $cv] as $entite) {
             $manager->persist($entite);
         }
         $manager->flush();

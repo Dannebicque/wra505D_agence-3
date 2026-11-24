@@ -24,7 +24,8 @@ class CvTest extends ApiTestCase
 
     public function testCreeEtRelitSonCvAuFormatDuFront(): void
     {
-        $this->connecter('etudiant');
+        // « etudiant » a déjà le CV des fixtures
+        $this->connecter('etudiant2');
 
         $cv = $this->envoyer('POST', '/api/cvs', self::CV);
 
@@ -48,7 +49,6 @@ class CvTest extends ApiTestCase
     public function testUnSeulCvParEtudiant(): void
     {
         $this->connecter('etudiant');
-        $this->envoyer('POST', '/api/cvs', self::CV);
 
         $reponse = $this->envoyer('POST', '/api/cvs', self::CV);
 
@@ -58,7 +58,7 @@ class CvTest extends ApiTestCase
 
     public function testRefuseUneSaisieInvalide(): void
     {
-        $this->connecter('etudiant');
+        $this->connecter('etudiant2');
 
         $reponse = $this->envoyer('POST', '/api/cvs', [...self::CV,
             'email' => 'pas-une-adresse',
@@ -77,7 +77,7 @@ class CvTest extends ApiTestCase
     public function testCvLisibleParSonSeulEtudiant(): void
     {
         $this->connecter('etudiant');
-        $cv = $this->envoyer('POST', '/api/cvs', self::CV)['@id'];
+        $cv = $this->lire('/api/cvs')['member'][0]['@id'];
 
         $this->connecter('etudiant2');
         $this->lire($cv);
