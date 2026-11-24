@@ -21,7 +21,10 @@ import type { MarkdownAction } from '~/utils/markdown-edition'
 defineProps<{ maxlength?: number }>()
 const model = defineModel<string>({ required: true })
 
-const textarea = useTemplateRef<{ textareaRef: HTMLTextAreaElement | null }>('textarea')
+const textarea = useTemplateRef<{
+  textareaRef: HTMLTextAreaElement | null
+  autoResize: () => void
+}>('textarea')
 // Aperçu par défaut dès qu'il y a quelque chose à montrer
 const previewing = ref(model.value.trim() !== '')
 
@@ -64,11 +67,12 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 async function togglePreview() {
-  previewing.value = !previewing.value
-  // Retour à l'écriture : le curseur revient dans le texte
-  if (!previewing.value) {
-    await nextTick()
+  if (previewing.value) {
+    await showEditor()
+    // Retour à l'écriture : le curseur revient dans le texte
     textarea.value?.textareaRef?.focus()
+  } else {
+    previewing.value = true
   }
 }
 
@@ -79,7 +83,17 @@ async function togglePreview() {
 function editFromPreview(event: MouseEvent) {
   if (!previewing.value) return
   if (event.target instanceof Element && event.target.closest('a')) return
-  if (window.getSelection()?.toString()) return
+  // Seule une sélection faite dans l'aperçu compte (pas une sélection restée ailleurs)
+  const selection = window.getSelection()
+  const region = event.currentTarget
+  if (
+    selection &&
+    !selection.isCollapsed &&
+    region instanceof Node &&
+    region.contains(selection.anchorNode)
+  ) {
+    return
+  }
   void togglePreview()
 }
 
@@ -87,8 +101,13 @@ function editFromPreview(event: MouseEvent) {
  * Revient à l'écriture, sans déplacer le focus. Appelé quand le champ reçoit le focus en aperçu
  * (libellé cliqué, tabulation, champ en erreur) et par le formulaire quand le champ passe en erreur.
  */
-function showEditor() {
+async function showEditor() {
+  if (!previewing.value) return
   previewing.value = false
+  // Masqué à l'écran, le champ a calculé sa hauteur sur 1 px de large : on la recalcule une fois
+  // qu'il a retrouvé sa largeur
+  await nextTick()
+  textarea.value?.autoResize()
 }
 defineExpose({ showEditor })
 </script>
