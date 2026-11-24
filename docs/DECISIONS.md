@@ -198,3 +198,16 @@ Format : date, décision, alternatives écartées, raison.
 - **Alternatives écartées** : tout mettre dans `frontend/`, docs et règles IA comprises (ces documents concernent tout le projet, back compris) ; déplacer `server/` vers `backend/` (impossible sans sortir les routes de l'application Nuxt).
 - **Conséquence pour l'équipe** : chaque branche créée avant ce déplacement doit être mise à jour (Git suit les fichiers renommés) ; les commandes se lancent depuis `frontend/`, et `npm ci` y est à refaire une fois.
 - **Raison** : séparer clairement le front du back sur GitHub, à la demande de l'équipe.
+
+## 2026-11-24 — Bascule vers ApiPlatform par un relais même origine (Sprint 4)
+
+- **Décision** (PO, Mathéo) : le front relaie `/api/**` vers l'API (`frontend/server/middleware/api-proxy.ts`, variable `NUXT_API_PROXY`), au lieu d'appeler une autre origine. Sans la variable, les routes Nitro factices répondent : chaque écran bascule à son rythme. Guide : `docs/BASCULE-API.md`.
+- **Alternatives écartées** : appeler l'API sur son origine (`NUXT_PUBLIC_API_BASE`) : il faudrait `credentials: 'include'` sur chaque appel, et en production des cookies `SameSite=None; Secure` si les domaines diffèrent ; les liens `/api/fichiers/…` des traces seraient à réécrire.
+- **Raison** : même origine en dev et en prod, donc cookie de session, fichiers et rendu serveur sans réglage ; le relais transmet l'IP du visiteur (`X-Forwarded-For`) pour la limite de connexion de l'API (`TRUSTED_PROXIES`).
+
+## 2026-11-24 — Image de production du back (Sprint 4)
+
+- **Décision** : une seule `backend/Dockerfile` à deux cibles (`dev`, `prod`) et `backend/compose.prod.yaml` : code et dépendances sans dev dans l'image, php.ini de production, opcache sans relecture des fichiers, migrations au démarrage, secrets par variables (`.env.prod`, jamais versionné), refus de démarrer avec l'`APP_SECRET` par défaut.
+- **Alternatives écartées** : un second Dockerfile (extensions et réglages PHP dupliqués) ; le mode worker de FrankenPHP (plus rapide, mais l'état partagé entre requêtes demande une revue du code repris de l'ancienne version).
+- **Raison** : la roadmap prévoit l'API sous Docker pour le Sprint 4 ; la même base d'image en dev et en prod évite les écarts d'extensions.
+

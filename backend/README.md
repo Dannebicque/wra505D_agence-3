@@ -131,8 +131,15 @@ Le front autorisé à appeler l'API est fixé par `CORS_ALLOW_ORIGIN` (`.env`, p
 
 ### En production
 
+Image et compose dédiés (cible `prod` du `Dockerfile`, code et dépendances dans l'image, opcache, migrations au démarrage) :
+
+    cp .env.prod.example .env.prod   # puis remplir les secrets (openssl rand -hex 32)
+    docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
+
+Le démarrage refuse un `APP_SECRET` absent ou laissé à sa valeur par défaut. La base n'est pas publiée hors de Docker ; les fichiers des traces sont dans le volume `fichiers`, à sauvegarder avec la base. Le front relaie `/api/**` vers l'API ([`docs/BASCULE-API.md`](../docs/BASCULE-API.md)).
+
 - `CORS_ALLOW_ORIGIN` : l'adresse du front de production (expression régulière, par ex. `'^https://portfolio\.exemple\.fr$'`).
-- `TRUSTED_PROXIES` : l'IP ou le sous-réseau exact du reverse proxy (sinon la limite de connexion compte tous les utilisateurs comme une seule IP). Jamais `REMOTE_ADDR` si l'API est joignable sans passer par le proxy.
+- `TRUSTED_PROXIES` : l'IP ou le sous-réseau exact du reverse proxy, ou du serveur Nuxt qui relaie `/api/**` (sinon la limite de connexion compte tous les utilisateurs comme une seule IP). Jamais `REMOTE_ADDR` si l'API est joignable sans passer par le proxy.
 - Fichiers des traces : `var/fichiers/prod/` doit être un volume persistant et sauvegardé (les fiches sont en base, le contenu sur disque).
 - `APP_SECRET` : une vraie valeur secrète, dans `.env.local` ou les variables d'environnement du serveur.
 - Le cookie de session est toujours `Secure` en prod ; la documentation `/api/docs` y est désactivée.
