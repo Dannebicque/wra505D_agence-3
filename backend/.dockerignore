@@ -2,3 +2,6 @@ vendor/
 var/
 .env.local
 .env.*.local
+tests/
+compose*.yaml
+.git
