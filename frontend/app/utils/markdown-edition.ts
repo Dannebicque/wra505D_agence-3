@@ -198,13 +198,62 @@ function link(selection: Selection): Edition {
     : { start, end, text, selectionStart: start + 1, selectionEnd: start + 1 + label.length }
 }
 
+/** Puce ou numéro d'un élément de liste, avec son retrait : laissé hors des marques. */
+const LIST_PREFIX = /^\s*(?:[-+*]|\d+[.)])\s+/
+
+/**
+ * Gras ou italique ligne par ligne : des marques à cheval sur plusieurs lignes casseraient une
+ * liste (`**- un\n- deux**`) ou deux paragraphes. Les lignes vides sont sautées, la puce ou le
+ * numéro d'un élément de liste reste hors des marques. La sélection couvre ensuite les lignes
+ * touchées : un second clic les rétablit.
+ */
+function toggleEmphasisByLine(selection: Selection, size: 1 | 2, placeholder: string): Edition {
+  const { value, start, end } = selection
+  if (start === end) return toggleEmphasis(selection, size, placeholder)
+  const lineStart = start === 0 ? 0 : value.lastIndexOf('\n', start - 1) + 1
+  const nextBreak = value.indexOf('\n', end)
+  const lineEnd = nextBreak === -1 ? value.length : nextBreak
+  // Une seule ligne, sans puce choisie avec elle : la sélection reste sur le texte choisi
+  const singleLine = !value.slice(start, end).includes('\n')
+  const withPrefix = start === lineStart && LIST_PREFIX.test(value.slice(lineStart, lineEnd))
+  if (singleLine && !withPrefix) return toggleEmphasis(selection, size, placeholder)
+  const segments: [number, number][] = []
+  let segmentStart = start
+  for (let i = start; i <= end; i++) {
+    if (i === end || value[i] === '\n') {
+      segments.push([segmentStart, i])
+      segmentStart = i + 1
+    }
+  }
+  let text = value
+  // De la dernière ligne à la première : les positions des lignes précédentes ne bougent pas
+  for (const [from, to] of segments.reverse()) {
+    let contentStart = from
+    if (from === 0 || text[from - 1] === '\n') {
+      contentStart += LIST_PREFIX.exec(text.slice(from, to))?.[0].length ?? 0
+    }
+    const segment = trimmed({ value: text, start: contentStart, end: to })
+    if (segment.start === segment.end) continue
+    const edit = toggleEmphasis(segment, size, placeholder)
+    text = text.slice(0, edit.start) + edit.text + text.slice(edit.end)
+  }
+  const delta = text.length - value.length
+  return {
+    start: lineStart,
+    end: lineEnd,
+    text: text.slice(lineStart, lineEnd + delta),
+    selectionStart: lineStart,
+    selectionEnd: lineEnd + delta,
+  }
+}
+
 export function applyMarkdownAction(selection: Selection, action: MarkdownAction): Edition {
   switch (action) {
     case 'bold':
-      return toggleEmphasis(selection, 2, PLACEHOLDERS.bold)
+      return toggleEmphasisByLine(selection, 2, PLACEHOLDERS.bold)
     case 'italic':
       // `*` plutôt que `_` : `m_ot_clé` n'est pas de l'italique au milieu d'un mot
-      return toggleEmphasis(selection, 1, PLACEHOLDERS.italic)
+      return toggleEmphasisByLine(selection, 1, PLACEHOLDERS.italic)
     case 'bullets':
       return toggleList(selection, false)
     case 'numbers':

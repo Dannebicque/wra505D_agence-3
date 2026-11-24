@@ -191,7 +191,35 @@ describe('applyMarkdownAction', () => {
   )
 
   it.each([
+    // [texte, début, fin, action, rendu attendu]
+    [
+      '- un\n- deux',
+      0,
+      11,
+      'bold',
+      '<ul>\n<li><strong>un</strong></li>\n<li><strong>deux</strong></li>\n</ul>\n',
+    ],
+    [
+      '1. un\n2. deux',
+      3,
+      13,
+      'italic',
+      '<ol>\n<li><em>un</em></li>\n<li><em>deux</em></li>\n</ol>\n',
+    ],
+    ['para\n\npara', 0, 10, 'bold', '<p><strong>para</strong></p>\n<p><strong>para</strong></p>\n'],
+    ['- **a**', 0, 7, 'bold', '<ul>\n<li>a</li>\n</ul>\n'],
+  ] as const)(
+    'met en forme ligne par ligne, puces hors des marques : %j',
+    (value, start, end, action, rendu) => {
+      expect(renderMarkdown(run({ value, start, end }, action).value)).toBe(rendu)
+    },
+  )
+
+  it.each([
     ['un mot', 3, 6],
+    ['- un\n- deux', 0, 11],
+    ['para\n\npara', 0, 10],
+    ['- un mot ici', 5, 8],
     ['**mot**', 2, 5],
     ['**mot**', 0, 7],
     ['*a* et *b*', 0, 10],
