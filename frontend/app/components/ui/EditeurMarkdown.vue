@@ -72,14 +72,20 @@ async function togglePreview() {
   }
 }
 
-/** Clic dans l'aperçu (souris, doigt) : on passe à l'écriture, comme avec « Modifier ». */
-function editFromPreview() {
-  if (previewing.value) void togglePreview()
+/**
+ * Clic dans l'aperçu (souris, doigt) : on passe à l'écriture, comme avec « Modifier ». Sauf sur un
+ * lien (il s'ouvre) et quand on vient de sélectionner du texte (pour le copier).
+ */
+function editFromPreview(event: MouseEvent) {
+  if (!previewing.value) return
+  if (event.target instanceof Element && event.target.closest('a')) return
+  if (window.getSelection()?.toString()) return
+  void togglePreview()
 }
 
 /**
- * Revient à l'écriture, sans déplacer le focus : le formulaire l'appelle quand le champ passe en
- * erreur, pour pouvoir y mettre le focus (un champ masqué par l'aperçu ne le recevrait pas).
+ * Revient à l'écriture, sans déplacer le focus. Appelé quand le champ reçoit le focus en aperçu
+ * (libellé cliqué, tabulation, champ en erreur) et par le formulaire quand le champ passe en erreur.
  */
 function showEditor() {
   previewing.value = false
@@ -129,24 +135,30 @@ defineExpose({ showEditor })
         class="ms-auto"
         @click="togglePreview"
       >
-        {{ previewing ? 'Modifier' : 'Aperçu' }}
+        <!-- Nom complet pour qui arrive au bouton sans voir l'éditeur -->
+        <template v-if="previewing">Modifier<span class="sr-only"> la description</span></template>
+        <template v-else>Aperçu<span class="sr-only"> de la description</span></template>
       </UButton>
     </div>
 
-    <!-- v-show : le champ reste dans la page (libellé, id, erreurs, envoi du formulaire) -->
+    <!--
+      En aperçu, le champ est masqué à l'écran seulement (sr-only, pas display:none) : il garde son
+      libellé, sa consigne, son compteur et ses erreurs pour les lecteurs d'écran, reste dans
+      l'ordre de tabulation, et le focus (libellé cliqué, Tab, erreur) le rouvre en écriture
+    -->
     <UTextarea
-      v-show="!previewing"
       ref="textarea"
       v-model="model"
       variant="none"
       :rows="5"
       :maxlength="maxlength"
       autoresize
-      class="w-full"
+      :class="previewing ? 'sr-only' : 'w-full'"
       :ui="{ base: 'px-3 py-2.5' }"
       @keydown="onKeydown"
+      @focus="showEditor"
     />
-    <!-- Clic dans l'aperçu : écriture (au clavier, le bouton « Modifier » fait de même) -->
+    <!-- Clic dans l'aperçu : écriture (au clavier, « Modifier » ou le champ font de même) -->
     <div
       v-if="previewing"
       role="region"

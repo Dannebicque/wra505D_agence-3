@@ -49,10 +49,16 @@ const breadcrumb = computed(() => [
 ])
 
 const visibilite = ref(portfolio.visibilite)
+// Toutes les informations restent dans l'état de l'écran : le panneau démonte son formulaire à la
+// fermeture et le reprend de ces valeurs à la réouverture
+const description = ref(portfolio.description)
+const visibleRecruteurs = ref(false)
 const formMessage = ref('')
 function onSubmit(values: DemoPortfolioForm) {
   intitule.value = values.intitule
   visibilite.value = values.visibilite
+  description.value = values.description
+  visibleRecruteurs.value = values.visibleRecruteurs
   isEditOpen.value = false
   formMessage.value =
     'Informations enregistrées. Maquette : appliquées à cette page seulement, rien n’est enregistré.'
@@ -265,9 +271,9 @@ const traceCount = (page: PageItem) =>
             <PortfolioForm
               :initial="{
                 intitule,
-                description: portfolio.description,
+                description,
                 visibilite,
-                visibleRecruteurs: false,
+                visibleRecruteurs,
               }"
               submit-label="Enregistrer les informations"
               submit-icon="i-lucide-save"

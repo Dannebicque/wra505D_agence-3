@@ -142,7 +142,11 @@ async function saveAndNext() {
         <!-- La date de dépôt est déjà sous le titre de la page : pas de doublon ici -->
         <section aria-labelledby="description" class="rounded-panneau bg-muted p-4 sm:p-6">
           <h2 id="description" class="text-sm font-semibold text-highlighted">Description</h2>
-          <UiTexteMarkdown :source="trace.description" class="mt-4 max-w-mesure" />
+          <UiTexteMarkdown
+            :source="trace.description"
+            :heading-level="3"
+            class="mt-4 max-w-mesure"
+          />
           <dl class="mt-4 text-sm">
             <dt class="text-muted">Contexte</dt>
             <dd class="max-w-mesure text-highlighted">{{ detail.contexte }}</dd>

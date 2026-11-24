@@ -204,6 +204,34 @@ test.describe('écran d’un portfolio', () => {
     await expect(trigger).toBeFocused()
   })
 
+  test('garde toutes les informations enregistrées à la réouverture du panneau', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/etudiant/portfolios/1')
+    const trigger = page.getByRole('button', { name: 'Modifier les informations' })
+    const panel = page.getByRole('dialog', { name: 'Modifier les informations' })
+
+    await trigger.click()
+    await panel.getByRole('textbox', { name: /Introduction/ }).fill('Nouvelle introduction.')
+    await panel.getByRole('switch', { name: /Visible par les recruteurs/ }).click()
+    await panel.getByRole('button', { name: 'Enregistrer les informations' }).click()
+    await expect(panel).toBeHidden()
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Informations enregistrées' }),
+    ).toHaveCount(1)
+
+    await trigger.click()
+    await expect(panel.getByRole('textbox', { name: /Introduction/ })).toHaveValue(
+      'Nouvelle introduction.',
+    )
+    await expect(panel.getByRole('switch', { name: /Visible par les recruteurs/ })).toBeChecked()
+
+    // Échap referme le panneau et rend le focus au bouton
+    await page.keyboard.press('Escape')
+    await expect(panel).toBeHidden()
+    await expect(trigger).toBeFocused()
+  })
+
   test('le bouton « Modifier » d’une carte ouvre d’emblée les informations', async ({ page }) => {
     await gotoHydrated(page, '/etudiant/portfolios')
     await page.getByRole('link', { name: 'Modifier « Léa Martin, développeuse web »' }).click()

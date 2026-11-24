@@ -39,12 +39,15 @@ function plainParagraph(text: string): string {
   return `<p>${escapeHtml(text.trim()).replace(/\n/g, '<br>')}</p>\n`
 }
 
+/** Niveau HTML des titres `#` d'une description : sous le titre de l'endroit où elle s'affiche. */
+export type HeadingLevel = 2 | 3 | 4 | 5 | 6
+
 /** Niveau HTML d'un titre : `#` au niveau donné, `##` (et au-delà) juste en dessous, h6 au plus. */
-function headingTag(depth: number, headingLevel: number): string {
+function headingTag(depth: number, headingLevel: HeadingLevel): string {
   return `h${Math.min(6, headingLevel + (depth > 1 ? 1 : 0))}`
 }
 
-const createParser = (headingLevel: number) =>
+const createParser = (headingLevel: HeadingLevel) =>
   new Marked({
     gfm: true,
     // Un retour à la ligne de l'étudiant reste un retour à la ligne
@@ -54,9 +57,14 @@ const createParser = (headingLevel: number) =>
         return escapeHtml(text)
       },
       // data-titre : style du titre (1) ou du sous-titre (2), quel que soit le niveau HTML
-      heading({ tokens, depth }: Tokens.Heading) {
-        const tag = headingTag(depth, headingLevel)
+      heading({ tokens, depth, raw }: Tokens.Heading) {
         const inner = this.parser.parseInline(tokens)
+        // Titre vide (`# ` posé par la barre, puis laissé) : rien, pas un titre vide annoncé
+        if (!inner.trim()) return ''
+        // Seuls `#` et `##` font un titre : une ligne soulignée de `===` ou `---` (description
+        // reprise ou collée) reste un paragraphe, comme avant l'ajout des titres
+        if (!raw.trimStart().startsWith('#')) return `<p>${inner}</p>\n`
+        const tag = headingTag(depth, headingLevel)
         return `<${tag} data-titre="${depth > 1 ? 2 : 1}">${inner}</${tag}>\n`
       },
       image({ text }: Tokens.Image) {
@@ -89,7 +97,7 @@ const createParser = (headingLevel: number) =>
     },
   })
 
-const parsers = new Map<number, ReturnType<typeof createParser>>()
+const parsers = new Map<HeadingLevel, ReturnType<typeof createParser>>()
 
 /**
  * HTML sûr d'une description en Markdown ; chaîne vide si elle est vide. `headingLevel` : niveau
@@ -97,7 +105,7 @@ const parsers = new Map<number, ReturnType<typeof createParser>>()
  */
 export function renderMarkdown(
   source: string | null | undefined,
-  { headingLevel = 3 }: { headingLevel?: number } = {},
+  { headingLevel = 3 }: { headingLevel?: HeadingLevel } = {},
 ): string {
   if (!source?.trim()) return ''
   let parser = parsers.get(headingLevel)

@@ -4,6 +4,8 @@
   niveaux de titre placés sous ceux de la page, pas d'image. Styles des listes, liens et paragraphes : utilitaire `texte-markdown` (main.css).
 -->
 <script setup lang="ts">
+import type { HeadingLevel } from '~/utils/markdown'
+
 const props = withDefaults(
   defineProps<{
     source: string | null | undefined
@@ -11,7 +13,7 @@ const props = withDefaults(
      * Niveau HTML des titres `#` de la description (les `##` en dessous) : celui qui suit le titre
      * de l'endroit où elle s'affiche (sous un h3, mettre 4).
      */
-    headingLevel?: number
+    headingLevel?: HeadingLevel
   }>(),
   { headingLevel: 3 },
 )

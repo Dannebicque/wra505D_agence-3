@@ -31,7 +31,7 @@ describe('éditeur Markdown', () => {
   it('s’ouvre en écriture quand la description est vide', async () => {
     const wrapper = await mountEditor('')
     expect(wrapper.find('[role="region"]').exists()).toBe(false)
-    expect(wrapper.get(TOGGLE).text()).toBe('Aperçu')
+    expect(wrapper.get(TOGGLE).text()).toBe('Aperçu de la description')
     wrapper.unmount()
   })
 
@@ -44,7 +44,7 @@ describe('éditeur Markdown', () => {
     expect(region.html()).toContain('<strong>Fort</strong>')
     // En aperçu, pas de barre de mise en forme : « Modifier » passe à l'écriture
     expect(wrapper.find('[role="group"]').exists()).toBe(false)
-    expect(wrapper.get(TOGGLE).text()).toBe('Modifier')
+    expect(wrapper.get(TOGGLE).text()).toBe('Modifier la description')
     wrapper.unmount()
   })
 
@@ -57,6 +57,27 @@ describe('éditeur Markdown', () => {
       expect(document.activeElement).toBe(wrapper.get('textarea').element)
       wrapper.unmount()
     }
+  })
+
+  it('garde le champ atteignable en aperçu : le focus le rouvre en écriture', async () => {
+    const wrapper = await mountEditor('**Fort**')
+    const textarea = wrapper.get('textarea')
+    // Masqué à l'écran seulement : libellé, consigne et erreurs restent pour les lecteurs d'écran
+    expect(textarea.element.closest('.sr-only')).not.toBeNull()
+    expect((textarea.element as HTMLElement).style.display).not.toBe('none')
+
+    ;(textarea.element as HTMLTextAreaElement).focus()
+    await textarea.trigger('focus')
+    expect(wrapper.find('[role="region"]').exists()).toBe(false)
+    expect(textarea.element.closest('.sr-only')).toBeNull()
+    wrapper.unmount()
+  })
+
+  it('ne quitte pas l’aperçu quand on clique un lien', async () => {
+    const wrapper = await mountEditor('[Site](https://exemple.fr)')
+    await wrapper.get('[role="region"] a').trigger('click')
+    expect(wrapper.find('[role="region"]').exists()).toBe(true)
+    wrapper.unmount()
   })
 
   it('nomme chaque bouton de la barre (sans lien) et annonce les raccourcis', async () => {

@@ -123,6 +123,12 @@ function toggleEmphasis(selection: Selection, size: 1 | 2, placeholder: string):
 
 const BULLET = /^(\s*)- /
 const NUMBER = /^(\s*)\d+\. /
+/** Puce ou numéro d'un élément de liste, avec son retrait : laissé hors des marques. */
+const LIST_PREFIX = /^\s*(?:[-+*]|\d+[.)])\s+/
+/** Titre (`# `, `## `…) : retiré d'une ligne passée en liste, laissé hors des marques. */
+const HEADING = /^#{1,6}\s+/
+/** Ce qui précède le texte d'une ligne : laissé hors du gras et de l'italique. */
+const LINE_PREFIX = /^\s*(?:(?:[-+*]|\d+[.)])\s+|#{1,6}\s+)/
 
 /**
  * Préfixe chaque ligne non vide touchée par la sélection (ou retire le préfixe s'il y est
@@ -155,7 +161,12 @@ function toggleList({ value, start, end }: Selection, ordered: boolean): Edition
     .map((line) => {
       if (line.trim() === '') return line
       const indent = /^\s*/.exec(line)![0]
-      const bare = line.replace(BULLET, '$1').replace(NUMBER, '$1').slice(indent.length)
+      // Une ligne de titre perd son `#` : un titre n'est pas un élément de liste
+      const bare = line
+        .replace(BULLET, '$1')
+        .replace(NUMBER, '$1')
+        .slice(indent.length)
+        .replace(HEADING, '')
       if (allMarked) return `${indent}${bare}`
       rank++
       return `${indent}${ordered ? `${rank}.` : '-'} ${bare}`
@@ -169,10 +180,6 @@ function toggleList({ value, start, end }: Selection, ordered: boolean): Edition
     selectionEnd: lineStart + text.length,
   }
 }
-
-/** Puce ou numéro d'un élément de liste, avec son retrait : laissé hors des marques. */
-const LIST_PREFIX = /^\s*(?:[-+*]|\d+[.)])\s+/
-const HEADING = /^#{1,6}\s+/
 
 /**
  * Titre (`depth` 1, `# `) ou sous-titre (2, `## `) sur chaque ligne non vide touchée par la
@@ -230,7 +237,7 @@ function toggleEmphasisByLine(selection: Selection, size: 1 | 2, placeholder: st
   const lineEnd = nextBreak === -1 ? value.length : nextBreak
   // Une seule ligne, sans puce choisie avec elle : la sélection reste sur le texte choisi
   const singleLine = !value.slice(start, end).includes('\n')
-  const withPrefix = start === lineStart && LIST_PREFIX.test(value.slice(lineStart, lineEnd))
+  const withPrefix = start === lineStart && LINE_PREFIX.test(value.slice(lineStart, lineEnd))
   if (singleLine && !withPrefix) return toggleEmphasis(selection, size, placeholder)
   const segments: [number, number][] = []
   let segmentStart = start
@@ -245,7 +252,7 @@ function toggleEmphasisByLine(selection: Selection, size: 1 | 2, placeholder: st
   for (const [from, to] of segments.reverse()) {
     let contentStart = from
     if (from === 0 || text[from - 1] === '\n') {
-      contentStart += LIST_PREFIX.exec(text.slice(from, to))?.[0].length ?? 0
+      contentStart += LINE_PREFIX.exec(text.slice(from, to))?.[0].length ?? 0
     }
     const segment = trimmed({ value: text, start: contentStart, end: to })
     if (segment.start === segment.end) continue

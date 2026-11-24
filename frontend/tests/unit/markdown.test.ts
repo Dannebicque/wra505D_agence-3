@@ -70,6 +70,16 @@ describe('renderMarkdown', () => {
     expect(renderMarkdown('# <script>x</script>')).not.toContain('<script')
   })
 
+  it('n’affiche pas de titre vide (préfixe posé par la barre puis laissé)', () => {
+    expect(renderMarkdown('# \n\nTexte')).toBe('<p>Texte</p>\n')
+    expect(renderMarkdown('##')).toBe('')
+  })
+
+  it('laisse en paragraphe une ligne soulignée (seuls # et ## font un titre)', () => {
+    expect(renderMarkdown('Ligne\n---')).toBe('<p>Ligne</p>\n')
+    expect(renderMarkdown('Titre\n===')).toBe('<p>Titre</p>\n')
+  })
+
   it('rend les images en texte', () => {
     const html = renderMarkdown('![Affiche du festival](https://a.fr/i.png)')
     expect(html).not.toContain('<img')
@@ -297,5 +307,23 @@ describe('applyMarkdownAction', () => {
 
   it('retire la puce d’une ligne transformée en titre', () => {
     expect(run({ value: '- Bilan', start: 0, end: 7 }, 'heading').value).toBe('# Bilan')
+  })
+
+  it('retire le titre d’une ligne passée en liste', () => {
+    expect(run({ value: '# un\n## deux', start: 0, end: 12 }, 'bullets').value).toBe('- un\n- deux')
+  })
+
+  it('laisse le dièse d’un titre hors du gras', () => {
+    const value = '# Bilan'
+    expect(run({ value, start: 0, end: value.length }, 'bold').value).toBe('# **Bilan**')
+  })
+
+  it('met plusieurs lignes en titre puis les rétablit, lignes vides comprises', () => {
+    const value = 'Un\n\nDeux\n'
+    const titles = run({ value, start: 0, end: value.length }, 'subheading')
+    expect(titles.value).toBe('## Un\n\n## Deux\n')
+    expect(
+      run({ value: titles.value, start: 0, end: titles.value.length }, 'subheading').value,
+    ).toBe(value)
   })
 })
