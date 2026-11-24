@@ -117,6 +117,22 @@ class EnseignantTest extends ApiTestCase
         self::assertResponseStatusCodeSame(404, 'Autre département');
     }
 
+    public function testNeLitPasLeFichierDUnAutreEtudiantGlisseDansUneTrace(): void
+    {
+        $this->connecter('etudiant2');
+        $chemin = tempnam(sys_get_temp_dir(), 'envoi');
+        imagepng(imagecreatetruecolor(2, 2), $chemin);
+        $this->client->request('POST', '/api/fichiers', ['type' => 'image'], ['fichier' => new UploadedFile($chemin, 'b.png', null, null, true)], ['HTTP_ACCEPT' => 'application/ld+json']);
+        $fichierDeB = json_decode((string) $this->client->getResponse()->getContent(), true)['@id'];
+        // Écrit en base : l'API refuse déjà qu'une trace cite le fichier d'un autre étudiant
+        $this->connection->executeStatement('UPDATE trace SET contenu = ? WHERE id = ?', [json_encode([$fichierDeB]), basename($this->trace('Site vitrine d’une association'))]);
+
+        $this->connecter('enseignant');
+        $this->client->request('GET', $fichierDeB);
+
+        self::assertResponseStatusCodeSame(404);
+    }
+
     public function testNEcritRienPourLEtudiant(): void
     {
         $this->connecter('enseignant');

@@ -61,13 +61,12 @@ class FichierRepository extends ServiceEntityRepository
             JOIN annee a ON a.id = s.annee_id
             JOIN diplome d ON d.id = a.diplome_id
             -- Le fichier doit être celui de l'étudiant de la trace
-            JOIN users u ON u.etudiant_id = e.id
-            JOIN fichier f ON f.proprietaire_id = u.id AND f.id = :fichier
+            JOIN users u ON u.etudiant_id = e.id AND u.id = :proprietaire
             WHERE t.statut = 'finalisee' AND t.date_suppression IS NULL
               AND d.departement_id IN (:departements)
               AND jsonb_exists(t.contenu::jsonb, :iri)
             LIMIT 1
-            SQL, ['iri' => '/api/fichiers/' . $fichier->getId(), 'fichier' => (string) $fichier->getId(), 'departements' => $departements], ['departements' => \Doctrine\DBAL\ArrayParameterType::INTEGER]);
+            SQL, ['iri' => '/api/fichiers/' . $fichier->getId(), 'proprietaire' => $fichier->getProprietaire()->getId(), 'departements' => $departements], ['departements' => \Doctrine\DBAL\ArrayParameterType::INTEGER]);
     }
 
     /**

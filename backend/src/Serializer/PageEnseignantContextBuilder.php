@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 /**
  * Une page lue par un enseignant ne liste que ses traces finalisées (groupe page:enseignant, Page::getTracesPubliques) :
  * l'IRI d'un brouillon, qui lui répondrait 404, n'apparaît pas. L'étudiant garde toutes les siennes.
+ * Les groupes sont remplacés : tout champ ajouté à page:read doit l'être aussi à page:enseignant.
  */
 #[AsDecorator('api_platform.serializer.context_builder')]
 final class PageEnseignantContextBuilder implements SerializerContextBuilderInterface

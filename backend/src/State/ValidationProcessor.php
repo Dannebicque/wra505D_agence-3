@@ -12,6 +12,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use ApiPlatform\State\ProcessorInterface;
 use ApiPlatform\Validator\Exception\ValidationException;
+use Symfony\Component\Validator\Constraints\NotNull;
 use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 use App\Entity\Validation;
@@ -55,8 +56,10 @@ final class ValidationProcessor implements ProcessorInterface
             }
             // Sans état, rien n'est évalué : ni signature ni notification
             if (!$data->isEvaluee()) {
-                throw new ValidationException(new ConstraintViolationList([new ConstraintViolation('Choisissez un niveau d’acquisition : non acquis, en cours d’acquisition ou acquis.', 'Choisissez un niveau d’acquisition : non acquis, en cours d’acquisition ou acquis.', [], null, 'etat', null)]));
+                throw new ValidationException(new ConstraintViolationList([new ConstraintViolation('Choisissez un niveau d’acquisition : non acquis, en cours d’acquisition ou acquis.', 'Choisissez un niveau d’acquisition : non acquis, en cours d’acquisition ou acquis.', [], null, 'etat', null, null, NotNull::IS_NULL_ERROR)]));
             }
+            // Notifiée seulement quand l'état change : une réévaluation au même niveau ne dérange pas l'étudiant
+            // (et garde la signature d'origine)
             $avant = $context['previous_data'] ?? null;
             if ($avant instanceof Validation && $avant->isEtat() === $data->isEtat()) {
                 return $data;
@@ -66,7 +69,6 @@ final class ValidationProcessor implements ProcessorInterface
             $data->setEnseignant($user->getEnseignant());
             $data->setDateModification(new \DateTime());
             $etudiant = $data->getTrace()?->getBibliotheque()?->getEtudiant();
-            // Notifiée seulement quand l'état change (une réévaluation au même niveau ne dérange pas l'étudiant)
             if (null !== $etudiant) {
                 $this->em->persist(Notification::pour($etudiant, $data));
             }
