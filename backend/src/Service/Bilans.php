@@ -15,7 +15,7 @@ final class Bilans
     /** État d'une validation => clé du bilan. */
     private const ETATS = [3 => 'acquis', 2 => 'enCours', 1 => 'nonAcquis', 0 => 'enAttente'];
 
-    /** @var array<int, list<ApcReferentiel>> référentiels par département, lus une fois par bilan collectif */
+    /** @var array<int, list<ApcReferentiel>> référentiels par département, le temps d'un calcul (vidé à chaque bilan) */
     private array $referentielsParDepartement = [];
 
     public function __construct(private readonly EntityManagerInterface $em)
@@ -30,6 +30,7 @@ final class Bilans
 
     public function individuel(Etudiant $etudiant): array
     {
+        $this->referentielsParDepartement = [];
         $comptes = $this->comptes([$etudiant]);
         $competences = [];
         $totaux = self::zero();
@@ -60,6 +61,7 @@ final class Bilans
     /** @param list<Etudiant> $etudiants */
     public function collectif(array $etudiants): array
     {
+        $this->referentielsParDepartement = [];
         $comptes = $this->comptes($etudiants);
         $lignes = [];
         $parCompetence = [];

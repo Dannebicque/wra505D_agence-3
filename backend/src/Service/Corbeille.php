@@ -92,7 +92,10 @@ final class Corbeille
         $objet->setDateSuppression(null);
         try {
             $this->em->flush();
-        } catch (UniqueConstraintViolationException) {
+        } catch (UniqueConstraintViolationException $erreur) {
+            if (!$objet instanceof Portfolio) {
+                throw $erreur;
+            }
             // Un autre portfolio de l'année créé ou restauré au même moment (index portfolio_unique_par_annee)
             throw new ConflictHttpException('Vous avez déjà un portfolio pour cette année : supprimez-le avant de restaurer celui-ci.');
         }

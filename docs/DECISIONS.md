@@ -220,4 +220,4 @@ Format : date, décision, alternatives écartées, raison.
 - **Alternatives écartées** : échéances reportées (tuiles restées en démo) ; PDF par le serveur (dompdf : nouvelle dépendance, rendu CSS limité, mise en page à refaire côté back) ; corbeille sans limite (la base et les fichiers grossissent sans fin).
 - **Raison** : comme les maquettes ; aucune dépendance nouvelle ; le texte du PDF reste sélectionnable et accessible.
 - **Recherche globale** : extension `unaccent` de PostgreSQL et même filtre de périmètre que les collections (`ProprietaireExtension`), pour ne jamais trouver ce que l'utilisateur ne peut pas lire.
-
+- **CV repris de l'ancienne version** : un seul CV par étudiant (index unique). Quand un étudiant en avait plusieurs, le dernier modifié reste rattaché ; les autres sont détachés (`etudiant_id` à NULL), conservés en base mais plus accessibles par l'API.
