@@ -124,6 +124,23 @@ class UsersFixture extends Fixture implements OrderedFixtureInterface
         $enseignant2->AddEnseignantDepartement(new EnseignantDepartement($enseignant2, $this->departementRepository->findOneBy(['id' => 2])));
         $manager->persist($enseignant2);
         $manager->persist($user12);
+
+        // Collègue du même département que « enseignant » : lit tout, mais ne modifie pas ses commentaires
+        $user13 = new Users();
+        $user13->setUsername('enseignant3')
+            ->setPassword($this->encoder->hashPassword($user13, 'test'))
+            ->setRoles(['ROLE_ENSEIGNANT'])
+            ->setEmail('prof3@univ-reims.fr')
+            ->setIsVerified(true);
+        $enseignant3 = new Enseignant();
+        $enseignant3->setUsers($user13);
+        $enseignant3->setNom('Moreau');
+        $enseignant3->setPrenom('Inès');
+        $enseignant3->setMailUniv('prof3@univ-reims.fr');
+        $enseignant3->setUsername('enseignant3');
+        $enseignant3->AddEnseignantDepartement(new EnseignantDepartement($enseignant3, $this->departementRepository->findOneBy(['id' => 1])));
+        $manager->persist($enseignant3);
+        $manager->persist($user13);
         $manager->flush();
     }
 

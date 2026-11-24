@@ -52,6 +52,34 @@ class CommentaireTest extends ApiTestCase
         self::assertSame(3, $this->lire('/api/notifications')['totalItems']);
     }
 
+    public function testRemasqueNeLaissePasDeNotificationNiNeLaDouble(): void
+    {
+        $this->connecter('enseignant');
+        $commentaire = $this->envoyer('POST', '/api/commentaires', ['trace' => $this->trace(), 'contenu' => 'Bien', 'visibleEtudiant' => true])['@id'];
+
+        $this->envoyer('PATCH', $commentaire, ['visibleEtudiant' => false]);
+        $this->connecter('etudiant');
+        self::assertNotContains($commentaire, array_column($this->lire('/api/notifications')['member'], 'commentaire'), 'Notification masquée avec le commentaire');
+
+        $this->connecter('enseignant');
+        $this->envoyer('PATCH', $commentaire, ['visibleEtudiant' => true]);
+        $this->connecter('etudiant');
+        self::assertSame(1, \count(array_keys(array_column($this->lire('/api/notifications')['member'], 'commentaire'), $commentaire)), 'Une seule notification');
+    }
+
+    public function testUnCollegueNeModifiePasLeCommentaireDUnAutre(): void
+    {
+        $existant = $this->iri("SELECT '/api/commentaires/' || id FROM commentaire LIMIT 1");
+        $this->connecter('enseignant3');
+
+        $this->lire($existant);
+        self::assertResponseIsSuccessful();
+        $this->envoyer('PATCH', $existant, ['contenu' => 'Pirate']);
+        self::assertResponseStatusCodeSame(403);
+        $this->envoyer('DELETE', $existant);
+        self::assertResponseStatusCodeSame(403);
+    }
+
     public function testCommenteUnPortfolioPublic(): void
     {
         $this->connecter('enseignant');

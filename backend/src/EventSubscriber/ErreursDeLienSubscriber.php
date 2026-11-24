@@ -39,6 +39,7 @@ final class ErreursDeLienSubscriber implements EventSubscriberInterface
         Validation::class => [
             ['/^trace$/', 'trace', 'Trace introuvable.'],
             ['/^niveau$/', 'niveau', 'Niveau de compétence introuvable.'],
+            ['/^etatEvalue$/', 'etat', 'Choisissez un niveau d’acquisition : non acquis, en cours d’acquisition ou acquis.'],
         ],
     ];
 

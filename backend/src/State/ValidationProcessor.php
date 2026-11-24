@@ -11,6 +11,9 @@ use App\Entity\Users;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use ApiPlatform\State\ProcessorInterface;
+use ApiPlatform\Validator\Exception\ValidationException;
+use Symfony\Component\Validator\ConstraintViolation;
+use Symfony\Component\Validator\ConstraintViolationList;
 use App\Entity\Validation;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -50,11 +53,20 @@ final class ValidationProcessor implements ProcessorInterface
             if ($data->getId() !== (int) ($uriVariables['id'] ?? 0)) {
                 throw new UnprocessableEntityHttpException('Validation invalide.');
             }
+            // Sans état, rien n'est évalué : ni signature ni notification
+            if (!$data->isEvaluee()) {
+                throw new ValidationException(new ConstraintViolationList([new ConstraintViolation('Choisissez un niveau d’acquisition : non acquis, en cours d’acquisition ou acquis.', 'Choisissez un niveau d’acquisition : non acquis, en cours d’acquisition ou acquis.', [], null, 'etat', null)]));
+            }
+            $avant = $context['previous_data'] ?? null;
+            if ($avant instanceof Validation && $avant->isEtat() === $data->isEtat()) {
+                return $data;
+            }
             $user = $this->security->getUser();
             \assert($user instanceof Users);
             $data->setEnseignant($user->getEnseignant());
             $data->setDateModification(new \DateTime());
             $etudiant = $data->getTrace()?->getBibliotheque()?->getEtudiant();
+            // Notifiée seulement quand l'état change (une réévaluation au même niveau ne dérange pas l'étudiant)
             if (null !== $etudiant) {
                 $this->em->persist(Notification::pour($etudiant, $data));
             }

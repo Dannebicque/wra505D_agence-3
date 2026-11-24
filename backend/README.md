@@ -109,7 +109,7 @@ Règles à connaître côté front :
 
 #### Évaluation, commentaires et notifications (Sprint 3)
 
-Comptes de démo en plus : `enseignant2` (département CJ, ne voit aucun étudiant des fixtures).
+Comptes de démo en plus : `enseignant2` (département CJ, ne voit aucun étudiant des fixtures) et `enseignant3` (MMI, collègue de `enseignant`).
 
 | Ressource | Opérations | Accès |
 |---|---|---|
@@ -120,9 +120,10 @@ Comptes de démo en plus : `enseignant2` (département CJ, ne voit aucun étudia
 
 Règles à connaître côté front :
 
-- **Évaluer** : seul `etat` change ; l'enseignant et `dateModification` sont fixés par le serveur. Chaque niveau s'évalue à part (point ouvert n° 16 : évaluation partielle permise). 422 « Choisissez un niveau d’acquisition… » hors de 1 à 3. L'étudiant reçoit une notification `evaluation` à chaque évaluation.
+- **Évaluer** : seul `etat` change ; l'enseignant et `dateModification` sont fixés par le serveur. Chaque niveau s'évalue à part (point ouvert n° 16 : évaluation partielle permise). 422 « Choisissez un niveau d’acquisition… » hors de 1 à 3. `etat` est obligatoire ; l'étudiant reçoit une notification `evaluation` quand l'état change (pas pour une réévaluation au même niveau).
 - **Commentaire** : une trace finalisée **ou** un portfolio public, jamais les deux (422 « Commentez une trace ou un portfolio. ») ; 2 000 caractères au plus. Non visible, c'est une note entre enseignants ; l'étudiant est notifié la première fois qu'il lui devient visible.
-- **Notification** : `destinataire` est l'IRI de l'étudiant ; `trace` est la trace à ouvrir (E-EV-07), celle de l'évaluation ou du commentaire (null pour un commentaire de portfolio).
+- **Page lue par un enseignant** : `traces` ne liste que les traces finalisées.
+- **Notification** : celle d'un commentaire repassé en note privée disparaît avec lui. `destinataire` est l'IRI de l'étudiant ; `trace` est la trace à ouvrir (E-EV-07), celle de l'évaluation ou du commentaire (null pour un commentaire de portfolio).
 - **Filtres** : une valeur inconnue ou mal formée donne une liste vide. Les autres filtres enseignant (groupe, année, étudiants ayant des travaux en attente) se calculent dans le navigateur à partir de ces collections.
 - `/api/etudiants` est désormais limité au département de l'enseignant ; la fiche d'un autre étudiant répond 404 (au lieu de 403).
 

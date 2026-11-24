@@ -39,6 +39,23 @@ class EnseignantTest extends ApiTestCase
         self::assertSame(2, $this->lire('/api/pages?portfolio=' . urlencode($this->portfolio()))['totalItems']);
     }
 
+    public function testUnePageNeLuiMontrePasLesBrouillons(): void
+    {
+        $page = $this->iri("SELECT '/api/pages/' || id FROM page WHERE intitule = 'Projet web'");
+        $site = $this->trace('Site vitrine d’une association');
+        $this->connection->executeStatement("UPDATE trace SET statut = 'brouillon' WHERE id = ?", [basename($site)]);
+
+        $this->connecter('enseignant');
+        $lue = $this->lire($page);
+        self::assertSame([], $lue['traces']);
+        $cles = array_keys($lue);
+        sort($cles);
+        self::assertSame(['@context', '@id', '@type', 'dateSuppression', 'description', 'intitule', 'portfolio', 'traces'], $cles);
+
+        $this->connecter('etudiant');
+        self::assertSame([$site], $this->lire($page)['traces'], 'L’étudiant garde la sienne');
+    }
+
     public function testNeVoitPasUnPortfolioPrive(): void
     {
         $this->connection->executeStatement('UPDATE portfolio SET visibilite = false');

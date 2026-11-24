@@ -106,7 +106,7 @@ class Page
         return $this;
     }
 
-    #[Groups(['page:read', 'portfolio:public'])]
+    #[Groups(['page:read', 'page:enseignant', 'portfolio:public'])]
     public function getIntitule(): ?string
     {
         return $this->intitule;
@@ -120,7 +120,7 @@ class Page
         return $this;
     }
 
-    #[Groups(['page:read', 'portfolio:public'])]
+    #[Groups(['page:read', 'page:enseignant', 'portfolio:public'])]
     public function getDescription(): ?string
     {
         return $this->description;
@@ -147,7 +147,7 @@ class Page
         return $this;
     }
 
-    #[Groups(['page:read'])]
+    #[Groups(['page:read', 'page:enseignant'])]
     public function getPortfolio(): ?Portfolio
     {
         return $this->portfolio;
@@ -192,7 +192,7 @@ class Page
      *
      * @return list<Trace>
      */
-    #[Groups(['portfolio:public'])]
+    #[Groups(['portfolio:public', 'page:enseignant'])]
     #[SerializedName('traces')]
     public function getTracesPubliques(): array
     {
@@ -243,7 +243,7 @@ class Page
         return $this;
     }
 
-    #[Groups(['page:read'])]
+    #[Groups(['page:read', 'page:enseignant'])]
     public function getDateSuppression(): ?\DateTimeImmutable
     {
         return $this->date_suppression;

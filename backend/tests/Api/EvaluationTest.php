@@ -48,6 +48,33 @@ class EvaluationTest extends ApiTestCase
         self::assertFalse($notification['lu']);
     }
 
+    public function testSansEtatRienNEstEvalueNiNotifie(): void
+    {
+        $this->connecter('enseignant');
+
+        $reponse = $this->envoyer('PATCH', $this->enAttente(), ['trace' => '/api/traces/1']);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('etat', $reponse['violations'][0]['propertyPath']);
+        $reponse = $this->envoyer('PATCH', $this->enAttente(), ['etat' => '3']);
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('etat', $reponse['violations'][0]['propertyPath'], 'Mauvais type : champ du front');
+
+        self::assertNull($this->lire($this->enAttente())['enseignant']);
+        self::assertSame(2, $this->nombreDeNotifications());
+    }
+
+    public function testReevaluerAuMemeNiveauNeNotifiePas(): void
+    {
+        $this->connecter('enseignant');
+        $this->envoyer('PATCH', $this->enAttente(), ['etat' => 2]);
+        $this->envoyer('PATCH', $this->enAttente(), ['etat' => 2]);
+        self::assertResponseIsSuccessful();
+
+        self::assertSame(3, $this->nombreDeNotifications());
+        $this->envoyer('PATCH', $this->enAttente(), ['etat' => 3]);
+        self::assertSame(4, $this->nombreDeNotifications());
+    }
+
     public function testModifieUneEvaluation(): void
     {
         $this->connecter('enseignant');
@@ -117,6 +144,11 @@ class EvaluationTest extends ApiTestCase
         $this->connecter('enseignant');
         $this->lire('/api/notifications');
         self::assertResponseStatusCodeSame(403);
+    }
+
+    private function nombreDeNotifications(): int
+    {
+        return (int) $this->connection->fetchOne("SELECT COUNT(*) FROM notification n JOIN etudiant e ON e.id = n.etudiant_id WHERE e.username = 'etudiant'");
     }
 
     private function enAttente(): string

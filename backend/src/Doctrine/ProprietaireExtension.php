@@ -70,7 +70,9 @@ final class ProprietaireExtension implements QueryCollectionExtensionInterface, 
 
         match ($classe) {
             Etudiant::class => $qb->andWhere(sprintf('%s = :%s', $racine, $moi)),
-            Bibliotheque::class, Notification::class => $qb->andWhere(sprintf('%s.etudiant = :%s', $racine, $moi)),
+            Bibliotheque::class => $qb->andWhere(sprintf('%s.etudiant = :%s', $racine, $moi)),
+            // Notification d'un commentaire repassé en note privée : masquée avec lui (lien mort et fuite sinon)
+            Notification::class => $qb->andWhere(sprintf('%s.etudiant = :%s AND (%3$s.id IS NULL OR %3$s.visibilite = true)', $racine, $moi, $this->joindre($qb, $noms, $racine, 'commentaire', true))),
             Portfolio::class => $qb->andWhere(sprintf('%s.etudiant = :%s AND %1$s.date_suppression IS NULL', $racine, $moi)),
             // Une page d'un portfolio supprimé disparaît avec lui
             Page::class => $qb->andWhere(sprintf('%s.date_suppression IS NULL AND %s', $racine, sprintf('%s.etudiant = :%s AND %1$s.date_suppression IS NULL', $this->joindre($qb, $noms, $racine, 'portfolio'), $moi))),
