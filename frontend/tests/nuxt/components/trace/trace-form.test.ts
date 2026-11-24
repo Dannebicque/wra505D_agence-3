@@ -242,4 +242,21 @@ describe('formulaire de trace', () => {
 
     await vi.waitFor(() => expect(form.text()).not.toContain('Fichier manquant.'))
   })
+
+  it('ferme l’aperçu de la description quand le serveur la refuse, pour y mettre le focus', async () => {
+    const form = await mountSuspended(TraceForm, { attachTo: document.body })
+    await form.get('button[aria-pressed]').trigger('click')
+    expect(form.find('[role="region"]').exists()).toBe(true)
+
+    ;(form.vm as unknown as { setServerErrors: (v: unknown[]) => unknown }).setServerErrors([
+      {
+        propertyPath: 'description',
+        message: 'La description ne doit pas dépasser 5 000 caractères.',
+      },
+    ])
+
+    await vi.waitFor(() => expect(form.find('[role="region"]').exists()).toBe(false))
+    await vi.waitFor(() => expect(document.activeElement).toBe(form.get('textarea').element))
+    form.unmount()
+  })
 })

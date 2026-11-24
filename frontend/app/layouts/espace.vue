@@ -21,12 +21,17 @@ function isActive(to: string) {
 
 /*
  * Pages regroupées par usage (« Mon travail », « Mon suivi »…). Chaque liste est nommée par son
- * intitulé (aria-labelledby) ; le groupe du bas (la corbeille) prend l'espace restant au-dessus de
+ * intitulé (aria-label) ; le groupe du bas (la corbeille) prend l'espace restant au-dessus de
  * lui. Écrit à la main plutôt qu'avec UNavigationMenu, qui faisait de l'intitulé un élément de la
  * liste qu'il titre (« 4 éléments » pour 3 liens) au lieu de son nom.
  */
 const groups = computed(() => navigationGroups(espace.value ? NAVIGATION[espace.value] : []))
-const groupIdPrefix = useId()
+
+/** Page affichée : « page » ; sous-page d'une entrée (une trace dans « Mes traces ») : « true ». */
+function ariaCurrent(to: string) {
+  if (route.path === to) return 'page'
+  return isActive(to) ? 'true' : undefined
+}
 </script>
 
 <template>
@@ -57,24 +62,26 @@ const groupIdPrefix = useId()
       <nav aria-label="Navigation de l’espace" class="flex flex-1 flex-col gap-4">
         <div
           v-for="(group, index) in groups"
-          :key="group.label ?? `groupe-${index}`"
+          :key="group.label ?? `group-${index}`"
           :class="{ 'mt-auto': group.pinnedBottom }"
         >
+          <!--
+            La liste porte son intitulé en aria-label, pas par un id : la barre est rendue deux
+            fois (bureau et menu mobile), des ids y seraient en double. L'intitulé visible est
+            masqué aux lecteurs d'écran, qui l'entendent déjà comme nom de la liste.
+          -->
           <p
             v-if="group.label"
-            :id="`${groupIdPrefix}-${index}`"
+            aria-hidden="true"
             class="px-2.5 pb-1 text-xs/5 font-medium text-muted"
           >
             {{ group.label }}
           </p>
-          <ul
-            :aria-labelledby="group.label ? `${groupIdPrefix}-${index}` : undefined"
-            class="space-y-1"
-          >
+          <ul :aria-label="group.label" class="space-y-1">
             <li v-for="item in group.items" :key="item.to">
               <NuxtLink
                 :to="item.to"
-                :aria-current="isActive(item.to) ? 'page' : undefined"
+                :aria-current="ariaCurrent(item.to)"
                 class="group relative flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors motion-reduce:transition-none"
                 :class="
                   isActive(item.to)

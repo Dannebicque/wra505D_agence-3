@@ -75,6 +75,12 @@ describe('renderMarkdown', () => {
     expect(renderMarkdown(source)).not.toContain(balise)
   })
 
+  it('garde en texte ce qui est coché dans une liste de tâches', () => {
+    const html = renderMarkdown('- [x] fait\n- [ ] à faire')
+    expect(html).toContain('[x] fait')
+    expect(html).toContain('[ ] à faire')
+  })
+
   it('garde le texte d’un paragraphe collé avec un retrait, avec ses retours à la ligne', () => {
     expect(renderMarkdown('    ligne un\n    ligne deux')).toBe('<p>ligne un<br>ligne deux</p>\n')
   })
@@ -139,7 +145,40 @@ describe('applyMarkdownAction', () => {
   it('liste sans plage inversée quand le texte commence par une ligne vide', () => {
     const edit = applyMarkdownAction({ value: '\nabc', start: 0, end: 0 }, 'bullets')
     expect(edit.start).toBeLessThanOrEqual(edit.end)
-    expect(run({ value: '\nabc', start: 0, end: 0 }, 'bullets').value).toBe('\nabc')
+    expect(run({ value: '\nabc', start: 0, end: 0 }, 'bullets').value).toBe('- \nabc')
+  })
+
+  it.each([
+    ['', 0, 'bullets', '- '],
+    ['', 0, 'numbers', '1. '],
+    ['abc\n', 4, 'bullets', 'abc\n- '],
+  ] as const)('commence une liste sur une ligne vide : %j', (value, cursor, action, attendu) => {
+    const edit = applyMarkdownAction({ value, start: cursor, end: cursor }, action)
+    expect(run({ value, start: cursor, end: cursor }, action).value).toBe(attendu)
+    // Le curseur suit le préfixe, prêt pour la saisie
+    expect(edit.selectionStart).toBe(edit.selectionEnd)
+    expect(edit.selectionStart).toBe(attendu.length)
+  })
+
+  it.each([
+    // [texte, début, fin, action, résultat]
+    ['**mot**', 2, 5, 'italic', '***mot***'],
+    ['*mot*', 1, 4, 'bold', '***mot***'],
+    ['***mot***', 3, 6, 'italic', '**mot**'],
+    ['***mot***', 3, 6, 'bold', '*mot*'],
+    ['**mot**', 0, 7, 'italic', '***mot***'],
+    ['*mot*', 0, 5, 'italic', 'mot'],
+  ] as const)(
+    'combine gras et italique sans perdre l’un ou l’autre : %s',
+    (value, start, end, action, attendu) => {
+      expect(run({ value, start, end }, action).value).toBe(attendu)
+    },
+  )
+
+  it('ne casse pas la syntaxe quand la sélection couvre deux mises en forme', () => {
+    const value = '*a* et *b*'
+    const result = run({ value, start: 0, end: value.length }, 'italic').value
+    expect(result).not.toBe('a* et *b')
   })
 
   it('ne prend pas la ligne suivante quand la sélection finit sur un saut de ligne', () => {

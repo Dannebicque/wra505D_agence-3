@@ -67,8 +67,9 @@ const parser = new Marked({
     del({ tokens }: Tokens.Del) {
       return this.parser.parseInline(tokens)
     },
-    checkbox() {
-      return ''
+    // Case d'une liste de tâches : en texte, pas en champ sans libellé (on garde ce qui est coché)
+    checkbox({ checked }: Tokens.Checkbox) {
+      return checked ? '[x] ' : '[ ] '
     },
     link({ href, tokens }: Tokens.Link) {
       const label = this.parser.parseInline(tokens)

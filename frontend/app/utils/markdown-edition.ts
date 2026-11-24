@@ -40,34 +40,62 @@ function trimmed({ value, start, end }: Selection): Selection {
   return { value, start, end }
 }
 
-/** Entoure la sélection de `mark` (ou l'en retire si elle en est déjà entourée). */
-function toggleWrap(selection: Selection, mark: string, placeholder: string): Edition {
+/** Nombre d'astérisques consécutifs à partir de `from`, vers la droite (1) ou la gauche (-1). */
+function countStars(text: string, from: number, step: 1 | -1): number {
+  let count = 0
+  for (let i = from; text[i] === '*'; i += step) count++
+  return count
+}
+
+/**
+ * Une suite d'astérisques porte le gras si elle en compte 2 ou plus, l'italique si elle en compte
+ * un nombre impair : `***mot***` est en gras et en italique.
+ */
+function carries(stars: number, size: 1 | 2): boolean {
+  return size === 2 ? stars >= 2 : stars % 2 === 1
+}
+
+/**
+ * Gras (`size` 2) ou italique (`size` 1) : ajoute les astérisques, ou retire seulement ceux de
+ * l'action s'ils entourent déjà la sélection. L'italique d'un texte en gras donne donc `***mot***`,
+ * et retirer l'italique de `***mot***` laisse `**mot**`.
+ */
+function toggleEmphasis(selection: Selection, size: 1 | 2, placeholder: string): Edition {
   const { value, start, end } = trimmed(selection)
   const inner = value.slice(start, end)
   // Marques comprises dans la sélection : `**mot**` choisi en entier
-  if (inner.length > 2 * mark.length && inner.startsWith(mark) && inner.endsWith(mark)) {
-    const bare = inner.slice(mark.length, -mark.length)
-    return { start, end, text: bare, selectionStart: start, selectionEnd: start + bare.length }
-  }
-  // Marques autour de la sélection : `mot` choisi dans `**mot**`
-  const before = value.slice(start - mark.length, start)
-  const after = value.slice(end, end + mark.length)
-  if (start !== end && before === mark && after === mark) {
-    return {
-      start: start - mark.length,
-      end: end + mark.length,
-      text: inner,
-      selectionStart: start - mark.length,
-      selectionEnd: end - mark.length,
+  const lead = countStars(inner, 0, 1)
+  const trail = countStars(inner, inner.length - 1, -1)
+  if (lead < inner.length && carries(lead, size) && carries(trail, size)) {
+    const middle = inner.slice(lead, inner.length - trail)
+    // Pas d'autre marque au milieu : `*a* et *b*` n'est pas un seul italique
+    if (!middle.includes('*')) {
+      const bare = '*'.repeat(lead - size) + middle + '*'.repeat(trail - size)
+      return { start, end, text: bare, selectionStart: start, selectionEnd: start + bare.length }
     }
   }
+  // Marques autour de la sélection : `mot` choisi dans `**mot**`
+  if (start !== end && !inner.includes('*')) {
+    const before = countStars(value, start - 1, -1)
+    const after = countStars(value, end, 1)
+    if (carries(before, size) && carries(after, size)) {
+      return {
+        start: start - size,
+        end: end + size,
+        text: inner,
+        selectionStart: start - size,
+        selectionEnd: end - size,
+      }
+    }
+  }
+  const mark = '*'.repeat(size)
   const content = start === end ? placeholder : inner
   return {
     start,
     end,
     text: `${mark}${content}${mark}`,
-    selectionStart: start + mark.length,
-    selectionEnd: start + mark.length + content.length,
+    selectionStart: start + size,
+    selectionEnd: start + size + content.length,
   }
 }
 
@@ -86,6 +114,18 @@ function toggleList({ value, start, end }: Selection, ordered: boolean): Edition
   const lineEnd = nextBreak === -1 ? value.length : nextBreak
   const lines = value.slice(lineStart, lineEnd).split('\n')
   const filled = lines.filter((line) => line.trim() !== '')
+  // Ligne vide (« je commence une liste ») : le préfixe est posé, le curseur le suit
+  if (filled.length === 0) {
+    const firstBreak = value.indexOf('\n', lineStart)
+    const prefix = ordered ? '1. ' : '- '
+    return {
+      start: lineStart,
+      end: firstBreak === -1 ? value.length : firstBreak,
+      text: prefix,
+      selectionStart: lineStart + prefix.length,
+      selectionEnd: lineStart + prefix.length,
+    }
+  }
   const marker = ordered ? NUMBER : BULLET
   const allMarked = filled.length > 0 && filled.every((line) => marker.test(line))
   let rank = 0
@@ -135,10 +175,10 @@ function link(selection: Selection): Edition {
 export function applyMarkdownAction(selection: Selection, action: MarkdownAction): Edition {
   switch (action) {
     case 'bold':
-      return toggleWrap(selection, '**', PLACEHOLDERS.bold)
+      return toggleEmphasis(selection, 2, PLACEHOLDERS.bold)
     case 'italic':
       // `*` plutôt que `_` : `m_ot_clé` n'est pas de l'italique au milieu d'un mot
-      return toggleWrap(selection, '*', PLACEHOLDERS.italic)
+      return toggleEmphasis(selection, 1, PLACEHOLDERS.italic)
     case 'bullets':
       return toggleList(selection, false)
     case 'numbers':
