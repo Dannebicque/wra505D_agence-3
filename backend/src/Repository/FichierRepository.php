@@ -32,6 +32,8 @@ class FichierRepository extends ServiceEntityRepository
     {
         return false !== $this->getEntityManager()->getConnection()->fetchOne(<<<'SQL'
             SELECT 1 FROM portfolio p
+            -- Portfolio de l'étudiant propriétaire du fichier : le fichier d'un autre ne devient jamais public par lui
+            JOIN users u ON u.etudiant_id = p.etudiant_id AND u.id = :proprietaire
             WHERE p.visibilite AND p.date_suppression IS NULL AND (
                 p.banniere = :iri OR EXISTS (
                     SELECT 1 FROM page pa
@@ -43,7 +45,30 @@ class FichierRepository extends ServiceEntityRepository
                 )
             )
             LIMIT 1
-            SQL, ['iri' => '/api/fichiers/' . $fichier->getId()]);
+            SQL, ['iri' => '/api/fichiers/' . $fichier->getId(), 'proprietaire' => $fichier->getProprietaire()->getId()]);
+    }
+
+    /**
+     * Fichier d'une trace finalisée, hors corbeille, d'un étudiant de l'un de ces départements (lecture enseignant).
+     *
+     * @param list<int> $departements
+     */
+    public function lisibleParEnseignant(Fichier $fichier, array $departements): bool
+    {
+        return [] !== $departements && false !== $this->getEntityManager()->getConnection()->fetchOne(<<<'SQL'
+            SELECT 1 FROM trace t
+            JOIN bibliotheque b ON b.id = t.bibliotheque_id
+            JOIN etudiant e ON e.id = b.etudiant_id
+            JOIN semestre s ON s.id = e.semestre_id
+            JOIN annee a ON a.id = s.annee_id
+            JOIN diplome d ON d.id = a.diplome_id
+            -- Le fichier doit être celui de l'étudiant de la trace
+            JOIN users u ON u.etudiant_id = e.id AND u.id = :proprietaire
+            WHERE t.statut = 'finalisee' AND t.date_suppression IS NULL
+              AND d.departement_id IN (:departements)
+              AND jsonb_exists(t.contenu::jsonb, :iri)
+            LIMIT 1
+            SQL, ['iri' => '/api/fichiers/' . $fichier->getId(), 'proprietaire' => $fichier->getProprietaire()->getId(), 'departements' => $departements], ['departements' => \Doctrine\DBAL\ArrayParameterType::INTEGER]);
     }
 
     /**

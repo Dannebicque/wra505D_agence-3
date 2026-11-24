@@ -107,6 +107,40 @@ class UsersFixture extends Fixture implements OrderedFixtureInterface
 
         $manager->persist($enseignant);
         $manager->persist($user11);
+
+        // Enseignant d'un autre département (CJ) : ne voit aucun étudiant des fixtures (cloisonnement, Sprint 3)
+        $user12 = new Users();
+        $user12->setUsername('enseignant2')
+            ->setPassword($this->encoder->hashPassword($user12, 'test'))
+            ->setRoles(['ROLE_ENSEIGNANT'])
+            ->setEmail('prof2@univ-reims.fr')
+            ->setIsVerified(true);
+        $enseignant2 = new Enseignant();
+        $enseignant2->setUsers($user12);
+        $enseignant2->setNom('Lefèvre');
+        $enseignant2->setPrenom('Karim');
+        $enseignant2->setMailUniv('prof2@univ-reims.fr');
+        $enseignant2->setUsername('enseignant2');
+        $enseignant2->AddEnseignantDepartement(new EnseignantDepartement($enseignant2, $this->departementRepository->findOneBy(['id' => 2])));
+        $manager->persist($enseignant2);
+        $manager->persist($user12);
+
+        // Collègue du même département que « enseignant » : lit tout, mais ne modifie pas ses commentaires
+        $user13 = new Users();
+        $user13->setUsername('enseignant3')
+            ->setPassword($this->encoder->hashPassword($user13, 'test'))
+            ->setRoles(['ROLE_ENSEIGNANT'])
+            ->setEmail('prof3@univ-reims.fr')
+            ->setIsVerified(true);
+        $enseignant3 = new Enseignant();
+        $enseignant3->setUsers($user13);
+        $enseignant3->setNom('Moreau');
+        $enseignant3->setPrenom('Inès');
+        $enseignant3->setMailUniv('prof3@univ-reims.fr');
+        $enseignant3->setUsername('enseignant3');
+        $enseignant3->AddEnseignantDepartement(new EnseignantDepartement($enseignant3, $this->departementRepository->findOneBy(['id' => 1])));
+        $manager->persist($enseignant3);
+        $manager->persist($user13);
         $manager->flush();
     }
 

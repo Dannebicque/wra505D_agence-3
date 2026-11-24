@@ -14,7 +14,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\QueryParameter;
-use App\Filter\PortfolioDeLaPageFilter;
+use App\Filter\IriExacteFilter;
 use App\Repository\PageRepository;
 use App\State\PageProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -34,16 +34,17 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ApiResource(
     operations: [
         // ?portfolio=/api/portfolios/1 : pages d'un portfolio (app/services/portfolio.ts)
-        new GetCollection(parameters: ['portfolio' => new QueryParameter(filter: new PortfolioDeLaPageFilter())]),
+        new GetCollection(parameters: ['portfolio' => new QueryParameter(filter: new IriExacteFilter('portfolio', 'portfolios'))]),
         new Get(),
-        new Post(processor: PageProcessor::class, denormalizationContext: ['groups' => ['page:write', 'page:creation']]),
-        new Patch(processor: PageProcessor::class, denormalizationContext: ['groups' => ['page:write', 'page:traces']]),
+        new Post(processor: PageProcessor::class, denormalizationContext: ['groups' => ['page:write', 'page:creation']], security: "is_granted('ROLE_ETUDIANT')"),
+        new Patch(processor: PageProcessor::class, denormalizationContext: ['groups' => ['page:write', 'page:traces']], security: "is_granted('ROLE_ETUDIANT')"),
         // Corbeille : ses traces restent dans la bibliothèque
-        new Delete(processor: PageProcessor::class),
+        new Delete(processor: PageProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
     ],
     normalizationContext: ['groups' => ['page:read']],
     order: ['ordre' => 'ASC', 'id' => 'ASC'],
-    security: "is_granted('ROLE_ETUDIANT')",
+    // Lecture : l'étudiant (ses données) et l'enseignant (ses départements), cf. App\Doctrine\ProprietaireExtension
+    security: "is_granted('ROLE_ETUDIANT') or is_granted('ROLE_ENSEIGNANT')",
     collectDenormalizationErrors: true,
 )]
 #[ORM\Entity(repositoryClass: PageRepository::class)]
@@ -105,7 +106,7 @@ class Page
         return $this;
     }
 
-    #[Groups(['page:read', 'portfolio:public'])]
+    #[Groups(['page:read', 'page:enseignant', 'portfolio:public'])]
     public function getIntitule(): ?string
     {
         return $this->intitule;
@@ -119,7 +120,7 @@ class Page
         return $this;
     }
 
-    #[Groups(['page:read', 'portfolio:public'])]
+    #[Groups(['page:read', 'page:enseignant', 'portfolio:public'])]
     public function getDescription(): ?string
     {
         return $this->description;
@@ -146,7 +147,7 @@ class Page
         return $this;
     }
 
-    #[Groups(['page:read'])]
+    #[Groups(['page:read', 'page:enseignant'])]
     public function getPortfolio(): ?Portfolio
     {
         return $this->portfolio;
@@ -191,7 +192,7 @@ class Page
      *
      * @return list<Trace>
      */
-    #[Groups(['portfolio:public'])]
+    #[Groups(['portfolio:public', 'page:enseignant'])]
     #[SerializedName('traces')]
     public function getTracesPubliques(): array
     {
@@ -242,7 +243,7 @@ class Page
         return $this;
     }
 
-    #[Groups(['page:read'])]
+    #[Groups(['page:read', 'page:enseignant'])]
     public function getDateSuppression(): ?\DateTimeImmutable
     {
         return $this->date_suppression;

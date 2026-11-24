@@ -3,6 +3,7 @@
 namespace App\EventSubscriber;
 
 use ApiPlatform\Validator\Exception\ValidationException;
+use App\Entity\Commentaire;
 use App\Entity\Page;
 use App\Entity\Portfolio;
 use App\Entity\Validation;
@@ -31,9 +32,14 @@ final class ErreursDeLienSubscriber implements EventSubscriberInterface
         Portfolio::class => [
             ['/^pagesVisibles(\[\d+\])?$/', 'pages', 'L’ordre doit reprendre exactement les pages du portfolio.'],
         ],
+        Commentaire::class => [
+            ['/^trace$/', 'trace', 'Trace introuvable.'],
+            ['/^portfolio$/', 'portfolio', 'Portfolio introuvable.'],
+        ],
         Validation::class => [
             ['/^trace$/', 'trace', 'Trace introuvable.'],
             ['/^niveau$/', 'niveau', 'Niveau de compétence introuvable.'],
+            ['/^etatEvalue$/', 'etat', 'Choisissez un niveau d’acquisition : non acquis, en cours d’acquisition ou acquis.'],
         ],
     ];
 

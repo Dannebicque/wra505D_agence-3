@@ -33,9 +33,9 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
     operations: [
         new GetCollection(),
         new Get(),
-        new Post(processor: PortfolioProcessor::class),
-        new Patch(processor: PortfolioProcessor::class, denormalizationContext: ['groups' => ['portfolio:write', 'portfolio:ordre']]),
-        new Delete(processor: PortfolioProcessor::class),
+        new Post(processor: PortfolioProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
+        new Patch(processor: PortfolioProcessor::class, denormalizationContext: ['groups' => ['portfolio:write', 'portfolio:ordre']], security: "is_granted('ROLE_ETUDIANT')"),
+        new Delete(processor: PortfolioProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
         new Get(
             uriTemplate: '/portfolios/{id}/public',
             provider: PortfolioPublicProvider::class,
@@ -47,7 +47,8 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
     normalizationContext: ['groups' => ['portfolio:read']],
     denormalizationContext: ['groups' => ['portfolio:write']],
     order: ['id' => 'ASC'],
-    security: "is_granted('ROLE_ETUDIANT')",
+    // Lecture : l'étudiant (ses données) et l'enseignant (ses départements), cf. App\Doctrine\ProprietaireExtension
+    security: "is_granted('ROLE_ETUDIANT') or is_granted('ROLE_ENSEIGNANT')",
     collectDenormalizationErrors: true,
 )]
 #[PortfolioValide]

@@ -80,7 +80,7 @@ class StructureSynchro extends AbstractController
                     }
                     $etudiantRepository->remove($etudiant, true);
                 }
-                foreach ($enseignantRepository->findBy(['username' => ['enseignant']]) as $enseignant) {
+                foreach ($enseignantRepository->findBy(['username' => ['enseignant', 'enseignant2', 'enseignant3']]) as $enseignant) {
                     $enseignantRepository->remove($enseignant, true);
                 }
 

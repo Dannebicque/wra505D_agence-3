@@ -2,6 +2,8 @@
 
 namespace App\DataFixtures;
 
+use App\Entity\Commentaire;
+use App\Entity\Notification;
 use App\Entity\Page;
 use App\Entity\Portfolio;
 use App\Entity\Trace;
@@ -17,7 +19,8 @@ use Doctrine\Persistence\ObjectManager;
 /**
  * Traces de démonstration du compte « etudiant » : une par état utile au front (lien finalisé et évalué,
  * vidéo en attente d'évaluation, brouillon d'image sans fichier), et son portfolio public de l'année avec deux
- * pages-projets. « etudiant2 » n'a ni trace ni portfolio.
+ * pages-projets ; un commentaire visible de « enseignant » sur le site, et les notifications de l'évaluation et du
+ * commentaire (une lue, une non lue). « etudiant2 » n'a ni trace ni portfolio.
  */
 class TraceFixture extends Fixture implements OrderedFixtureInterface
 {
@@ -62,7 +65,13 @@ class TraceFixture extends Fixture implements OrderedFixtureInterface
         $web->setTraces([$site]);
         $motion->setTraces([$video]);
 
-        foreach ([$site, $video, $brouillon, $evaluee, $enAttente, $portfolio, $web, $motion] as $entite) {
+        $commentaire = (new Commentaire())->setTrace($site)->setEnseignant($evaluee->getEnseignant())
+            ->setContenu('Site clair et accessible : pensez à justifier vos choix de couleurs.')->setVisibilite(true)
+            ->setDateCreation(new \DateTime('-3 days'));
+        $notifEvaluation = Notification::pour($etudiant, $evaluee)->setLu(true)->setDateCreation(new \DateTime('-3 days'));
+        $notifCommentaire = Notification::pour($etudiant, commentaire: $commentaire)->setDateCreation(new \DateTime('-3 days +1 minute'));
+
+        foreach ([$site, $video, $brouillon, $evaluee, $enAttente, $portfolio, $web, $motion, $commentaire, $notifEvaluation, $notifCommentaire] as $entite) {
             $manager->persist($entite);
         }
         $manager->flush();
