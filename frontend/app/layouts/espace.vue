@@ -13,25 +13,40 @@ const ACTIVE_LINK_CLASS =
   'font-semibold after:absolute after:inset-y-2 after:start-0 after:w-1 after:rounded-full after:bg-primary dark:after:bg-or-400'
 
 // La barre latérale est en rem (unit="rem") : elle garde ses 224 px (14 rem) quelle que soit la fenêtre
-const items = computed(() =>
-  (espace.value ? NAVIGATION[espace.value] : []).map((item) => {
-    // Accueil de l'espace : actif sur sa seule page ; autres entrées : aussi sur leurs sous-pages
-    // (les routes sont plates, le routeur ne le ferait pas seul)
-    const active =
-      item.to === homePath.value
-        ? route.path === item.to
-        : route.path === item.to || route.path.startsWith(`${item.to}/`)
-    return {
-      ...item,
-      active,
-      // La page courante se repère par le trait, la pilule et la graisse, pas par la seule couleur
-      // (WCAG 1.4.1)
-      class: active ? ACTIVE_LINK_CLASS : undefined,
-      onSelect: () => {
-        isMenuOpen.value = false
-      },
-    }
-  }),
+function toMenuItem({ label, to, icon }: NavItem) {
+  // Accueil de l'espace : actif sur sa seule page ; autres entrées : aussi sur leurs sous-pages
+  // (les routes sont plates, le routeur ne le ferait pas seul)
+  const active =
+    to === homePath.value ? route.path === to : route.path === to || route.path.startsWith(`${to}/`)
+  return {
+    label,
+    to,
+    icon,
+    active,
+    // La page courante se repère par le trait, la pilule et la graisse, pas par la seule couleur
+    // (WCAG 1.4.1)
+    class: active ? ACTIVE_LINK_CLASS : undefined,
+    onSelect: () => {
+      isMenuOpen.value = false
+    },
+  }
+}
+
+/*
+ * Pages regroupées par usage (« Mon travail », « Mon suivi »…), chaque groupe sous son intitulé ;
+ * le dernier groupe (la corbeille) est poussé en bas de la barre, à l'écart du travail courant.
+ * Une seule liste de groupes : la barre reste un seul repère « Navigation de l'espace ».
+ */
+const navGroupes = computed(() => navigationGroupes(espace.value ? NAVIGATION[espace.value] : []))
+const groupes = computed(() =>
+  navGroupes.value.map((groupe) => [
+    ...(groupe.label ? [{ label: groupe.label, type: 'label' as const }] : []),
+    ...groupe.items.map(toMenuItem),
+  ]),
+)
+// Le groupe du bas est toujours le dernier (navigationGroupes) : sa liste prend l'espace restant
+const listClass = computed(() =>
+  navGroupes.value.some((g) => g.enBas) ? 'last-of-type:mt-auto' : undefined,
 )
 </script>
 
@@ -58,9 +73,15 @@ const items = computed(() =>
            la couleur d'action ne colore pas les libellés, gardée aux données et à l'action
            principale de chaque page -->
       <UNavigationMenu
-        :items="items"
+        :items="groupes"
         color="neutral"
-        :ui="{ link: 'font-normal' }"
+        class="flex-1 gap-4"
+        :ui="{
+          link: 'font-normal',
+          label: 'text-xs/5 font-medium text-muted',
+          separator: 'hidden',
+          list: listClass,
+        }"
         orientation="vertical"
         aria-label="Navigation de l’espace"
       />

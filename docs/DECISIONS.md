@@ -252,4 +252,3 @@ Design : `docs/superpowers/specs/2026-11-23-passe-ui-ux-design.md`.
 - **Décision** : une seule `backend/Dockerfile` à deux cibles (`dev`, `prod`) et `backend/compose.prod.yaml` : code et dépendances sans dev dans l'image, php.ini de production, opcache sans relecture des fichiers, migrations au démarrage, secrets par variables (`.env.prod`, jamais versionné), refus de démarrer avec l'`APP_SECRET` par défaut.
 - **Alternatives écartées** : un second Dockerfile (extensions et réglages PHP dupliqués) ; le mode worker de FrankenPHP (plus rapide, mais l'état partagé entre requêtes demande une revue du code repris de l'ancienne version).
 - **Raison** : la roadmap prévoit l'API sous Docker pour le Sprint 4 ; la même base d'image en dev et en prod évite les écarts d'extensions.
-

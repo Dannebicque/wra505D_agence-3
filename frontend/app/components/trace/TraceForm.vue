@@ -190,12 +190,11 @@ function setServerErrors(violations: Violation[]): Violation[] {
 }
 defineExpose({ setServerErrors })
 
-const TYPE_ITEMS = [
-  { label: 'Lien', value: 'lien' },
-  { label: 'Vidéo', value: 'video' },
-  { label: 'Image', value: 'image' },
-  { label: 'PDF', value: 'pdf' },
-]
+const TYPE_ITEMS = (['lien', 'video', 'image', 'pdf'] as const).map((value) => ({
+  label: TRACE_TYPE_LIBELLES[value],
+  value,
+  icon: TRACE_TYPE_ICONS[value],
+}))
 const CONCEPTION_ITEMS = Object.entries(CONCEPTION_IA_LIBELLES).map(([value, label]) => ({
   label,
   value,
@@ -232,14 +231,9 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
     </UFormField>
 
     <!-- Le groupe est nommé par sa légende (un libellé de UFormField ne vise aucun champ ici) ;
-         UFormField garde l'erreur du champ, liée au groupe (aria-describedby) -->
+         UFormField garde l'erreur du champ, liée à chaque bouton (aria-describedby) -->
     <UFormField name="type">
-      <URadioGroup
-        v-model="state.type"
-        legend="Type de trace"
-        :items="TYPE_ITEMS"
-        orientation="horizontal"
-      />
+      <UiChoixSegmente v-model="state.type" legend="Type de trace" :items="TYPE_ITEMS" />
     </UFormField>
 
     <TraceFileField
@@ -286,7 +280,8 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
     </UFormField>
 
     <!-- Champs secondaires : repliés par défaut, mais toujours dans la page (`hidden="until-found"`),
-         donc validés, trouvés par la recherche du navigateur et jamais perdus -->
+         donc validés, trouvés par la recherche du navigateur et jamais perdus. Le bouton épouse la
+         boîte : même arrondi moins la bordure, coins du bas carrés une fois ouvert (le contenu suit) -->
     <UCollapsible
       v-model:open="detailsOpen"
       :unmount-on-hide="false"
@@ -297,7 +292,7 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
         variant="ghost"
         block
         trailing-icon="i-lucide-chevron-down"
-        class="group justify-between rounded-feuille p-4 text-left"
+        class="group justify-between rounded-[calc(var(--radius-feuille)-1px)] p-4 text-left data-[state=open]:rounded-b-none"
         :ui="{
           trailingIcon:
             'transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none',

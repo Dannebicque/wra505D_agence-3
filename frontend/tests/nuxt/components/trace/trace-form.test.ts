@@ -207,8 +207,8 @@ describe('formulaire de trace', () => {
     })
     expect(form.text()).toContain('affiche.jpg')
 
-    // Les boutons radio de Nuxt UI (Reka) sont des `button role="radio"`
-    await form.get('[role="radio"][value="pdf"]').trigger('click')
+    // Sélecteur segmenté : de vrais boutons radio natifs
+    await form.get('input[type="radio"][value="pdf"]').setValue()
 
     await vi.waitFor(() =>
       expect(form.emitted('change')?.at(-1)?.[0]).toMatchObject({ type: 'pdf', contenu: [] }),

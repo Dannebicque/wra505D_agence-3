@@ -6,6 +6,10 @@ const ACTIVE_OPTION =
 
 export default defineAppConfig({
   ui: {
+    // Arrondis du thème (main.css) déclarés à tailwind-merge : sans cela, `class="rounded-feuille"`
+    // sur un composant ne remplaçait pas son arrondi (`rounded-full` des boutons) mais s'y ajoutait,
+    // et le fond de survol gardait la forme d'une pilule dans une boîte rectangulaire.
+    tv: { twMergeConfig: { extend: { theme: { radius: ['feuille', 'panneau'] } } } },
     colors: {
       // Palettes définies dans app/assets/css/main.css : prune (violet de l'IUT) pour l'action,
       // gris très légèrement teinté de prune pour tout le reste

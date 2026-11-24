@@ -202,6 +202,8 @@
   --ui-bg: oklch(21.2% 0.008 297.55);
   --ui-bg-muted: oklch(26.8% 0.009 297.55);
   --ui-bg-elevated: oklch(31% 0.01 297.55);
+  /* Redéfini aussi en clair (:root) : sans cette ligne, la valeur claire s'appliquait en sombre */
+  --ui-bg-accented: oklch(37.2% 0.009 297.55);
   --ui-text: oklch(93.6% 0.004 297.55);
   --ui-text-highlighted: var(--ui-text);
   --ui-text-muted: oklch(72.2% 0.01 297.55);
