@@ -24,7 +24,7 @@ export default defineAppConfig({
       },
     },
     // Contour des champs et des commandes à au moins 3:1 (WCAG 1.4.11) : `contour` (main.css) au
-    // lieu de `accented` (1,4 à 1,7:1), gardé pour les contours décoratifs (boutons « outline »…)
+    // lieu de `accented` (1,55 à 1,9:1), gardé pour les contours décoratifs (boutons « outline »…)
     input: { variants: { variant: { outline: 'ring-contour', subtle: 'ring-contour' } } },
     textarea: { variants: { variant: { outline: 'ring-contour', subtle: 'ring-contour' } } },
     select: {

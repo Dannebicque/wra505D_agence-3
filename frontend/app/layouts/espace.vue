@@ -8,7 +8,7 @@ const homePath = computed(() => (espace.value ? `/${espace.value}` : '/'))
 const isMenuOpen = ref(false)
 
 // Trait de la page courante, au moins 3:1 sur la pilule et le cadre (WCAG 1.4.11) : prune en clair
-// (7,9:1 ; l'or n'y faisait que 1,5:1), or de l'IUT en sombre (7,6:1)
+// (7,5:1 ; l'or n'y faisait que 1,5:1), or de l'IUT en sombre (7,0:1)
 const ACTIVE_LINK_CLASS =
   'font-semibold after:absolute after:inset-y-2 after:start-0 after:w-1 after:rounded-full after:bg-primary dark:after:bg-or-400'
 

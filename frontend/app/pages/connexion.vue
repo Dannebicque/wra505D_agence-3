@@ -152,7 +152,7 @@ const DEMO_ACCESS = [
         <li v-for="access in DEMO_ACCESS" :key="access.to">
           <NuxtLink
             :to="access.to"
-            class="flex items-center gap-3 rounded-feuille border border-default p-4 transition-colors hover:bg-muted"
+            class="flex items-center gap-3 rounded-feuille border border-default p-4 shadow-carte transition-[background-color,border-color,box-shadow] hover:border-accented hover:bg-muted hover:shadow-carte-survol focus-visible:shadow-carte-survol motion-reduce:transition-none"
           >
             <UIcon :name="access.icon" class="size-5 shrink-0 text-primary" />
             <span class="flex min-w-0 flex-1 flex-col">
