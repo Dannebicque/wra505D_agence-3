@@ -32,6 +32,9 @@ export default defineNuxtConfig({
     '/admin/**': { appLayout: 'espace' },
   },
   runtimeConfig: {
+    // Origine d'ApiPlatform à relayer sur /api/** (server/middleware/api-proxy.ts), via NUXT_API_PROXY ;
+    // vide = routes Nitro factices. Côté serveur seulement : le navigateur ne voit que /api/** du front.
+    apiProxy: '',
     public: {
       // Origine de l'API : vide = routes Nitro locales ; URL d'ApiPlatform via NUXT_PUBLIC_API_BASE
       apiBase: '',

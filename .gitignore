@@ -23,6 +23,7 @@ playwright/.cache/
 # Symfony : .env et .env.test ne contiennent que des valeurs par défaut (secrets dans .env.local, ignoré)
 !backend/.env
 !backend/.env.test
+!backend/.env.prod.example
 
 # Logs
 logs/

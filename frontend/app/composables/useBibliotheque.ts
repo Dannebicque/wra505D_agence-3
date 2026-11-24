@@ -9,7 +9,7 @@ export function useBibliotheque() {
     const [traces, validations, referentiels] = await Promise.all([
       store.list(),
       listValidations(requestOptions),
-      listReferentiels(),
+      listReferentiels(requestOptions),
     ])
     return { traces, validations, referentiel: referentiels[0] ?? null }
   })

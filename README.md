@@ -14,6 +14,7 @@ UniFolio : refonte de l'outil de portfolio de compétences de l'IUT (Nuxt 4, Typ
 
 - [Fonctionnalités](docs/FONCTIONNALITES.md) : périmètre de référence et statuts.
 - [Roadmap](docs/ROADMAP.md) : planification par sprint.
+- [Bascule vers l'API](docs/BASCULE-API.md) : brancher le front sur ApiPlatform (`NUXT_API_PROXY`), écran par écran.
 
 ## Assistants IA
 
