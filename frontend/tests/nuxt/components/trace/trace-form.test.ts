@@ -259,4 +259,34 @@ describe('formulaire de trace', () => {
     await vi.waitFor(() => expect(document.activeElement).toBe(form.get('textarea').element))
     form.unmount()
   })
+
+  it('signale une description trop longue chargée d’emblée et ferme l’aperçu', async () => {
+    const form = await mountSuspended(TraceForm, {
+      props: {
+        initial: {
+          titre: 'Description reprise',
+          description: 'x'.repeat(5001),
+          contexte: null,
+          legende: null,
+          type: 'lien',
+          contenu: ['https://exemple.fr'],
+          statut: 'brouillon',
+          conceptionIa: 'aucun',
+          realisationIa: 'aucun',
+          dateRealisation: null,
+        },
+      },
+      attachTo: document.body,
+    })
+    await form.get('button[aria-pressed]').trigger('click')
+
+    await submitWith(form, 'finaliser')
+
+    await vi.waitFor(() =>
+      expect(form.text()).toContain('La description ne doit pas dépasser 5 000 caractères.'),
+    )
+    expect(form.find('[role="region"]').exists()).toBe(false)
+    expect(form.emitted('submit')).toBeUndefined()
+    form.unmount()
+  })
 })

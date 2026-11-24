@@ -21,7 +21,7 @@ function isActive(to: string) {
 
 /*
  * Pages regroupées par usage (« Mon travail », « Mon suivi »…). Chaque liste est nommée par son
- * intitulé (aria-label) ; le groupe du bas (la corbeille) prend l'espace restant au-dessus de
+ * intitulé (`LayoutNavGroup`) ; le groupe du bas (la corbeille) prend l'espace restant au-dessus de
  * lui. Écrit à la main plutôt qu'avec UNavigationMenu, qui faisait de l'intitulé un élément de la
  * liste qu'il titre (« 4 éléments » pour 3 liens) au lieu de son nom.
  */
@@ -60,50 +60,37 @@ function ariaCurrent(to: string) {
         que 1,5:1), or 7,0:1 en sombre. La couleur d'action ne colore pas les libellés.
       -->
       <nav aria-label="Navigation de l’espace" class="flex flex-1 flex-col gap-4">
-        <div
+        <LayoutNavGroup
           v-for="(group, index) in groups"
           :key="group.label ?? `group-${index}`"
+          :label="group.label"
           :class="{ 'mt-auto': group.pinnedBottom }"
         >
-          <!--
-            La liste porte son intitulé en aria-label, pas par un id : la barre est rendue deux
-            fois (bureau et menu mobile), des ids y seraient en double. L'intitulé visible est
-            masqué aux lecteurs d'écran, qui l'entendent déjà comme nom de la liste.
-          -->
-          <p
-            v-if="group.label"
-            aria-hidden="true"
-            class="px-2.5 pb-1 text-xs/5 font-medium text-muted"
-          >
-            {{ group.label }}
-          </p>
-          <ul :aria-label="group.label" class="space-y-1">
-            <li v-for="item in group.items" :key="item.to">
-              <NuxtLink
-                :to="item.to"
-                :aria-current="ariaCurrent(item.to)"
-                class="group relative flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors motion-reduce:transition-none"
+          <li v-for="item in group.items" :key="item.to">
+            <NuxtLink
+              :to="item.to"
+              :aria-current="ariaCurrent(item.to)"
+              class="group relative flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors motion-reduce:transition-none"
+              :class="
+                isActive(item.to)
+                  ? 'bg-elevated font-semibold text-highlighted after:absolute after:inset-y-2 after:start-0 after:w-1 after:rounded-full after:bg-primary dark:after:bg-or-400'
+                  : 'text-muted hover:bg-elevated/50 hover:text-highlighted'
+              "
+              @click="isMenuOpen = false"
+            >
+              <UIcon
+                v-if="item.icon"
+                :name="item.icon"
+                class="size-5 shrink-0"
                 :class="
-                  isActive(item.to)
-                    ? 'bg-elevated font-semibold text-highlighted after:absolute after:inset-y-2 after:start-0 after:w-1 after:rounded-full after:bg-primary dark:after:bg-or-400'
-                    : 'text-muted hover:bg-elevated/50 hover:text-highlighted'
+                  isActive(item.to) ? 'text-highlighted' : 'text-dimmed group-hover:text-default'
                 "
-                @click="isMenuOpen = false"
-              >
-                <UIcon
-                  v-if="item.icon"
-                  :name="item.icon"
-                  class="size-5 shrink-0"
-                  :class="
-                    isActive(item.to) ? 'text-highlighted' : 'text-dimmed group-hover:text-default'
-                  "
-                  aria-hidden="true"
-                />
-                <span class="truncate">{{ item.label }}</span>
-              </NuxtLink>
-            </li>
-          </ul>
-        </div>
+                aria-hidden="true"
+              />
+              <span class="truncate">{{ item.label }}</span>
+            </NuxtLink>
+          </li>
+        </LayoutNavGroup>
       </nav>
 
       <template #footer>

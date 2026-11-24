@@ -40,6 +40,9 @@ function trimmed({ value, start, end }: Selection): Selection {
   return { value, start, end }
 }
 
+/** Lettre ou chiffre : un astérisque qui en touche un n'est pas en bord de mot. */
+const WORD_CHAR = /[\p{L}\p{N}]/u
+
 /** Nombre d'astérisques consécutifs à partir de `from`, vers la droite (1) ou la gauche (-1). */
 function countStars(text: string, from: number, step: 1 | -1): number {
   let count = 0
@@ -74,21 +77,33 @@ function toggleEmphasis(selection: Selection, size: 1 | 2, placeholder: string):
       return { start, end, text: bare, selectionStart: start, selectionEnd: start + bare.length }
     }
   }
-  // Marques autour de la sélection : `mot` choisi dans `**mot**`
-  if (start !== end && !inner.includes('*')) {
-    const before = countStars(value, start - 1, -1)
-    const after = countStars(value, end, 1)
-    if (carries(before, size) && carries(after, size)) {
-      return {
-        start: start - size,
-        end: end + size,
-        text: inner,
-        selectionStart: start - size,
-        selectionEnd: end - size,
-      }
+  // Marques autour de la sélection : `mot` choisi dans `**mot**`. Seulement en bord de mot : dans
+  // `**gras**mot` ou `2*3*4`, ces astérisques ne sont pas ceux de la sélection
+  const before = countStars(value, start - 1, -1)
+  const after = countStars(value, end, 1)
+  // La sélection est déjà entourée d'une mise en forme (gras, italique ou les deux)
+  const emphasized =
+    start !== end &&
+    !inner.includes('*') &&
+    before > 0 &&
+    after > 0 &&
+    !WORD_CHAR.test(value[start - before - 1] ?? '') &&
+    !WORD_CHAR.test(value[end + after] ?? '')
+  if (emphasized && carries(before, size) && carries(after, size)) {
+    return {
+      start: start - size,
+      end: end + size,
+      text: inner,
+      selectionStart: start - size,
+      selectionEnd: end - size,
     }
   }
-  const mark = '*'.repeat(size)
+  // Déjà en gras ou en italique : les astérisques s'ajoutent (`**mot**` → `***mot***`). Sinon,
+  // des astérisques dans la sélection ou collés à elle sont d'autres marques ou des signes : on
+  // entoure de `_` ou `__`, qui ne s'y mêlent pas (`*a* et *b*` ne devient pas du gras, `2*3*4`
+  // garde ses signes de multiplication)
+  const touchesStars = !emphasized && (inner.includes('*') || before > 0 || after > 0)
+  const mark = (touchesStars ? '_' : '*').repeat(size)
   const content = start === end ? placeholder : inner
   return {
     start,

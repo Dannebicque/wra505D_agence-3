@@ -166,7 +166,7 @@ describe('applyMarkdownAction', () => {
     ['*mot*', 1, 4, 'bold', '***mot***'],
     ['***mot***', 3, 6, 'italic', '**mot**'],
     ['***mot***', 3, 6, 'bold', '*mot*'],
-    ['**mot**', 0, 7, 'italic', '***mot***'],
+    ['**mot**', 0, 7, 'italic', '_**mot**_'],
     ['*mot*', 0, 5, 'italic', 'mot'],
   ] as const)(
     'combine gras et italique sans perdre l’un ou l’autre : %s',
@@ -175,11 +175,19 @@ describe('applyMarkdownAction', () => {
     },
   )
 
-  it('ne casse pas la syntaxe quand la sélection couvre deux mises en forme', () => {
-    const value = '*a* et *b*'
-    const result = run({ value, start: 0, end: value.length }, 'italic').value
-    expect(result).not.toBe('a* et *b')
-  })
+  it.each([
+    // [texte, début, fin, action, rendu attendu]
+    ['*a* et *b*', 0, 10, 'italic', '<em><em>a</em> et <em>b</em></em>'],
+    ['**a** et **b**', 0, 14, 'bold', '<strong><strong>a</strong> et <strong>b</strong></strong>'],
+    ['**gras**mot', 8, 11, 'bold', '<strong>gras</strong><strong>mot</strong>'],
+    ['2*3*4', 2, 3, 'italic', '2*<em>3</em>*4'],
+  ] as const)(
+    'garde une syntaxe valide quand la sélection touche d’autres astérisques : %s',
+    (value, start, end, action, rendu) => {
+      const result = run({ value, start, end }, action).value
+      expect(renderMarkdown(result)).toBe(`<p>${rendu}</p>\n`)
+    },
+  )
 
   it('ne prend pas la ligne suivante quand la sélection finit sur un saut de ligne', () => {
     expect(run({ value: 'a\nb\nc', start: 0, end: 2 }, 'bullets').value).toBe('- a\nb\nc')

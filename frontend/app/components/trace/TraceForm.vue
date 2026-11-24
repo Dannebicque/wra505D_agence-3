@@ -109,6 +109,8 @@ function onSubmit() {
 }
 
 const form = useTemplateRef('form')
+/** Bloc des boutons d'envoi, dans le `<form>` de UForm : de là, `requestSubmit()` (voir submitAs). */
+const actions = useTemplateRef<HTMLElement>('actions')
 
 /**
  * Divulgation progressive : champs secondaires (contexte, date, usage de l'IA) dans une section
@@ -172,10 +174,16 @@ function onError(event: FormErrorEvent) {
   focusFirstError(event)
 }
 
-/** Les deux actions envoient le formulaire elles-mêmes : Entrée dans un champ ne change jamais le statut. */
+/**
+ * Les deux actions envoient le formulaire elles-mêmes : Entrée dans un champ ne change jamais le
+ * statut. Par `requestSubmit()` sur le `<form>`, qui respecte `novalidate`, et non par
+ * `UForm.submit()`, qui passe d'abord par la validation du navigateur : un champ au-delà de sa
+ * limite (`maxlength`, description reprise de l'ancienne version) arrêtait l'envoi sans message de
+ * l'application, et sans rien du tout si l'aperçu masquait le champ.
+ */
 function submitAs(value: TraceStatut) {
   statut.value = value
-  form.value?.submit()
+  actions.value?.closest('form')?.requestSubmit()
 }
 
 /**
@@ -357,6 +365,7 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
       l'une sous l'autre, la principale en bas). Pendant l'envoi, le libellé dit ce qui se passe.
     -->
     <div
+      ref="actions"
       class="flex flex-col gap-2 border-t border-default pt-6 max-sm:*:justify-center sm:flex-row sm:flex-wrap sm:justify-end"
     >
       <UButton

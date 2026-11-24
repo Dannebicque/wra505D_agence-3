@@ -1,6 +1,7 @@
 import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { describe, expect, it } from 'vitest'
-import { h } from 'vue'
+import { defineComponent, h } from 'vue'
+import LayoutNavGroup from '~/components/layout/NavGroup.vue'
 import EspaceLayout from '~/layouts/espace.vue'
 
 describe('mise en page des espaces', () => {
@@ -16,7 +17,7 @@ describe('mise en page des espaces', () => {
     expect(lien.attributes('aria-current')).toBe('page')
   })
 
-  it('nomme chaque groupe de pages sans id (la barre est rendue deux fois) et range la corbeille en bas', async () => {
+  it('nomme chaque groupe de pages par son intitulé et range la corbeille en bas', async () => {
     const layout = await mountSuspended(EspaceLayout, {
       route: '/etudiant/traces/1',
       slots: { default: () => h('p', 'Contenu de la page') },
@@ -24,13 +25,12 @@ describe('mise en page des espaces', () => {
 
     const nav = layout.get('nav[aria-label="Navigation de l’espace"]')
     const lists = nav.findAll('ul')
-    expect(lists.map((l) => l.attributes('aria-label'))).toEqual([
-      undefined,
-      'Mon travail',
-      'Mon suivi',
-      undefined,
-    ])
-    expect(nav.findAll('[id]')).toHaveLength(0)
+    // Chaque liste titrée est nommée par son intitulé visible (lu aussi par NVDA)
+    const names = lists.map((list) => {
+      const id = list.attributes('aria-labelledby')
+      return id ? nav.get(`[id="${id}"]`).text() : undefined
+    })
+    expect(names).toEqual([undefined, 'Mon travail', 'Mon suivi', undefined])
     expect(lists.at(-1)!.text()).toContain('Corbeille')
     // Sous-page de « Mes traces » : l'entrée est signalée, sans se dire la page affichée
     expect(nav.get('a[href="/etudiant/traces"]').attributes('aria-current')).toBe('true')
@@ -45,5 +45,18 @@ describe('mise en page des espaces', () => {
 
     expect(layout.get('main#contenu').text()).toContain('Contenu de la page')
     expect(layout.text()).toContain('UniFolio')
+  })
+
+  it('tire des ids distincts quand la barre est rendue deux fois (ordinateur et menu mobile)', async () => {
+    const twice = defineComponent({
+      setup: () => () => [
+        h(LayoutNavGroup, { label: 'Mon travail' }),
+        h(LayoutNavGroup, { label: 'Mon travail' }),
+      ],
+    })
+    const wrapper = await mountSuspended(twice)
+    const ids = wrapper.findAll('p[id]').map((p) => p.attributes('id'))
+    expect(ids).toHaveLength(2)
+    expect(new Set(ids).size).toBe(2)
   })
 })
