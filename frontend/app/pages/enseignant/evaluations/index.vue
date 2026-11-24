@@ -133,7 +133,7 @@ const resultLabel = computed(() =>
         <li
           v-for="trace in traces"
           :key="trace.id"
-          class="group relative grid gap-x-6 gap-y-3 rounded-feuille border border-default p-4 transition-colors hover:border-accented hover:bg-muted has-focus-visible:border-accented has-focus-visible:bg-muted motion-reduce:transition-none md:grid-cols-[1fr_auto] md:items-center"
+          class="group relative grid gap-x-6 gap-y-3 rounded-feuille border border-default p-4 shadow-carte transition-[background-color,border-color,box-shadow] hover:border-accented hover:bg-muted hover:shadow-carte-survol has-focus-visible:border-accented has-focus-visible:bg-muted has-focus-visible:shadow-carte-survol motion-reduce:transition-none md:grid-cols-[1fr_auto] md:items-center"
         >
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">

@@ -93,7 +93,7 @@ const newPortfolioLink = computed(() =>
           <!-- Carte entièrement cliquable : le lien du titre la couvre (::after), les boutons
                d'action restent au-dessus (relative). Survol et focus : changement de ton. -->
           <article
-            class="group relative flex h-full flex-col gap-4 rounded-panneau border border-default p-4 transition-colors hover:border-accented hover:bg-muted has-focus-visible:border-accented has-focus-visible:bg-muted motion-reduce:transition-none sm:p-6"
+            class="group relative flex h-full flex-col gap-4 rounded-panneau border border-default p-4 shadow-carte transition-[background-color,border-color,box-shadow] hover:border-accented hover:bg-muted hover:shadow-carte-survol has-focus-visible:border-accented has-focus-visible:bg-muted has-focus-visible:shadow-carte-survol motion-reduce:transition-none sm:p-6"
           >
             <PortfolioBanner size="sm" />
             <div>

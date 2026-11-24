@@ -138,7 +138,7 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
           <li
             v-for="{ trace, competences: traceCompetences } in filtered"
             :key="trace['@id']"
-            class="group relative flex items-center gap-4 rounded-feuille border border-default p-4 transition-colors hover:border-accented hover:bg-muted has-focus-visible:border-accented has-focus-visible:bg-muted motion-reduce:transition-none"
+            class="group relative flex items-center gap-4 rounded-feuille border border-default p-4 shadow-carte transition-[background-color,border-color,box-shadow] hover:border-accented hover:bg-muted hover:shadow-carte-survol has-focus-visible:border-accented has-focus-visible:bg-muted has-focus-visible:shadow-carte-survol motion-reduce:transition-none"
           >
             <UIcon
               :name="TRACE_TYPE_ICONS[trace.type]"

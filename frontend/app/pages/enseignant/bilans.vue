@@ -111,7 +111,7 @@ const resultLabel = computed(() =>
         <li
           v-for="etudiant in etudiants"
           :key="etudiant.id"
-          class="group relative flex items-center justify-between gap-3 rounded-feuille bg-default p-4 transition-colors hover:bg-elevated has-focus-visible:bg-elevated motion-reduce:transition-none"
+          class="group relative flex items-center justify-between gap-3 rounded-feuille bg-default p-4 shadow-carte transition-[background-color,box-shadow] hover:bg-elevated hover:shadow-carte-survol has-focus-visible:bg-elevated has-focus-visible:shadow-carte-survol motion-reduce:transition-none"
         >
           <div class="min-w-0">
             <!-- Élément partagé avec le titre de la fiche de l'étudiant (transition de vue) -->

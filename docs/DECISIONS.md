@@ -233,3 +233,10 @@ Design : `docs/superpowers/specs/2026-11-23-passe-ui-ux-design.md`.
   - « Télécharger en PDF » (CV) et « Exporter en PDF » (bilans), mis en action principale alors qu'ils restent sans effet en maquette ;
   - des écrans sans action principale : portfolio publié, liste des étudiants, corbeille, retours.
 - **Raison** : l'interface était jugée plate et ses actions sans ordre. Chaque écran dit maintenant ce qu'on y fait, et l'action principale est toujours au même endroit.
+
+## 2026-11-24 — Surfaces mieux séparées, ombre des cartes cliquables (#32)
+
+- **Constat** : panneau gris sur feuille blanche à 1,07:1 (sombre 1,10), bordure des cartes à 1,25 (1,22), piste des barres sur le panneau à 1,18 (1,12), cadre à 1,13 (1,07) : les blocs se confondaient.
+- **Décision** : changer les clartés des jetons (`app/assets/css/main.css`) plutôt qu'ajouter des ombres partout. Paliers, clair / sombre : panneau 1,13 / 1,16, piste sur panneau 1,17 / 1,15, bordure 1,41 / 1,44, cadre 1,18 / 1,09 ; `--ui-border-accented` foncé pour que le survol d'une carte se voie encore. Les cartes cliquables d'une liste (traces, portfolios, traces à évaluer, bilans individuels) prennent `shadow-carte`, renforcée au survol et au focus (`shadow-carte-survol`).
+- **Écartés** : des ombres sur tous les panneaux (tout aurait l'air de flotter, et l'ombre ne dirait plus « cliquable ») ; un gris encore plus foncé (l'écran s'alourdit sans mieux séparer).
+- **Contraintes vérifiées** : texte discret sur `bg-elevated` 4,56:1 (clair), contour des champs sur le panneau 4,23 / 3,17:1, segments des barres de progression 3,17:1 au moins.

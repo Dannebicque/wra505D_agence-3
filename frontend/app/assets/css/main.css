@@ -112,18 +112,29 @@
   /*
    * Relief (passe #32) : rien n'a d'ombre au repos, sauf ce qu'on presse et ce qui flotte.
    * `shadow-touche` : boutons pleins (reflet en haut, ombre courte, posés par app.config.ts) ;
-   * `shadow-flottant` : menus, fenêtres, aperçu de la page d'accueil.
+   * `shadow-flottant` : menus, fenêtres, aperçu de la page d'accueil ;
+   * `shadow-carte` / `shadow-carte-survol` : cartes cliquables d'une liste (trace, portfolio, trace
+   *   à évaluer), au repos puis au survol ou au focus. Un panneau qui ne fait que regrouper des
+   *   informations n'en a pas : l'ombre dit « on peut l'ouvrir ».
    */
   --shadow-touche:
     inset 0 1px 0 0 rgb(255 255 255 / 0.18), 0 1px 2px 0 oklch(20.5% 0.055 297.55 / 0.3),
     0 3px 8px -3px oklch(20.5% 0.055 297.55 / 0.35);
+  --shadow-carte:
+    0 1px 2px 0 oklch(20.5% 0.055 297.55 / 0.06), 0 2px 6px -2px oklch(20.5% 0.055 297.55 / 0.08);
+  --shadow-carte-survol:
+    0 1px 2px 0 oklch(20.5% 0.055 297.55 / 0.08), 0 8px 20px -6px oklch(20.5% 0.055 297.55 / 0.2);
   --shadow-flottant:
     0 1px 2px 0 oklch(20.5% 0.055 297.55 / 0.06), 0 12px 32px -8px oklch(20.5% 0.055 297.55 / 0.22);
 }
 
 /*
- * Surfaces et textes : mêmes clartés que le thème précédent (contrastes déjà validés par axe),
- * dans la teinte du gris. Contrastes mesurés : docs/DECISIONS.md, entrée du 2026-11-23.
+ * Surfaces et textes, dans la teinte du gris. Contrastes mesurés : docs/DECISIONS.md, entrées du
+ * 2026-11-23 et du 2026-11-24.
+ * Écart entre surfaces voisines (2026-11-24) : à 1,07 à 1,12:1, panneau, piste et feuille se
+ * confondaient. Paliers retenus, clair puis sombre : panneau (bg-muted) sur feuille 1,13 / 1,16 ;
+ * piste (bg-elevated) sur panneau 1,17 / 1,15 ; bordure sur feuille 1,41 / 1,44 ; cadre sur
+ * feuille 1,18 / 1,09. Plus foncé, le gris alourdirait l'écran sans rien séparer de plus.
  */
 :root {
   /*
@@ -132,11 +143,11 @@
    * quand la police arrive.
    */
   --font-instrument: 'Instrument Sans', system-ui, sans-serif;
-  --uf-cadre: oklch(95.7% 0.005 297.55);
+  --uf-cadre: oklch(94.5% 0.005 297.55);
   /*
-   * Contour des champs (WCAG 1.4.11, ≥ 3:1) : gris 500 sur bg-default / bg-muted 4,79 / 4,46:1.
-   * `--ui-border-accented` (gris 300, 1,49:1) reste aux contours décoratifs (boutons et badges
-   * « outline », séparateurs), qu'un gris 500 alourdirait sans rien apporter.
+   * Contour des champs (WCAG 1.4.11, ≥ 3:1) : gris 500 sur bg-default / bg-muted 4,79 / 4,23:1.
+   * `--ui-border-accented` (1,75:1) reste aux contours décoratifs (boutons et badges « outline »,
+   * survol des cartes), qu'un gris 500 alourdirait sans rien apporter.
    */
   --uf-contour: var(--color-gris-500);
   /* Fond de la sélection de texte (sous un texte prune-950) */
@@ -151,17 +162,19 @@
   --ui-warning: var(--ui-color-warning-800);
   --ui-error: var(--ui-color-error-700);
   --ui-bg: #fff;
-  --ui-bg-muted: oklch(97.6% 0.003 297.55);
-  --ui-bg-elevated: oklch(92.1% 0.007 297.55);
+  --ui-bg-muted: oklch(95.8% 0.004 297.55);
+  /* Texte discret sur bg-elevated : 4,56:1 (plus foncé, il passerait sous 4,5:1) */
+  --ui-bg-elevated: oklch(90.6% 0.007 297.55);
   --ui-text: oklch(24.1% 0.007 297.55);
   --ui-text-highlighted: var(--ui-text);
   --ui-text-muted: oklch(49.9% 0.008 297.55);
-  --ui-border: oklch(92.4% 0.006 297.55);
+  --ui-border: oklch(88.5% 0.006 297.55);
+  --ui-border-accented: oklch(82% 0.008 297.55);
 }
 
 .dark {
-  --uf-cadre: oklch(18% 0.007 297.55);
-  /* Gris 500 sur bg-default / bg-muted : 3,69 / 3,35:1 (gris 400, à 6,9:1, découperait trop) */
+  --uf-cadre: oklch(16.5% 0.007 297.55);
+  /* Gris 500 sur bg-default / bg-muted : 3,69 / 3,17:1 (gris 400, à 6,9:1, découperait trop) */
   --uf-contour: var(--color-gris-500);
   --uf-selection: var(--color-or-400);
   /* 400 : prune éclairci, texte foncé (gris-900) sur les boutons (6,2:1) */
@@ -171,12 +184,13 @@
   --ui-warning: var(--ui-color-warning-400);
   --ui-error: var(--ui-color-error-400);
   --ui-bg: oklch(21.2% 0.008 297.55);
-  --ui-bg-muted: oklch(25% 0.009 297.55);
-  --ui-bg-elevated: oklch(28.6% 0.01 297.55);
+  --ui-bg-muted: oklch(26.8% 0.009 297.55);
+  --ui-bg-elevated: oklch(31% 0.01 297.55);
   --ui-text: oklch(93.6% 0.004 297.55);
   --ui-text-highlighted: var(--ui-text);
   --ui-text-muted: oklch(72.2% 0.01 297.55);
-  --ui-border: oklch(28.3% 0.009 297.55);
+  --ui-border: oklch(33% 0.009 297.55);
+  --ui-border-accented: oklch(40% 0.01 297.55);
 }
 
 @layer base {

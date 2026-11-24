@@ -7,9 +7,9 @@
  * Les segments sont posés sur le panneau (`bg-muted`, ou `bg-default`), séparés par un écart
  * (`gap-1`) : la piste (`bg-elevated`) ne dessine que le reste de l'échelle. Contraste de chaque
  * segment avec le panneau (WCAG 1.4.11, 3:1 au moins), clair puis sombre, mesuré sur `bg-muted`
- * (le plus défavorable) : acquis (prune 700 / prune 200) 9,28 / 10,67 ; non acquis (error 700 /
- * 400) 5,99 / 5,54 ; en cours (prune 500) 4,02 / 3,72 ; en attente (gris 500) 4,46 / 3,35.
- * Pas de transparence : la couleur ne dépend pas du panneau sous la barre. La piste (≈ 1,2:1 sur
+ * (le plus défavorable) : acquis (prune 700 / prune 200) 8,80 / 10,11 ; non acquis (error 700 /
+ * 400) 5,68 / 5,25 ; en cours (prune 500) 3,81 / 3,53 ; en attente (gris 500) 4,23 / 3,17.
+ * Pas de transparence : la couleur ne dépend pas du panneau sous la barre. La piste (≈ 1,16:1 sur
  * le panneau) est un repère d'échelle décoratif : la longueur des segments porte la comparaison,
  * et les valeurs sont écrites à côté.
  */
