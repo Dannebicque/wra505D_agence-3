@@ -15,6 +15,9 @@ final class Bilans
     /** État d'une validation => clé du bilan. */
     private const ETATS = [3 => 'acquis', 2 => 'enCours', 1 => 'nonAcquis', 0 => 'enAttente'];
 
+    /** @var array<int, list<ApcReferentiel>> référentiels par département, lus une fois par bilan collectif */
+    private array $referentielsParDepartement = [];
+
     public function __construct(private readonly EntityManagerInterface $em)
     {
     }
@@ -118,7 +121,7 @@ final class Bilans
     {
         $departement = $etudiant->getSemestre()?->getAnnee()?->getDiplome()?->getDepartement();
 
-        return null === $departement ? [] : $this->em->getRepository(ApcReferentiel::class)->findBy(['departement' => $departement], ['id' => 'ASC']);
+        return null === $departement ? [] : $this->referentielsParDepartement[$departement->getId()] ??= $this->em->getRepository(ApcReferentiel::class)->findBy(['departement' => $departement], ['id' => 'ASC']);
     }
 
     private static function ajouter(array $a, array $b): array

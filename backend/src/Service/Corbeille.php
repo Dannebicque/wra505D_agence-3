@@ -7,6 +7,7 @@ use App\Entity\Fichier;
 use App\Entity\Page;
 use App\Entity\Portfolio;
 use App\Entity\Trace;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -89,7 +90,12 @@ final class Corbeille
         }
 
         $objet->setDateSuppression(null);
-        $this->em->flush();
+        try {
+            $this->em->flush();
+        } catch (UniqueConstraintViolationException) {
+            // Un autre portfolio de l'année créé ou restauré au même moment (index portfolio_unique_par_annee)
+            throw new ConflictHttpException('Vous avez déjà un portfolio pour cette année : supprimez-le avant de restaurer celui-ci.');
+        }
 
         return $objet;
     }
@@ -125,9 +131,12 @@ final class Corbeille
             if (null !== $fichier) {
                 $this->em->remove($fichier);
             }
+        }
+        // Lignes retirées d'abord : si l'écriture en base échoue, les fichiers restent et l'effacement se refera demain
+        $this->em->flush();
+        foreach ($orphelins as $id) {
             @unlink($this->dossier . '/' . $id);
         }
-        $this->em->flush();
         $compte['fichiers'] = \count($orphelins);
 
         return $compte;

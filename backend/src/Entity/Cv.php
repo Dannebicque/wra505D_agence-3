@@ -43,6 +43,8 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
     collectDenormalizationErrors: true,
 )]
 #[ORM\Entity(repositoryClass: CvRepository::class)]
+// Un CV par étudiant (le processeur le dit aussi ; l'index arrête deux créations simultanées)
+#[ORM\UniqueConstraint(name: 'cv_unique_par_etudiant', fields: ['etudiant'])]
 class Cv
 {
     public const NIVEAUX_LANGUE = ['A1 : débutant', 'A2 : élémentaire', 'B1 : intermédiaire', 'B2 : avancé', 'C1 : autonome', 'C2 : maîtrise', 'Langue maternelle'];

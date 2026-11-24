@@ -74,6 +74,16 @@ class CvTest extends ApiTestCase
         );
     }
 
+    public function testErreurDeTypeSousLeNomDuFront(): void
+    {
+        $this->connecter('etudiant2');
+
+        $reponse = $this->envoyer('POST', '/api/cvs', [...self::CV, 'experiences' => 'abc']);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame([['experiences', 'Liste invalide.']], array_map(static fn (array $v) => [$v['propertyPath'], $v['message']], $reponse['violations']));
+    }
+
     public function testCvLisibleParSonSeulEtudiant(): void
     {
         $this->connecter('etudiant');

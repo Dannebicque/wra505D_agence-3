@@ -76,6 +76,16 @@ class EcheanceTest extends ApiTestCase
         self::assertSame([[$champ, $message]], array_map(static fn (array $v) => [$v['propertyPath'], $v['message']], $reponse['violations']));
     }
 
+    public function testDateDuMauvaisTypeSousLeChampDate(): void
+    {
+        $this->connecter('enseignant');
+
+        $reponse = $this->envoyer('POST', '/api/echeances', ['libelle' => 'Soutenance', 'date' => ['a' => 1], 'annee' => $this->annee()]);
+
+        self::assertResponseStatusCodeSame(422);
+        self::assertSame('date', $reponse['violations'][0]['propertyPath']);
+    }
+
     public function testRefuseUneAnneeDUnAutreDepartement(): void
     {
         $this->connecter('enseignant2');

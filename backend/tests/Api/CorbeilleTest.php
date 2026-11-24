@@ -145,6 +145,31 @@ class CorbeilleTest extends ApiTestCase
         self::assertFalse($this->connection->fetchOne("SELECT 1 FROM fichier WHERE nom = 'oublie.png'"));
     }
 
+    public function testEffaceUneTraceEvalueeCommenteeEtRangeeEtUnPortfolioAvecSesPages(): void
+    {
+        $site = $this->trace('Site vitrine d’une association');
+        $portfolio = $this->portfolio();
+        $proprietaire = $this->connection->fetchOne("SELECT id FROM users WHERE username = 'etudiant'");
+        // Fichier ancien encore utilisé par une trace active : gardé
+        $this->connection->insert('fichier', ['id' => '00000000-0000-4000-8000-000000000002', 'date_creation' => '2020-01-01', 'nom' => 'utilise.png', 'mime_type' => 'image/png', 'taille' => 1, 'proprietaire_id' => $proprietaire]);
+        $this->connection->executeStatement("UPDATE trace SET contenu = '[\"/api/fichiers/00000000-0000-4000-8000-000000000002\"]' WHERE titre = 'Affiche en cours'");
+        // Le site (évalué, commenté, notifié, rangé dans « Projet web ») et le portfolio, supprimés il y a 31 jours
+        $this->connection->executeStatement("UPDATE trace SET date_suppression = NOW() - INTERVAL '31 days' WHERE id = ?", [basename($site)]);
+        $this->connection->executeStatement("UPDATE portfolio SET date_suppression = NOW() - INTERVAL '31 days' WHERE id = ?", [basename($portfolio)]);
+
+        $compte = static::getContainer()->get(Corbeille::class)->vider(new \DateTimeImmutable());
+
+        self::assertSame(['traces' => 1, 'portfolios' => 1, 'fichiers' => 0], ['traces' => $compte['traces'], 'portfolios' => $compte['portfolios'], 'fichiers' => $compte['fichiers']]);
+        foreach (['trace' => $site, 'portfolio' => $portfolio] as $table => $iri) {
+            self::assertFalse($this->connection->fetchOne("SELECT 1 FROM $table WHERE id = ?", [basename($iri)]), $table);
+        }
+        self::assertSame(0, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM page WHERE intitule IN ('Projet web', 'Motion design')"), 'Pages parties avec le portfolio');
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM validation WHERE trace_id = ?', [basename($site)]));
+        self::assertSame(0, (int) $this->connection->fetchOne('SELECT COUNT(*) FROM commentaire WHERE trace_id = ?', [basename($site)]));
+        self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM fichier WHERE nom = 'utilise.png'"), 'Fichier encore utilisé gardé');
+        self::assertSame(1, (int) $this->connection->fetchOne("SELECT COUNT(*) FROM trace WHERE titre = 'Motion design du festival'"), 'Trace active intacte');
+    }
+
     private function restaurer(string $iri): ?array
     {
         $this->client->request('POST', $iri . '/restaurer', server: ['CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/ld+json'], content: '{}');

@@ -9,6 +9,7 @@ use ApiPlatform\Validator\Exception\ValidationException;
 use App\Entity\Cv;
 use App\Entity\Users;
 use App\Repository\CvRepository;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpKernel\Exception\UnprocessableEntityHttpException;
@@ -47,6 +48,10 @@ final class CvProcessor implements ProcessorInterface
         }
         $data->setDateModification($maintenant);
 
-        return $this->persist->process($data, $operation, $uriVariables, $context);
+        try {
+            return $this->persist->process($data, $operation, $uriVariables, $context);
+        } catch (UniqueConstraintViolationException) {
+            throw new ValidationException(new ConstraintViolationList([new ConstraintViolation('Vous avez déjà un CV : modifiez-le.', null, [], null, '', null)]));
+        }
     }
 }
