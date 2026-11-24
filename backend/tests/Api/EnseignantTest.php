@@ -129,7 +129,11 @@ class EnseignantTest extends ApiTestCase
 
         $this->connecter('enseignant');
         $this->client->request('GET', $fichierDeB);
+        self::assertResponseStatusCodeSame(404);
 
+        // Ni par le portfolio public de l'autre étudiant, où la trace est publiée
+        $this->client->getCookieJar()->clear();
+        $this->client->request('GET', $fichierDeB);
         self::assertResponseStatusCodeSame(404);
     }
 

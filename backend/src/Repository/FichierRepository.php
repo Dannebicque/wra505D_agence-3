@@ -32,6 +32,8 @@ class FichierRepository extends ServiceEntityRepository
     {
         return false !== $this->getEntityManager()->getConnection()->fetchOne(<<<'SQL'
             SELECT 1 FROM portfolio p
+            -- Portfolio de l'étudiant propriétaire du fichier : le fichier d'un autre ne devient jamais public par lui
+            JOIN users u ON u.etudiant_id = p.etudiant_id AND u.id = :proprietaire
             WHERE p.visibilite AND p.date_suppression IS NULL AND (
                 p.banniere = :iri OR EXISTS (
                     SELECT 1 FROM page pa
@@ -43,7 +45,7 @@ class FichierRepository extends ServiceEntityRepository
                 )
             )
             LIMIT 1
-            SQL, ['iri' => '/api/fichiers/' . $fichier->getId()]);
+            SQL, ['iri' => '/api/fichiers/' . $fichier->getId(), 'proprietaire' => $fichier->getProprietaire()->getId()]);
     }
 
     /**
