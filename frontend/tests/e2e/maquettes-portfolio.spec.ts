@@ -181,3 +181,34 @@ test.describe('liste des portfolios', () => {
     )
   })
 })
+
+test.describe('écran d’un portfolio', () => {
+  test('montre d’abord les pages-projets ; les informations s’ouvrent dans un panneau', async ({
+    page,
+  }) => {
+    await gotoHydrated(page, '/etudiant/portfolios/1')
+
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Léa Martin, développeuse web')
+    await expect(page.getByRole('heading', { name: 'Pages-projets' })).toBeVisible()
+    await expect(page.getByRole('textbox', { name: /Intitulé/ })).toHaveCount(0)
+
+    const trigger = page.getByRole('button', { name: 'Modifier les informations' })
+    await trigger.click()
+    const panel = page.getByRole('dialog', { name: 'Modifier les informations' })
+    await expect(panel.getByRole('textbox', { name: /Intitulé/ })).toBeVisible()
+    const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+    expect(results.violations).toEqual([])
+
+    await panel.getByRole('button', { name: 'Annuler' }).click()
+    await expect(panel).toBeHidden()
+    await expect(trigger).toBeFocused()
+  })
+
+  test('le bouton « Modifier » d’une carte ouvre d’emblée les informations', async ({ page }) => {
+    await gotoHydrated(page, '/etudiant/portfolios')
+    await page.getByRole('link', { name: 'Modifier « Léa Martin, développeuse web »' }).click()
+
+    await expect(page).toHaveURL(/\/etudiant\/portfolios\/1\?modifier=informations$/)
+    await expect(page.getByRole('dialog', { name: 'Modifier les informations' })).toBeVisible()
+  })
+})

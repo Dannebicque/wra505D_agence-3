@@ -1,6 +1,9 @@
 <!--
   Mini-éditeur Markdown (description d'une trace) : un vrai champ de texte, une barre de mise en
-  forme (gras, italique, listes, lien) et un aperçu du rendu (`UiTexteMarkdown`). Décision :
+  forme (titre, sous-titre, gras, italique, listes) et un aperçu du rendu (`UiTexteMarkdown`).
+  Une description déjà écrite s'ouvre sur son aperçu (on la lit avant de la modifier) ; « Modifier »
+  ou un clic dans l'aperçu passe à l'écriture. Une description vide s'ouvre en écriture. Pas de
+  bouton de lien (choix de l'équipe) : un lien écrit en Markdown s'affiche quand même. Décision :
   docs/DECISIONS.md, 2026-11-24.
 
   Pourquoi un champ de texte et pas un éditeur visuel : libellé, erreur, limite de caractères,
@@ -19,14 +22,16 @@ defineProps<{ maxlength?: number }>()
 const model = defineModel<string>({ required: true })
 
 const textarea = useTemplateRef<{ textareaRef: HTMLTextAreaElement | null }>('textarea')
-const previewing = ref(false)
+// Aperçu par défaut dès qu'il y a quelque chose à montrer
+const previewing = ref(model.value.trim() !== '')
 
 const ACTIONS: { action: MarkdownAction; label: string; icon: string; shortcut?: string }[] = [
+  { action: 'heading', label: 'Titre', icon: 'i-lucide-heading-1' },
+  { action: 'subheading', label: 'Sous-titre', icon: 'i-lucide-heading-2' },
   { action: 'bold', label: 'Gras', icon: 'i-lucide-bold', shortcut: 'B' },
   { action: 'italic', label: 'Italique', icon: 'i-lucide-italic', shortcut: 'I' },
   { action: 'bullets', label: 'Liste à puces', icon: 'i-lucide-list' },
   { action: 'numbers', label: 'Liste numérotée', icon: 'i-lucide-list-ordered' },
-  { action: 'link', label: 'Lien', icon: 'i-lucide-link' },
 ]
 
 function apply(action: MarkdownAction) {
@@ -67,6 +72,11 @@ async function togglePreview() {
   }
 }
 
+/** Clic dans l'aperçu (souris, doigt) : on passe à l'écriture, comme avec « Modifier ». */
+function editFromPreview() {
+  if (previewing.value) void togglePreview()
+}
+
 /**
  * Revient à l'écriture, sans déplacer le focus : le formulaire l'appelle quand le champ passe en
  * erreur, pour pouvoir y mettre le focus (un champ masqué par l'aperçu ne le recevrait pas).
@@ -81,7 +91,13 @@ defineExpose({ showEditor })
   <div class="editeur-markdown rounded-feuille bg-default ring ring-contour ring-inset">
     <div class="flex flex-wrap items-center gap-1 border-b border-default p-1">
       <!-- Garder le focus dans le texte au clic (mousedown) : la sélection n'est pas perdue -->
-      <div role="group" aria-label="Mise en forme" class="flex flex-wrap items-center gap-1">
+      <!-- En aperçu, la barre de mise en forme n'a rien à faire : elle laisse la place à « Modifier » -->
+      <div
+        v-if="!previewing"
+        role="group"
+        aria-label="Mise en forme"
+        class="flex flex-wrap items-center gap-1"
+      >
         <UTooltip
           v-for="item in ACTIONS"
           :key="item.action"
@@ -98,7 +114,6 @@ defineExpose({ showEditor })
             :aria-keyshortcuts="
               item.shortcut ? `Control+${item.shortcut} Meta+${item.shortcut}` : undefined
             "
-            :disabled="previewing"
             @mousedown.prevent
             @click="apply(item.action)"
           />
@@ -109,12 +124,12 @@ defineExpose({ showEditor })
         color="neutral"
         variant="ghost"
         size="sm"
-        icon="i-lucide-eye"
-        :aria-pressed="previewing"
-        class="ms-auto aria-pressed:bg-elevated aria-pressed:text-highlighted"
+        :icon="previewing ? 'i-lucide-pencil' : 'i-lucide-eye'"
+        data-action="basculer-apercu"
+        class="ms-auto"
         @click="togglePreview"
       >
-        Aperçu
+        {{ previewing ? 'Modifier' : 'Aperçu' }}
       </UButton>
     </div>
 
@@ -131,13 +146,15 @@ defineExpose({ showEditor })
       :ui="{ base: 'px-3 py-2.5' }"
       @keydown="onKeydown"
     />
+    <!-- Clic dans l'aperçu : écriture (au clavier, le bouton « Modifier » fait de même) -->
     <div
       v-if="previewing"
       role="region"
       aria-label="Aperçu de la description"
-      class="min-h-32 px-3 py-2.5"
+      class="min-h-32 cursor-text px-3 py-2.5"
+      @click="editFromPreview"
     >
-      <UiTexteMarkdown v-if="model.trim()" :source="model" />
+      <UiTexteMarkdown v-if="model.trim()" :source="model" :heading-level="2" />
       <p v-else class="text-muted">Rien à afficher pour l’instant.</p>
     </div>
   </div>

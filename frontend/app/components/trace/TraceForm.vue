@@ -285,7 +285,7 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
     <UFormField
       label="Description"
       name="description"
-      description="Gras, italique, listes et liens : utilisez la barre ou la syntaxe Markdown."
+      description="Titres, gras, italique et listes : utilisez la barre ou la syntaxe Markdown."
       :hint="`${state.description.length} / ${TRACE_LIMITS.description}`"
     >
       <UiEditeurMarkdown

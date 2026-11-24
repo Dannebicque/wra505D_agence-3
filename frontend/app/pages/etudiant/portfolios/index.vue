@@ -147,8 +147,9 @@ const newPortfolioLink = computed(() =>
 
             <!-- Actions de la carte : tertiaires, comme sur chaque ligne de liste -->
             <div class="relative mt-auto flex flex-wrap gap-1 border-t border-default pt-3">
+              <!-- La carte ouvre les pages-projets ; « Modifier » ouvre d'emblée les informations -->
               <UButton
-                :to="`/etudiant/portfolios/${portfolio.id}`"
+                :to="`/etudiant/portfolios/${portfolio.id}?modifier=informations`"
                 icon="i-lucide-pencil"
                 color="neutral"
                 variant="ghost"

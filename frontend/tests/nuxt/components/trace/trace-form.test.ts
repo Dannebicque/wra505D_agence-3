@@ -245,7 +245,7 @@ describe('formulaire de trace', () => {
 
   it('ferme l’aperçu de la description quand le serveur la refuse, pour y mettre le focus', async () => {
     const form = await mountSuspended(TraceForm, { attachTo: document.body })
-    await form.get('button[aria-pressed]').trigger('click')
+    await form.get('button[data-action="basculer-apercu"]').trigger('click')
     expect(form.find('[role="region"]').exists()).toBe(true)
 
     ;(form.vm as unknown as { setServerErrors: (v: unknown[]) => unknown }).setServerErrors([
@@ -278,7 +278,8 @@ describe('formulaire de trace', () => {
       },
       attachTo: document.body,
     })
-    await form.get('button[aria-pressed]').trigger('click')
+    // Description déjà écrite : l'éditeur s'ouvre sur son aperçu
+    expect(form.find('[role="region"]').exists()).toBe(true)
 
     await submitWith(form, 'finaliser')
 

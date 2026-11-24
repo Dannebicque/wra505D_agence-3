@@ -5,7 +5,7 @@
 // sélection est placée sur [selectionStart, selectionEnd]. L'éditeur l'applique avec
 // `insertText`, qui garde l'historique d'annulation du navigateur (Ctrl + Z).
 
-export type MarkdownAction = 'bold' | 'italic' | 'bullets' | 'numbers' | 'link'
+export type MarkdownAction = 'heading' | 'subheading' | 'bold' | 'italic' | 'bullets' | 'numbers'
 
 export interface Selection {
   value: string
@@ -24,11 +24,7 @@ export interface Edition {
 const PLACEHOLDERS = {
   bold: 'texte en gras',
   italic: 'texte en italique',
-  link: 'texte du lien',
 } as const
-
-const LINK_URL = 'https://'
-const URL_LIKE = /^(?:https?:\/\/|mailto:|www\.)\S+$/i
 
 /**
  * Sélection sans ses espaces de bord : un double-clic sous Windows prend l'espace qui suit le mot,
@@ -174,32 +170,51 @@ function toggleList({ value, start, end }: Selection, ordered: boolean): Edition
   }
 }
 
-/** Lien : le texte choisi devient le libellé, l'adresse est sélectionnée pour être tapée. */
-function link(selection: Selection): Edition {
-  const { value, start, end } = trimmed(selection)
-  const selected = value.slice(start, end)
-  if (selected && URL_LIKE.test(selected)) {
-    const href = /^www\./i.test(selected) ? `https://${selected}` : selected
-    const text = `[${PLACEHOLDERS.link}](${href})`
-    return {
-      start,
-      end,
-      text,
-      selectionStart: start + 1,
-      selectionEnd: start + 1 + PLACEHOLDERS.link.length,
-    }
-  }
-  const label = selected.replace(/[[\]]/g, '') || PLACEHOLDERS.link
-  const text = `[${label}](${LINK_URL})`
-  const urlStart = start + label.length + 3
-  // Sans texte choisi, on sélectionne le libellé à remplacer ; sinon l'adresse à taper
-  return selected
-    ? { start, end, text, selectionStart: urlStart, selectionEnd: urlStart + LINK_URL.length }
-    : { start, end, text, selectionStart: start + 1, selectionEnd: start + 1 + label.length }
-}
-
 /** Puce ou numéro d'un élément de liste, avec son retrait : laissé hors des marques. */
 const LIST_PREFIX = /^\s*(?:[-+*]|\d+[.)])\s+/
+const HEADING = /^#{1,6}\s+/
+
+/**
+ * Titre (`depth` 1, `# `) ou sous-titre (2, `## `) sur chaque ligne non vide touchée par la
+ * sélection. Déjà à ce niveau partout : le titre est retiré ; à un autre niveau : il change. Une
+ * puce de liste est retirée (un titre n'est pas un élément de liste). Sur une ligne vide, le
+ * préfixe est posé et le curseur le suit.
+ */
+function toggleHeading({ value, start, end }: Selection, depth: 1 | 2): Edition {
+  const prefix = `${'#'.repeat(depth)} `
+  const last = end > start && value[end - 1] === '\n' ? end - 1 : end
+  const lineStart = start === 0 ? 0 : value.lastIndexOf('\n', start - 1) + 1
+  const nextBreak = value.indexOf('\n', last)
+  const lineEnd = nextBreak === -1 ? value.length : nextBreak
+  const lines = value.slice(lineStart, lineEnd).split('\n')
+  const filled = lines.filter((line) => line.trim() !== '')
+  if (filled.length === 0) {
+    const firstBreak = value.indexOf('\n', lineStart)
+    return {
+      start: lineStart,
+      end: firstBreak === -1 ? value.length : firstBreak,
+      text: prefix,
+      selectionStart: lineStart + prefix.length,
+      selectionEnd: lineStart + prefix.length,
+    }
+  }
+  const atThisDepth = (line: string) => HEADING.exec(line)?.[0].trim() === prefix.trim()
+  const allAtDepth = filled.every(atThisDepth)
+  const text = lines
+    .map((line) => {
+      if (line.trim() === '') return line
+      const bare = line.trimStart().replace(HEADING, '').replace(LIST_PREFIX, '')
+      return allAtDepth ? bare : `${prefix}${bare}`
+    })
+    .join('\n')
+  return {
+    start: lineStart,
+    end: lineEnd,
+    text,
+    selectionStart: lineStart,
+    selectionEnd: lineStart + text.length,
+  }
+}
 
 /**
  * Gras ou italique ligne par ligne : des marques à cheval sur plusieurs lignes casseraient une
@@ -258,7 +273,9 @@ export function applyMarkdownAction(selection: Selection, action: MarkdownAction
       return toggleList(selection, false)
     case 'numbers':
       return toggleList(selection, true)
-    case 'link':
-      return link(selection)
+    case 'heading':
+      return toggleHeading(selection, 1)
+    case 'subheading':
+      return toggleHeading(selection, 2)
   }
 }

@@ -56,10 +56,22 @@ describe('renderMarkdown', () => {
     expect(html).not.toMatch(/"\s*onmouseover=/)
   })
 
-  it('rend les titres en paragraphe et les images en texte', () => {
-    const html = renderMarkdown('# Grand titre\n\n![Affiche du festival](https://a.fr/i.png)')
-    expect(html).not.toContain('<h1')
-    expect(html).toContain('<p>Grand titre</p>')
+  it('place les titres sous celui de l’endroit où la description s’affiche', () => {
+    const source = '# Titre\n\n## Sous-titre\n\n#### Plus bas'
+    expect(renderMarkdown(source)).toBe(
+      '<h3 data-titre="1">Titre</h3>\n<h4 data-titre="2">Sous-titre</h4>\n<h4 data-titre="2">Plus bas</h4>\n',
+    )
+    expect(renderMarkdown('# Titre', { headingLevel: 4 })).toBe('<h4 data-titre="1">Titre</h4>\n')
+    // Jamais au-delà de h6
+    expect(renderMarkdown('## Bas', { headingLevel: 6 })).toBe('<h6 data-titre="2">Bas</h6>\n')
+  })
+
+  it('échappe le HTML écrit dans un titre', () => {
+    expect(renderMarkdown('# <script>x</script>')).not.toContain('<script')
+  })
+
+  it('rend les images en texte', () => {
+    const html = renderMarkdown('![Affiche du festival](https://a.fr/i.png)')
     expect(html).not.toContain('<img')
     expect(html).toContain('Affiche du festival')
   })
@@ -266,24 +278,24 @@ describe('applyMarkdownAction', () => {
     expect(run({ value: '  imbriqué', start: 0, end: 10 }, 'bullets').value).toBe('  - imbriqué')
   })
 
-  it('fait du texte choisi le libellé d’un lien et sélectionne l’adresse', () => {
-    expect(run({ value: 'voir le site', start: 5, end: 12 }, 'link')).toEqual({
-      value: 'voir [le site](https://)',
-      selected: 'https://',
-    })
+  it('fait de la ligne du curseur un titre, puis la rétablit', () => {
+    const value = 'Intro\nContexte du projet\nsuite'
+    const heading = run({ value, start: 10, end: 10 }, 'heading')
+    expect(heading.value).toBe('Intro\n# Contexte du projet\nsuite')
+    expect(run({ value: heading.value, start: 12, end: 12 }, 'heading').value).toBe(value)
   })
 
-  it('fait d’une adresse choisie la cible du lien et sélectionne son libellé', () => {
-    expect(run({ value: 'https://a.fr', start: 0, end: 12 }, 'link')).toEqual({
-      value: '[texte du lien](https://a.fr)',
-      selected: 'texte du lien',
-    })
-    expect(run({ value: 'www.a.fr', start: 0, end: 8 }, 'link').value).toBe(
-      '[texte du lien](https://www.a.fr)',
-    )
+  it('passe d’un titre à un sous-titre sans cumuler les dièses', () => {
+    expect(run({ value: '# Résultats', start: 3, end: 3 }, 'subheading').value).toBe('## Résultats')
   })
 
-  it('retire les crochets d’un libellé, qui casseraient le lien', () => {
-    expect(run({ value: 'voir [x]', start: 5, end: 8 }, 'link').value).toBe('voir [x](https://)')
+  it('pose un titre sur une ligne vide, curseur après le préfixe', () => {
+    const edit = applyMarkdownAction({ value: '', start: 0, end: 0 }, 'subheading')
+    expect(edit.text).toBe('## ')
+    expect(edit.selectionStart).toBe(3)
+  })
+
+  it('retire la puce d’une ligne transformée en titre', () => {
+    expect(run({ value: '- Bilan', start: 0, end: 7 }, 'heading').value).toBe('# Bilan')
   })
 })

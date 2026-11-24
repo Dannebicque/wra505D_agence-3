@@ -1,13 +1,14 @@
 // Module pur (sans dépendance Nuxt) : testable dans le projet Vitest `unit`.
 //
 // Rendu de la description d'une trace, écrite en Markdown (docs/DECISIONS.md, 2026-11-24).
-// Sous-ensemble volontairement réduit : paragraphes et retours à la ligne, gras, italique, listes,
-// liens. Ce qui n'en fait pas partie s'affiche comme du texte :
+// Sous-ensemble volontairement réduit : paragraphes et retours à la ligne, titres et sous-titres,
+// gras, italique, listes, liens. Ce qui n'en fait pas partie s'affiche comme du texte :
 // - aucun HTML : il est échappé (le texte vient de l'étudiant et s'affiche sur un portfolio
 //   public, avec `v-html`) ;
 // - liens en http(s) ou mailto seulement (pas de `javascript:`, `data:`…), ouverts dans l'onglet ;
-// - pas d'images (texte alternatif seul) ni de titres (rendus en paragraphe : la page a déjà les
-//   siens, une trace ne doit pas casser leur hiérarchie) ;
+// - deux niveaux de titre (`#` et `##` ; au-delà, rendus comme `##`), placés sous le titre de
+//   l'endroit où la description s'affiche (`headingLevel`) : la hiérarchie de la page est gardée ;
+// - pas d'images (texte alternatif seul) ;
 // - ni bloc de code (un paragraphe collé avec un retrait de 4 espaces le devenait, sans retour à
 //   la ligne), ni tableau, citation, filet, texte barré ou case à cocher (un champ sans libellé) :
 //   leur texte s'affiche en paragraphe.
@@ -38,49 +39,71 @@ function plainParagraph(text: string): string {
   return `<p>${escapeHtml(text.trim()).replace(/\n/g, '<br>')}</p>\n`
 }
 
-const parser = new Marked({
-  gfm: true,
-  // Un retour à la ligne de l'étudiant reste un retour à la ligne
-  breaks: true,
-  renderer: {
-    html({ text }: Tokens.HTML | Tokens.Tag) {
-      return escapeHtml(text)
-    },
-    heading({ tokens }: Tokens.Heading) {
-      return `<p>${this.parser.parseInline(tokens)}</p>\n`
-    },
-    image({ text }: Tokens.Image) {
-      return escapeHtml(text)
-    },
-    code({ text }: Tokens.Code) {
-      return plainParagraph(text)
-    },
-    table({ raw }: Tokens.Table) {
-      return plainParagraph(raw)
-    },
-    blockquote({ tokens }: Tokens.Blockquote) {
-      return this.parser.parse(tokens)
-    },
-    hr() {
-      return ''
-    },
-    del({ tokens }: Tokens.Del) {
-      return this.parser.parseInline(tokens)
-    },
-    // Case d'une liste de tâches : en texte, pas en champ sans libellé (on garde ce qui est coché)
-    checkbox({ checked }: Tokens.Checkbox) {
-      return checked ? '[x] ' : '[ ] '
-    },
-    link({ href, tokens }: Tokens.Link) {
-      const label = this.parser.parseInline(tokens)
-      if (!isSafeLink(href)) return label
-      return `<a href="${escapeHtml(href.trim())}" rel="nofollow ugc noopener">${label}</a>`
-    },
-  },
-})
+/** Niveau HTML d'un titre : `#` au niveau donné, `##` (et au-delà) juste en dessous, h6 au plus. */
+function headingTag(depth: number, headingLevel: number): string {
+  return `h${Math.min(6, headingLevel + (depth > 1 ? 1 : 0))}`
+}
 
-/** HTML sûr d'une description en Markdown ; chaîne vide si elle est vide. */
-export function renderMarkdown(source: string | null | undefined): string {
+const createParser = (headingLevel: number) =>
+  new Marked({
+    gfm: true,
+    // Un retour à la ligne de l'étudiant reste un retour à la ligne
+    breaks: true,
+    renderer: {
+      html({ text }: Tokens.HTML | Tokens.Tag) {
+        return escapeHtml(text)
+      },
+      // data-titre : style du titre (1) ou du sous-titre (2), quel que soit le niveau HTML
+      heading({ tokens, depth }: Tokens.Heading) {
+        const tag = headingTag(depth, headingLevel)
+        const inner = this.parser.parseInline(tokens)
+        return `<${tag} data-titre="${depth > 1 ? 2 : 1}">${inner}</${tag}>\n`
+      },
+      image({ text }: Tokens.Image) {
+        return escapeHtml(text)
+      },
+      code({ text }: Tokens.Code) {
+        return plainParagraph(text)
+      },
+      table({ raw }: Tokens.Table) {
+        return plainParagraph(raw)
+      },
+      blockquote({ tokens }: Tokens.Blockquote) {
+        return this.parser.parse(tokens)
+      },
+      hr() {
+        return ''
+      },
+      del({ tokens }: Tokens.Del) {
+        return this.parser.parseInline(tokens)
+      },
+      // Case d'une liste de tâches : en texte, pas en champ sans libellé (on garde ce qui est coché)
+      checkbox({ checked }: Tokens.Checkbox) {
+        return checked ? '[x] ' : '[ ] '
+      },
+      link({ href, tokens }: Tokens.Link) {
+        const label = this.parser.parseInline(tokens)
+        if (!isSafeLink(href)) return label
+        return `<a href="${escapeHtml(href.trim())}" rel="nofollow ugc noopener">${label}</a>`
+      },
+    },
+  })
+
+const parsers = new Map<number, ReturnType<typeof createParser>>()
+
+/**
+ * HTML sûr d'une description en Markdown ; chaîne vide si elle est vide. `headingLevel` : niveau
+ * HTML de ses titres `#`, le premier sous le titre de l'endroit où elle s'affiche (3 par défaut).
+ */
+export function renderMarkdown(
+  source: string | null | undefined,
+  { headingLevel = 3 }: { headingLevel?: number } = {},
+): string {
   if (!source?.trim()) return ''
+  let parser = parsers.get(headingLevel)
+  if (!parser) {
+    parser = createParser(headingLevel)
+    parsers.set(headingLevel, parser)
+  }
   return parser.parse(source, { async: false })
 }

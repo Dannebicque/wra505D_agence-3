@@ -101,7 +101,11 @@ const competencesOf = (trace: DemoTrace) =>
                   <span aria-hidden="true">·</span>
                   <span class="tabular-nums">{{ formatDate(trace.date) }}</span>
                 </p>
-                <UiTexteMarkdown :source="trace.description" class="text-sm text-default" />
+                <UiTexteMarkdown
+                  :source="trace.description"
+                  :heading-level="4"
+                  class="text-sm text-default"
+                />
                 <div v-if="competencesOf(trace).length" class="mt-auto pt-1">
                   <p class="sr-only">Compétences mobilisées :</p>
                   <ul class="flex flex-wrap gap-2">
