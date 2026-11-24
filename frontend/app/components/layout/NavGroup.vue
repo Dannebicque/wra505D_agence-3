@@ -2,7 +2,8 @@
   Groupe de la barre latérale des espaces : intitulé visible qui nomme sa liste (aria-labelledby).
   L'id est tiré dans ce composant : la barre est rendue deux fois (ordinateur et menu mobile), et
   chaque rendu a ainsi ses propres ids, sans doublon. aria-label sur la liste aurait évité l'id,
-  mais NVDA n'annonce pas le nom d'une liste : l'intitulé doit rester lisible.
+  mais NVDA, à notre connaissance (non vérifié), n'annonce pas le nom d'une liste : l'intitulé
+  reste lisible et sert de nom.
 -->
 <script setup lang="ts">
 defineProps<{ label?: string }>()

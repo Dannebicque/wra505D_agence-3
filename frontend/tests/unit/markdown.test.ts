@@ -176,11 +176,48 @@ describe('applyMarkdownAction', () => {
   )
 
   it.each([
+    // [texte, début, fin, action, résultat]
+    ['**mot**s', 2, 5, 'bold', 'mots'],
+    ['in**croyable**', 4, 12, 'bold', 'incroyable'],
+    ['_mot_', 1, 4, 'italic', 'mot'],
+    ['2*_3_*4', 3, 4, 'italic', '2*3*4'],
+    // `2*3*4` se lit déjà « 2, 3 en italique, 4 » : l'italique est retiré
+    ['2*3*4', 2, 3, 'italic', '234'],
+  ] as const)(
+    'retire la mise en forme, même collée à un mot : %s',
+    (value, start, end, action, attendu) => {
+      expect(run({ value, start, end }, action).value).toBe(attendu)
+    },
+  )
+
+  it.each([
+    ['un mot', 3, 6],
+    ['**mot**', 2, 5],
+    ['**mot**', 0, 7],
+    ['*a* et *b*', 0, 10],
+    ['**gras**mot', 8, 11],
+    ['**mot**s', 2, 5],
+  ] as const)('revient au texte de départ après deux clics : %s', (value, start, end) => {
+    for (const action of ['bold', 'italic'] as const) {
+      const first = applyMarkdownAction({ value, start, end }, action)
+      const once = value.slice(0, first.start) + first.text + value.slice(first.end)
+      const second = applyMarkdownAction(
+        { value: once, start: first.selectionStart, end: first.selectionEnd },
+        action,
+      )
+      const twice = once.slice(0, second.start) + second.text + once.slice(second.end)
+      expect(twice, `${action} deux fois`).toBe(value)
+    }
+  })
+
+  it.each([
     // [texte, début, fin, action, rendu attendu]
     ['*a* et *b*', 0, 10, 'italic', '<em><em>a</em> et <em>b</em></em>'],
     ['**a** et **b**', 0, 14, 'bold', '<strong><strong>a</strong> et <strong>b</strong></strong>'],
     ['**gras**mot', 8, 11, 'bold', '<strong>gras</strong><strong>mot</strong>'],
-    ['2*3*4', 2, 3, 'italic', '2*<em>3</em>*4'],
+    ['2*3*4', 2, 3, 'bold', '2<em><strong>3</strong></em>4'],
+    ['**mot**s', 2, 5, 'italic', '<em><strong>mot</strong></em>s'],
+    ['x**mot**', 3, 6, 'italic', 'x<em><strong>mot</strong></em>'],
   ] as const)(
     'garde une syntaxe valide quand la sélection touche d’autres astérisques : %s',
     (value, start, end, action, rendu) => {
