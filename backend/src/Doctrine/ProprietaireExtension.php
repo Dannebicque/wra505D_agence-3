@@ -8,6 +8,7 @@ use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use App\Entity\Bibliotheque;
 use App\Entity\Commentaire;
+use App\Entity\Cv;
 use App\Entity\Echeance;
 use App\Entity\Etudiant;
 use App\Entity\Notification;
@@ -28,7 +29,7 @@ use Symfony\Bundle\SecurityBundle\Security;
  */
 final class ProprietaireExtension implements QueryCollectionExtensionInterface, QueryItemExtensionInterface
 {
-    private const RESSOURCES = [Trace::class, Bibliotheque::class, Validation::class, Portfolio::class, Page::class, Commentaire::class, Notification::class, Etudiant::class, Echeance::class];
+    private const RESSOURCES = [Trace::class, Bibliotheque::class, Validation::class, Portfolio::class, Page::class, Commentaire::class, Notification::class, Etudiant::class, Echeance::class, Cv::class];
 
     public function __construct(private readonly Security $security)
     {
@@ -77,7 +78,7 @@ final class ProprietaireExtension implements QueryCollectionExtensionInterface, 
 
         match ($classe) {
             Etudiant::class => $qb->andWhere(sprintf('%s = :%s', $racine, $moi)),
-            Bibliotheque::class => $qb->andWhere(sprintf('%s.etudiant = :%s', $racine, $moi)),
+            Bibliotheque::class, Cv::class => $qb->andWhere(sprintf('%s.etudiant = :%s', $racine, $moi)),
             // Notification d'un commentaire repassé en note privée : masquée avec lui (lien mort et fuite sinon)
             Notification::class => $qb->andWhere(sprintf('%s.etudiant = :%s AND (%3$s.id IS NULL OR %3$s.visibilite = true)', $racine, $moi, $this->joindre($qb, $noms, $racine, 'commentaire', true))),
             Portfolio::class => $qb->andWhere(sprintf('%s.etudiant = :%s AND %1$s.date_suppression IS NULL', $racine, $moi)),
@@ -139,8 +140,8 @@ final class ProprietaireExtension implements QueryCollectionExtensionInterface, 
                 $this->traceVisible($qb, $noms, $this->joindre($qb, $noms, $racine, 'trace', true), $departements, true),
                 $this->portfolioVisible($qb, $noms, $this->joindre($qb, $noms, $racine, 'portfolio', true), $departements, true),
             )),
-            // Les notifications sont celles des étudiants (E-EV-04 à 07)
-            Notification::class => $qb->andWhere('1 = 0'),
+            // Notifications et CV : ceux des étudiants seulement
+            Notification::class, Cv::class => $qb->andWhere('1 = 0'),
             // Échéances (passées comprises) d'une année ou d'un groupe de ses départements
             Echeance::class => $qb->andWhere(sprintf(
                 '(%s) OR (%s)',
