@@ -311,6 +311,43 @@
   --uf-contour: var(--color-prune-400);
 }
 
+/*
+ * Texte écrit en Markdown (description d'une trace, `UiTexteMarkdown`) : paragraphes espacés,
+ * listes avec leurs puces ou numéros, liens soulignés dans la couleur d'action.
+ */
+@utility texte-markdown {
+  overflow-wrap: anywhere;
+  & > * + * {
+    margin-top: --spacing(3);
+  }
+  & ul {
+    list-style-type: disc;
+    padding-inline-start: --spacing(5);
+  }
+  & ol {
+    list-style-type: decimal;
+    padding-inline-start: --spacing(5);
+  }
+  & li + li {
+    margin-top: --spacing(1);
+  }
+  & strong {
+    font-weight: 600;
+    color: var(--ui-text-highlighted);
+  }
+  & a {
+    color: var(--ui-primary);
+    text-decoration-line: underline;
+    text-underline-offset: 4px;
+  }
+  & code {
+    border-radius: --spacing(1);
+    background-color: var(--ui-bg-elevated);
+    padding-inline: --spacing(1);
+    font-size: 0.9em;
+  }
+}
+
 /* Zone qui défile : la place de la barre de défilement est réservée, le contenu ne se décale pas quand elle apparaît */
 @utility gouttiere-stable {
   scrollbar-gutter: stable;
@@ -323,6 +360,15 @@
  * principale des espaces (main#contenu, tabindex="0" pour défiler au clavier) garde le sien.
  */
 :focus-visible:not([tabindex='-1']) {
+  outline: 2px solid var(--ui-primary);
+  outline-offset: 2px;
+}
+
+/* Éditeur Markdown : le contour de focus entoure toute la boîte, barre de mise en forme comprise */
+.editeur-markdown textarea:focus-visible {
+  outline: none;
+}
+.editeur-markdown:has(textarea:focus-visible) {
   outline: 2px solid var(--ui-primary);
   outline-offset: 2px;
 }

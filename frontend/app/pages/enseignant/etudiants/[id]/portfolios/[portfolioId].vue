@@ -158,7 +158,7 @@ const pageLink = (id: number) => ({ query: { page: String(id) } })
                 Évaluer<span class="sr-only"> « {{ trace.titre }} »</span>
               </UButton>
             </div>
-            <p class="mt-3 max-w-mesure text-sm">{{ trace.description }}</p>
+            <UiTexteMarkdown :source="trace.description" class="mt-3 max-w-mesure text-sm" />
 
             <h4 class="sr-only">Compétences et niveau d’acquisition</h4>
             <ul class="mt-4 flex flex-col gap-2">

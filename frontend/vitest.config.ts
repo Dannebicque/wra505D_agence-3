@@ -19,6 +19,7 @@ export default defineConfig({
           name: 'nuxt',
           include: ['tests/nuxt/**/*.{test,spec}.ts'],
           environment: 'nuxt',
+          setupFiles: ['tests/nuxt/setup.ts'],
           environmentOptions: { nuxt: { rootDir: fileURLToPath(new URL('.', import.meta.url)) } },
           // Le cache disque de Vitest 5 mémorise un chemin erroné pour l'entrée virtuelle
           // de @nuxt/test-utils : le second lancement échoue (voir docs/DECISIONS.md)

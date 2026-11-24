@@ -269,14 +269,13 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
       />
     </UFormField>
 
-    <UFormField label="Description" name="description">
-      <UTextarea
-        v-model="state.description"
-        :rows="4"
-        :maxlength="TRACE_LIMITS.description"
-        autoresize
-        class="w-full"
-      />
+    <UFormField
+      label="Description"
+      name="description"
+      description="Gras, italique, listes et liens : utilisez la barre ou la syntaxe Markdown."
+      :hint="`${state.description.length} / ${TRACE_LIMITS.description}`"
+    >
+      <UiEditeurMarkdown v-model="state.description" :maxlength="TRACE_LIMITS.description" />
     </UFormField>
 
     <!-- Champs secondaires : repliés par défaut, mais toujours dans la page (`hidden="until-found"`),
