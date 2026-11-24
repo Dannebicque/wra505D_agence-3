@@ -52,8 +52,12 @@ navigateur (seulement par HTTP à travers le front).
 | `etudiant/index` (tableau de bord) | **404** : `DEMO_ETUDIANT_ID = 1` | prendre l'étudiant de `/api/me` (store auth) |
 | `etudiant/portfolios`, `portfolios/nouveau`, `portfolios/[id]/apercu` | démo (`app/demo/`) | `GET/POST /api/portfolios` ; aperçu : `GET /api/portfolios/{id}/public` |
 | `portfolio/[slug]` (lien public) | démo | l'API sert `GET /api/portfolios/{id}/public` **sans connexion** : utiliser l'identifiant comme `slug` (pas de slug côté API) |
-| `etudiant/competences`, `etudiant/retours` | démo | `GET /api/validations`, `GET /api/commentaires`, `GET /api/notifications`, `PATCH /api/notifications/{id} {lu: true}` |
-| `etudiant/corbeille`, `etudiant/cv` | démo | Sprint 5 (pas encore de route) |
+| `etudiant/competences`, `etudiant/retours` | démo | `GET /api/validations`, `GET /api/commentaires`, `GET /api/notifications`, `PATCH /api/notifications/{id} {lu: true}` ; progression : `GET /api/bilans/etudiants/{id}` |
+| `etudiant/corbeille` | démo | `GET /api/corbeille`, `POST /api/{traces,pages,portfolios}/{id}/restaurer` (corps `{}`) |
+| `etudiant/cv` | démo | `GET/POST/PATCH /api/cvs` (format de `CV_DEMO`) ; PDF : impression du navigateur |
+| Échéances (tableaux de bord) | démo (`ECHEANCES_PROVISOIRES`) | `GET /api/echeances` ; création par l'enseignant : `POST /api/echeances` |
+| Recherche globale | — | `GET /api/recherche?q=…` |
+| `enseignant/bilans` | démo | `GET /api/bilans/{annees,groupes}/{id}` et `?format=csv` |
 | `enseignant/*` | démo | voir § 4 |
 
 ## 4. Espace enseignant (Sprint 3 de l'API)
