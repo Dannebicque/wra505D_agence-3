@@ -13,7 +13,7 @@
   </UFormField>
 -->
 <script setup lang="ts" generic="T extends string">
-export interface ChoixSegmenteItem<V extends string = string> {
+export interface SegmentedItem<V extends string = string> {
   label: string
   value: V
   /** Icône Lucide, au-dessus du libellé sur téléphone, à sa gauche au-delà. */
@@ -22,7 +22,7 @@ export interface ChoixSegmenteItem<V extends string = string> {
 
 const props = defineProps<{
   legend: string
-  items: readonly ChoixSegmenteItem<T>[]
+  items: readonly SegmentedItem<T>[]
 }>()
 
 const model = defineModel<T>({ required: true })
@@ -31,12 +31,10 @@ const { id, name, ariaAttrs, emitFormChange, emitFormInput } = useFormField()
 const fallbackName = useId()
 const groupName = computed(() => name.value ?? fallbackName)
 
-const selectedIndex = computed(() =>
-  Math.max(
-    0,
-    props.items.findIndex((item) => item.value === model.value),
-  ),
-)
+// -1 si la valeur n'est pas dans la liste : aucun bouton coché, donc pas de pastille
+const selectedIndex = computed(() => props.items.findIndex((item) => item.value === model.value))
+/** Bouton qui porte l'id du champ (focalisé en cas d'erreur) : le coché, sinon le premier. */
+const focusIndex = computed(() => Math.max(0, selectedIndex.value))
 
 function onChange() {
   emitFormChange()
@@ -48,28 +46,34 @@ function onChange() {
   <fieldset class="min-w-0">
     <legend class="mb-2 text-sm font-medium text-default">{{ legend }}</legend>
     <!--
-      Colonnes égales : la pastille fait une colonne de large et se décale d'autant de fois sa
-      largeur que le rang de l'option choisie, sans mesure ni script (rendu serveur compris)
+      Colonnes égales : la pastille fait une colonne de large (moins le retrait `p-1` de la piste)
+      et se décale d'autant de fois sa largeur que le rang de l'option choisie, sans mesure ni
+      script (rendu serveur compris)
     -->
     <div
       class="relative grid rounded-full bg-elevated p-1"
       :style="{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }"
     >
+      <!--
+        Pastille : contour prune (7,5:1 sur la piste en clair), pas seulement un fond un peu plus
+        clair (1,3:1) ; en couleurs forcées, le fond disparaît mais le contour reste
+      -->
       <span
+        v-if="selectedIndex >= 0"
         aria-hidden="true"
-        class="absolute inset-y-1 start-1 rounded-full bg-default shadow-carte motion-safe:transition-[translate] motion-safe:duration-300 motion-safe:ease-out dark:bg-accented"
+        class="absolute inset-y-1 start-1 rounded-full border border-primary bg-default shadow-carte motion-safe:transition-[translate] motion-safe:duration-300 motion-safe:ease-out dark:bg-accented"
         :style="{
-          width: `calc((100% - 0.5rem) / ${items.length})`,
+          width: `calc((100% - var(--spacing) * 2) / ${items.length})`,
           translate: `${selectedIndex * 100}% 0`,
         }"
       />
       <label
         v-for="(item, index) in items"
         :key="item.value"
-        class="relative flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-full px-2 py-2 text-sm font-medium text-muted transition-colors hover:text-highlighted has-checked:text-highlighted has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary motion-reduce:transition-none sm:flex-row sm:gap-2"
+        class="relative flex min-w-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-full px-2 py-2 text-sm font-medium text-muted transition-colors hover:text-highlighted has-checked:font-semibold has-checked:text-highlighted has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-primary motion-reduce:transition-none sm:flex-row sm:gap-2"
       >
         <input
-          :id="index === selectedIndex ? id : undefined"
+          :id="index === focusIndex ? id : undefined"
           v-model="model"
           type="radio"
           class="sr-only"

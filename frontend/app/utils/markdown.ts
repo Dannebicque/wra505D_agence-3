@@ -7,7 +7,10 @@
 //   public, avec `v-html`) ;
 // - liens en http(s) ou mailto seulement (pas de `javascript:`, `data:`…), ouverts dans l'onglet ;
 // - pas d'images (texte alternatif seul) ni de titres (rendus en paragraphe : la page a déjà les
-//   siens, une trace ne doit pas casser leur hiérarchie).
+//   siens, une trace ne doit pas casser leur hiérarchie) ;
+// - ni bloc de code (un paragraphe collé avec un retrait de 4 espaces le devenait, sans retour à
+//   la ligne), ni tableau, citation, filet, texte barré ou case à cocher (un champ sans libellé) :
+//   leur texte s'affiche en paragraphe.
 import { Marked, type Tokens } from 'marked'
 
 const HTML_ESCAPES: Record<string, string> = {
@@ -22,11 +25,17 @@ export function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (char) => HTML_ESCAPES[char] ?? char)
 }
 
-const SAFE_LINK = /^(?:https?:\/\/|mailto:)/i
+// Une adresse incomplète (`https://` laissé par la barre de mise en forme) ne donne pas de lien
+const SAFE_LINK = /^(?:https?:\/\/[^\s/]|mailto:\S)/i
 
 /** Adresse de lien acceptée : web ou courriel, rien qui s'exécute. */
 export function isSafeLink(href: string): boolean {
   return SAFE_LINK.test(href.trim())
+}
+
+/** Texte brut en paragraphe, retours à la ligne gardés. */
+function plainParagraph(text: string): string {
+  return `<p>${escapeHtml(text.trim()).replace(/\n/g, '<br>')}</p>\n`
 }
 
 const parser = new Marked({
@@ -42,6 +51,24 @@ const parser = new Marked({
     },
     image({ text }: Tokens.Image) {
       return escapeHtml(text)
+    },
+    code({ text }: Tokens.Code) {
+      return plainParagraph(text)
+    },
+    table({ raw }: Tokens.Table) {
+      return plainParagraph(raw)
+    },
+    blockquote({ tokens }: Tokens.Blockquote) {
+      return this.parser.parse(tokens)
+    },
+    hr() {
+      return ''
+    },
+    del({ tokens }: Tokens.Del) {
+      return this.parser.parseInline(tokens)
+    },
+    checkbox() {
+      return ''
     },
     link({ href, tokens }: Tokens.Link) {
       const label = this.parser.parseInline(tokens)

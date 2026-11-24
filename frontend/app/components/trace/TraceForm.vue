@@ -125,11 +125,16 @@ const detailsOpen = ref(
 )
 /** Bouton de la section : nommé par son titre, décrit par sa sous-ligne. */
 const detailsId = useId()
-/** Une erreur dans la section l'ouvre : elle se voit, et le focus peut atteindre le champ. */
+const descriptionEditor = useTemplateRef<{ showEditor: () => void }>('descriptionEditor')
+/**
+ * Une erreur dans la section l'ouvre : elle se voit, et le focus peut atteindre le champ. De même,
+ * une erreur sur la description ferme l'aperçu, qui masque le champ.
+ */
 function revealDetailsFor(names: (string | undefined)[]) {
   if (names.some((name) => name !== undefined && DETAIL_FIELDS.test(name))) {
     detailsOpen.value = true
   }
+  if (names.includes('description')) descriptionEditor.value?.showEditor()
 }
 
 /**
@@ -275,7 +280,11 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
       description="Gras, italique, listes et liens : utilisez la barre ou la syntaxe Markdown."
       :hint="`${state.description.length} / ${TRACE_LIMITS.description}`"
     >
-      <UiEditeurMarkdown v-model="state.description" :maxlength="TRACE_LIMITS.description" />
+      <UiEditeurMarkdown
+        ref="descriptionEditor"
+        v-model="state.description"
+        :maxlength="TRACE_LIMITS.description"
+      />
     </UFormField>
 
     <!-- Champs secondaires : repliés par défaut, mais toujours dans la page (`hidden="until-found"`),

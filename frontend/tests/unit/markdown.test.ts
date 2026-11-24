@@ -40,7 +40,12 @@ describe('renderMarkdown', () => {
     '[clic](JaVaScRiPt:alert(1))',
     '[clic](data:text/html;base64,PHNjcmlwdD4=)',
     '<javascript:alert(1)>',
-  ])('ne crée pas de lien dangereux : %s', (source) => {
+    '[x][1]\n\n[1]: <javascript:alert(1)> "t"',
+    '[x](&#106;avascript:alert(1))',
+    '[x]( javascript:alert(1))',
+    // Adresse laissée incomplète après un clic sur « Lien »
+    '[x](https://)',
+  ])('ne crée pas de lien dangereux ou vide : %s', (source) => {
     const html = renderMarkdown(source)
     expect(html).not.toContain('<a ')
     expect(html.toLowerCase()).not.toContain('href="javascript')
@@ -59,6 +64,21 @@ describe('renderMarkdown', () => {
     expect(html).toContain('Affiche du festival')
   })
 
+  it.each([
+    ['- [ ] tâche', '<input'],
+    ['    paragraphe collé avec un retrait', '<pre'],
+    ['| a | b |\n|---|---|\n| 1 | 2 |', '<table'],
+    ['> cité', '<blockquote'],
+    ['avant\n\n---\n\naprès', '<hr'],
+    ['~~barré~~', '<del'],
+  ])('affiche en texte ce qui sort du sous-ensemble : %s', (source, balise) => {
+    expect(renderMarkdown(source)).not.toContain(balise)
+  })
+
+  it('garde le texte d’un paragraphe collé avec un retrait, avec ses retours à la ligne', () => {
+    expect(renderMarkdown('    ligne un\n    ligne deux')).toBe('<p>ligne un<br>ligne deux</p>\n')
+  })
+
   it('renvoie une chaîne vide pour une description vide', () => {
     expect(renderMarkdown(null)).toBe('')
     expect(renderMarkdown('   \n')).toBe('')
@@ -67,6 +87,7 @@ describe('renderMarkdown', () => {
   it('n’accepte que les liens web et courriel', () => {
     expect(isSafeLink('https://a.fr')).toBe(true)
     expect(isSafeLink('mailto:a@b.fr')).toBe(true)
+    expect(isSafeLink('https://')).toBe(false)
     expect(isSafeLink('/etudiant')).toBe(false)
     expect(isSafeLink('vbscript:x')).toBe(false)
   })
@@ -74,43 +95,83 @@ describe('renderMarkdown', () => {
 
 describe('applyMarkdownAction', () => {
   it('met la sélection en gras, puis l’en retire', () => {
-    const bold = run({ value: 'un mot ici', start: 3, end: 6 }, 'gras')
+    const bold = run({ value: 'un mot ici', start: 3, end: 6 }, 'bold')
     expect(bold).toEqual({ value: 'un **mot** ici', selected: 'mot' })
-    const back = run({ value: 'un **mot** ici', start: 5, end: 8 }, 'gras')
+    const back = run({ value: 'un **mot** ici', start: 5, end: 8 }, 'bold')
     expect(back).toEqual({ value: 'un mot ici', selected: 'mot' })
   })
 
+  it('retire le gras d’une sélection qui comprend ses marques', () => {
+    expect(run({ value: 'un **mot** ici', start: 3, end: 10 }, 'bold')).toEqual({
+      value: 'un mot ici',
+      selected: 'mot',
+    })
+  })
+
+  it('laisse hors des marques l’espace pris par un double-clic', () => {
+    expect(run({ value: 'un mot ici', start: 3, end: 7 }, 'bold').value).toBe('un **mot** ici')
+  })
+
   it('sans sélection, insère un exemple sélectionné, prêt à être remplacé', () => {
-    expect(run({ value: 'Avant ', start: 6, end: 6 }, 'italique')).toEqual({
-      value: 'Avant _texte en italique_',
+    expect(run({ value: 'Avant ', start: 6, end: 6 }, 'italic')).toEqual({
+      value: 'Avant *texte en italique*',
       selected: 'texte en italique',
     })
   })
 
+  it('met en italique au milieu d’un mot (astérisques)', () => {
+    expect(run({ value: 'motclé', start: 1, end: 3 }, 'italic').value).toBe('m*ot*clé')
+  })
+
   it('transforme les lignes touchées en liste à puces, puis les rétablit', () => {
     const value = 'Intro\nun\ndeux'
-    const list = run({ value, start: 7, end: 10 }, 'puces')
+    const list = run({ value, start: 7, end: 10 }, 'bullets')
     expect(list.value).toBe('Intro\n- un\n- deux')
-    expect(run({ value: list.value, start: 8, end: 14 }, 'puces').value).toBe(value)
+    expect(run({ value: list.value, start: 8, end: 14 }, 'bullets').value).toBe(value)
   })
 
   it('numérote les lignes, en remplaçant des puces existantes', () => {
-    expect(run({ value: '- un\n- deux', start: 0, end: 11 }, 'numeros').value).toBe(
+    expect(run({ value: '- un\n- deux', start: 0, end: 11 }, 'numbers').value).toBe(
       '1. un\n2. deux',
     )
   })
 
+  it('liste sans plage inversée quand le texte commence par une ligne vide', () => {
+    const edit = applyMarkdownAction({ value: '\nabc', start: 0, end: 0 }, 'bullets')
+    expect(edit.start).toBeLessThanOrEqual(edit.end)
+    expect(run({ value: '\nabc', start: 0, end: 0 }, 'bullets').value).toBe('\nabc')
+  })
+
+  it('ne prend pas la ligne suivante quand la sélection finit sur un saut de ligne', () => {
+    expect(run({ value: 'a\nb\nc', start: 0, end: 2 }, 'bullets').value).toBe('- a\nb\nc')
+  })
+
+  it('saute les lignes vides et numérote les autres à la suite', () => {
+    expect(run({ value: 'un\n\ndeux', start: 0, end: 8 }, 'numbers').value).toBe('1. un\n\n2. deux')
+  })
+
+  it('garde le retrait d’une liste imbriquée', () => {
+    expect(run({ value: '  imbriqué', start: 0, end: 10 }, 'bullets').value).toBe('  - imbriqué')
+  })
+
   it('fait du texte choisi le libellé d’un lien et sélectionne l’adresse', () => {
-    expect(run({ value: 'voir le site', start: 5, end: 12 }, 'lien')).toEqual({
+    expect(run({ value: 'voir le site', start: 5, end: 12 }, 'link')).toEqual({
       value: 'voir [le site](https://)',
       selected: 'https://',
     })
   })
 
   it('fait d’une adresse choisie la cible du lien et sélectionne son libellé', () => {
-    expect(run({ value: 'https://a.fr', start: 0, end: 12 }, 'lien')).toEqual({
+    expect(run({ value: 'https://a.fr', start: 0, end: 12 }, 'link')).toEqual({
       value: '[texte du lien](https://a.fr)',
       selected: 'texte du lien',
     })
+    expect(run({ value: 'www.a.fr', start: 0, end: 8 }, 'link').value).toBe(
+      '[texte du lien](https://www.a.fr)',
+    )
+  })
+
+  it('retire les crochets d’un libellé, qui casseraient le lien', () => {
+    expect(run({ value: 'voir [x]', start: 5, end: 8 }, 'link').value).toBe('voir [x](https://)')
   })
 })

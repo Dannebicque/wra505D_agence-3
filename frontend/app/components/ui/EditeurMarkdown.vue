@@ -19,19 +19,20 @@ defineProps<{ maxlength?: number }>()
 const model = defineModel<string>({ required: true })
 
 const textarea = useTemplateRef<{ textareaRef: HTMLTextAreaElement | null }>('textarea')
-const apercu = ref(false)
+const previewing = ref(false)
 
-const ACTIONS: { action: MarkdownAction; label: string; icon: string; raccourci?: string }[] = [
-  { action: 'gras', label: 'Gras', icon: 'i-lucide-bold', raccourci: 'B' },
-  { action: 'italique', label: 'Italique', icon: 'i-lucide-italic', raccourci: 'I' },
-  { action: 'puces', label: 'Liste à puces', icon: 'i-lucide-list' },
-  { action: 'numeros', label: 'Liste numérotée', icon: 'i-lucide-list-ordered' },
-  { action: 'lien', label: 'Lien', icon: 'i-lucide-link' },
+const ACTIONS: { action: MarkdownAction; label: string; icon: string; shortcut?: string }[] = [
+  { action: 'bold', label: 'Gras', icon: 'i-lucide-bold', shortcut: 'B' },
+  { action: 'italic', label: 'Italique', icon: 'i-lucide-italic', shortcut: 'I' },
+  { action: 'bullets', label: 'Liste à puces', icon: 'i-lucide-list' },
+  { action: 'numbers', label: 'Liste numérotée', icon: 'i-lucide-list-ordered' },
+  { action: 'link', label: 'Lien', icon: 'i-lucide-link' },
 ]
 
 function apply(action: MarkdownAction) {
   const el = textarea.value?.textareaRef
-  if (!el) return
+  // Pendant l'envoi, le formulaire désactive le champ : la barre ne le modifie pas non plus
+  if (!el || el.disabled || el.readOnly) return
   const edit = applyMarkdownAction(
     { value: el.value, start: el.selectionStart, end: el.selectionEnd },
     action,
@@ -39,7 +40,9 @@ function apply(action: MarkdownAction) {
   el.focus()
   el.setSelectionRange(edit.start, edit.end)
   // insertText garde l'annulation du navigateur ; repli si la commande n'est pas prise en charge
-  const inserted = document.execCommand('insertText', false, edit.text)
+  const inserted =
+    typeof document.execCommand === 'function' &&
+    document.execCommand('insertText', false, edit.text)
   if (!inserted) {
     el.setRangeText(edit.text, edit.start, edit.end, 'end')
     el.dispatchEvent(new Event('input', { bubbles: true }))
@@ -49,20 +52,29 @@ function apply(action: MarkdownAction) {
 
 function onKeydown(event: KeyboardEvent) {
   if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return
-  const item = ACTIONS.find((a) => a.raccourci?.toLowerCase() === event.key.toLowerCase())
+  const item = ACTIONS.find((a) => a.shortcut?.toLowerCase() === event.key.toLowerCase())
   if (!item) return
   event.preventDefault()
   apply(item.action)
 }
 
-async function toggleApercu() {
-  apercu.value = !apercu.value
+async function togglePreview() {
+  previewing.value = !previewing.value
   // Retour à l'écriture : le curseur revient dans le texte
-  if (!apercu.value) {
+  if (!previewing.value) {
     await nextTick()
     textarea.value?.textareaRef?.focus()
   }
 }
+
+/**
+ * Revient à l'écriture, sans déplacer le focus : le formulaire l'appelle quand le champ passe en
+ * erreur, pour pouvoir y mettre le focus (un champ masqué par l'aperçu ne le recevrait pas).
+ */
+function showEditor() {
+  previewing.value = false
+}
+defineExpose({ showEditor })
 </script>
 
 <template>
@@ -73,7 +85,7 @@ async function toggleApercu() {
         <UTooltip
           v-for="item in ACTIONS"
           :key="item.action"
-          :text="item.raccourci ? `${item.label} (Ctrl + ${item.raccourci})` : item.label"
+          :text="item.shortcut ? `${item.label} (Ctrl + ${item.shortcut})` : item.label"
         >
           <UButton
             type="button"
@@ -83,8 +95,10 @@ async function toggleApercu() {
             square
             :icon="item.icon"
             :aria-label="item.label"
-            :aria-keyshortcuts="item.raccourci ? `Control+${item.raccourci}` : undefined"
-            :disabled="apercu"
+            :aria-keyshortcuts="
+              item.shortcut ? `Control+${item.shortcut} Meta+${item.shortcut}` : undefined
+            "
+            :disabled="previewing"
             @mousedown.prevent
             @click="apply(item.action)"
           />
@@ -96,9 +110,9 @@ async function toggleApercu() {
         variant="ghost"
         size="sm"
         icon="i-lucide-eye"
-        :aria-pressed="apercu"
+        :aria-pressed="previewing"
         class="ms-auto aria-pressed:bg-elevated aria-pressed:text-highlighted"
-        @click="toggleApercu"
+        @click="togglePreview"
       >
         Aperçu
       </UButton>
@@ -106,7 +120,7 @@ async function toggleApercu() {
 
     <!-- v-show : le champ reste dans la page (libellé, id, erreurs, envoi du formulaire) -->
     <UTextarea
-      v-show="!apercu"
+      v-show="!previewing"
       ref="textarea"
       v-model="model"
       variant="none"
@@ -117,7 +131,12 @@ async function toggleApercu() {
       :ui="{ base: 'px-3 py-2.5' }"
       @keydown="onKeydown"
     />
-    <div v-if="apercu" class="min-h-32 px-3 py-2.5" aria-live="polite">
+    <div
+      v-if="previewing"
+      role="region"
+      aria-label="Aperçu de la description"
+      class="min-h-32 px-3 py-2.5"
+    >
       <UiTexteMarkdown v-if="model.trim()" :source="model" />
       <p v-else class="text-muted">Rien à afficher pour l’instant.</p>
     </div>

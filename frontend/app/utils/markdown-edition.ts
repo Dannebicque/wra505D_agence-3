@@ -5,7 +5,7 @@
 // sélection est placée sur [selectionStart, selectionEnd]. L'éditeur l'applique avec
 // `insertText`, qui garde l'historique d'annulation du navigateur (Ctrl + Z).
 
-export type MarkdownAction = 'gras' | 'italique' | 'puces' | 'numeros' | 'lien'
+export type MarkdownAction = 'bold' | 'italic' | 'bullets' | 'numbers' | 'link'
 
 export interface Selection {
   value: string
@@ -22,19 +22,37 @@ export interface Edition {
 }
 
 const PLACEHOLDERS = {
-  gras: 'texte en gras',
-  italique: 'texte en italique',
-  lien: 'texte du lien',
+  bold: 'texte en gras',
+  italic: 'texte en italique',
+  link: 'texte du lien',
 } as const
 
 const LINK_URL = 'https://'
+const URL_LIKE = /^(?:https?:\/\/|mailto:|www\.)\S+$/i
+
+/**
+ * Sélection sans ses espaces de bord : un double-clic sous Windows prend l'espace qui suit le mot,
+ * et `**mot **` ne serait pas du gras.
+ */
+function trimmed({ value, start, end }: Selection): Selection {
+  while (start < end && /\s/.test(value[start]!)) start++
+  while (end > start && /\s/.test(value[end - 1]!)) end--
+  return { value, start, end }
+}
 
 /** Entoure la sélection de `mark` (ou l'en retire si elle en est déjà entourée). */
-function toggleWrap({ value, start, end }: Selection, mark: string, placeholder: string): Edition {
+function toggleWrap(selection: Selection, mark: string, placeholder: string): Edition {
+  const { value, start, end } = trimmed(selection)
+  const inner = value.slice(start, end)
+  // Marques comprises dans la sélection : `**mot**` choisi en entier
+  if (inner.length > 2 * mark.length && inner.startsWith(mark) && inner.endsWith(mark)) {
+    const bare = inner.slice(mark.length, -mark.length)
+    return { start, end, text: bare, selectionStart: start, selectionEnd: start + bare.length }
+  }
+  // Marques autour de la sélection : `mot` choisi dans `**mot**`
   const before = value.slice(start - mark.length, start)
   const after = value.slice(end, end + mark.length)
   if (start !== end && before === mark && after === mark) {
-    const inner = value.slice(start, end)
     return {
       start: start - mark.length,
       end: end + mark.length,
@@ -43,32 +61,42 @@ function toggleWrap({ value, start, end }: Selection, mark: string, placeholder:
       selectionEnd: end - mark.length,
     }
   }
-  const inner = start === end ? placeholder : value.slice(start, end)
+  const content = start === end ? placeholder : inner
   return {
     start,
     end,
-    text: `${mark}${inner}${mark}`,
+    text: `${mark}${content}${mark}`,
     selectionStart: start + mark.length,
-    selectionEnd: start + mark.length + inner.length,
+    selectionEnd: start + mark.length + content.length,
   }
 }
 
-const BULLET = /^- /
-const NUMBER = /^\d+\. /
+const BULLET = /^(\s*)- /
+const NUMBER = /^(\s*)\d+\. /
 
-/** Préfixe chaque ligne touchée par la sélection (ou retire le préfixe s'il y est partout). */
+/**
+ * Préfixe chaque ligne non vide touchée par la sélection (ou retire le préfixe s'il y est
+ * partout). Une sélection qui finit au début d'une ligne (ligne choisie avec son saut de ligne)
+ * ne prend pas la ligne suivante. Le retrait d'une ligne (liste imbriquée) est gardé.
+ */
 function toggleList({ value, start, end }: Selection, ordered: boolean): Edition {
-  const lineStart = value.lastIndexOf('\n', start - 1) + 1
-  const nextBreak = value.indexOf('\n', end)
+  const last = end > start && value[end - 1] === '\n' ? end - 1 : end
+  const lineStart = start === 0 ? 0 : value.lastIndexOf('\n', start - 1) + 1
+  const nextBreak = value.indexOf('\n', last)
   const lineEnd = nextBreak === -1 ? value.length : nextBreak
   const lines = value.slice(lineStart, lineEnd).split('\n')
+  const filled = lines.filter((line) => line.trim() !== '')
   const marker = ordered ? NUMBER : BULLET
-  const allMarked = lines.every((line) => marker.test(line))
+  const allMarked = filled.length > 0 && filled.every((line) => marker.test(line))
+  let rank = 0
   const text = lines
-    .map((line, index) => {
-      const bare = line.replace(BULLET, '').replace(NUMBER, '')
-      if (allMarked) return bare
-      return `${ordered ? `${index + 1}.` : '-'} ${bare}`
+    .map((line) => {
+      if (line.trim() === '') return line
+      const indent = /^\s*/.exec(line)![0]
+      const bare = line.replace(BULLET, '$1').replace(NUMBER, '$1').slice(indent.length)
+      if (allMarked) return `${indent}${bare}`
+      rank++
+      return `${indent}${ordered ? `${rank}.` : '-'} ${bare}`
     })
     .join('\n')
   return {
@@ -81,19 +109,21 @@ function toggleList({ value, start, end }: Selection, ordered: boolean): Edition
 }
 
 /** Lien : le texte choisi devient le libellé, l'adresse est sélectionnée pour être tapée. */
-function link({ value, start, end }: Selection): Edition {
+function link(selection: Selection): Edition {
+  const { value, start, end } = trimmed(selection)
   const selected = value.slice(start, end)
-  if (selected && /^(?:https?:\/\/|mailto:)\S+$/i.test(selected)) {
-    const text = `[${PLACEHOLDERS.lien}](${selected})`
+  if (selected && URL_LIKE.test(selected)) {
+    const href = /^www\./i.test(selected) ? `https://${selected}` : selected
+    const text = `[${PLACEHOLDERS.link}](${href})`
     return {
       start,
       end,
       text,
       selectionStart: start + 1,
-      selectionEnd: start + 1 + PLACEHOLDERS.lien.length,
+      selectionEnd: start + 1 + PLACEHOLDERS.link.length,
     }
   }
-  const label = selected || PLACEHOLDERS.lien
+  const label = selected.replace(/[[\]]/g, '') || PLACEHOLDERS.link
   const text = `[${label}](${LINK_URL})`
   const urlStart = start + label.length + 3
   // Sans texte choisi, on sélectionne le libellé à remplacer ; sinon l'adresse à taper
@@ -104,15 +134,16 @@ function link({ value, start, end }: Selection): Edition {
 
 export function applyMarkdownAction(selection: Selection, action: MarkdownAction): Edition {
   switch (action) {
-    case 'gras':
-      return toggleWrap(selection, '**', PLACEHOLDERS.gras)
-    case 'italique':
-      return toggleWrap(selection, '_', PLACEHOLDERS.italique)
-    case 'puces':
+    case 'bold':
+      return toggleWrap(selection, '**', PLACEHOLDERS.bold)
+    case 'italic':
+      // `*` plutôt que `_` : `m_ot_clé` n'est pas de l'italique au milieu d'un mot
+      return toggleWrap(selection, '*', PLACEHOLDERS.italic)
+    case 'bullets':
       return toggleList(selection, false)
-    case 'numeros':
+    case 'numbers':
       return toggleList(selection, true)
-    case 'lien':
+    case 'link':
       return link(selection)
   }
 }

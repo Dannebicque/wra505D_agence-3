@@ -6,7 +6,7 @@ import {
   ESPACES,
   espaceFromPath,
   NAVIGATION,
-  navigationGroupes,
+  navigationGroups,
 } from '../../app/utils/navigation'
 
 const PAGES = fileURLToPath(new URL('../../app/pages', import.meta.url))
@@ -57,15 +57,15 @@ describe('NAVIGATION', () => {
   })
 })
 
-describe('navigationGroupes', () => {
+describe('navigationGroups', () => {
   it('regroupe les entrées voisines de même groupe, dans l’ordre', () => {
-    const groupes = navigationGroupes([
+    const groups = navigationGroups([
       { label: 'A', to: '/a' },
-      { label: 'B', to: '/b', groupe: 'Travail' },
-      { label: 'C', to: '/c', groupe: 'Travail' },
-      { label: 'D', to: '/d', groupe: 'Suivi' },
+      { label: 'B', to: '/b', group: 'Travail' },
+      { label: 'C', to: '/c', group: 'Travail' },
+      { label: 'D', to: '/d', group: 'Suivi' },
     ])
-    expect(groupes.map((g) => [g.label, g.items.map((i) => i.label)])).toEqual([
+    expect(groups.map((g) => [g.label, g.items.map((i) => i.label)])).toEqual([
       [undefined, ['A']],
       ['Travail', ['B', 'C']],
       ['Suivi', ['D']],
@@ -73,19 +73,31 @@ describe('navigationGroupes', () => {
   })
 
   it('range les entrées du bas à la fin, même placées plus haut dans la liste', () => {
-    const groupes = navigationGroupes([
-      { label: 'Corbeille', to: '/x', enBas: true },
+    const groups = navigationGroups([
+      { label: 'Corbeille', to: '/x', pinnedBottom: true },
       { label: 'A', to: '/a' },
     ])
-    expect(groupes.map((g) => [g.enBas, g.items[0]!.label])).toEqual([
+    expect(groups.map((g) => [g.pinnedBottom, g.items[0]!.label])).toEqual([
       [false, 'A'],
       [true, 'Corbeille'],
     ])
   })
 
+  it('ne coupe pas un groupe quand une entrée du bas est placée au milieu', () => {
+    const groups = navigationGroups([
+      { label: 'A', to: '/a', group: 'T' },
+      { label: 'X', to: '/x', pinnedBottom: true },
+      { label: 'B', to: '/b', group: 'T' },
+    ])
+    expect(groups.map((g) => [g.label, g.items.map((i) => i.label)])).toEqual([
+      ['T', ['A', 'B']],
+      [undefined, ['X']],
+    ])
+  })
+
   it('met la corbeille de l’étudiant seule en bas de sa barre', () => {
-    const groupes = navigationGroupes(NAVIGATION.etudiant)
-    expect(groupes.at(-1)).toMatchObject({ enBas: true, items: [{ label: 'Corbeille' }] })
-    expect(groupes.filter((g) => g.enBas)).toHaveLength(1)
+    const groups = navigationGroups(NAVIGATION.etudiant)
+    expect(groups.at(-1)).toMatchObject({ pinnedBottom: true, items: [{ label: 'Corbeille' }] })
+    expect(groups.filter((g) => g.pinnedBottom)).toHaveLength(1)
   })
 })
