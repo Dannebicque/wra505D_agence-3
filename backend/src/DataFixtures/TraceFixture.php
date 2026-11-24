@@ -3,6 +3,7 @@
 namespace App\DataFixtures;
 
 use App\Entity\Commentaire;
+use App\Entity\Echeance;
 use App\Entity\Notification;
 use App\Entity\Page;
 use App\Entity\Portfolio;
@@ -20,7 +21,8 @@ use Doctrine\Persistence\ObjectManager;
  * Traces de démonstration du compte « etudiant » : une par état utile au front (lien finalisé et évalué,
  * vidéo en attente d'évaluation, brouillon d'image sans fichier), et son portfolio public de l'année avec deux
  * pages-projets ; un commentaire visible de « enseignant » sur le site, et les notifications de l'évaluation et du
- * commentaire (une lue, une non lue). « etudiant2 » n'a ni trace ni portfolio.
+ * commentaire (une lue, une non lue) ; trois échéances de « enseignant » (année, groupe, une passée).
+ * « etudiant2 » n'a ni trace ni portfolio.
  */
 class TraceFixture extends Fixture implements OrderedFixtureInterface
 {
@@ -71,7 +73,14 @@ class TraceFixture extends Fixture implements OrderedFixtureInterface
         $notifEvaluation = Notification::pour($etudiant, $evaluee)->setLu(true)->setDateCreation(new \DateTime('-3 days'));
         $notifCommentaire = Notification::pour($etudiant, commentaire: $commentaire)->setDateCreation(new \DateTime('-3 days +1 minute'));
 
-        foreach ([$site, $video, $brouillon, $evaluee, $enAttente, $portfolio, $web, $motion, $commentaire, $notifEvaluation, $notifCommentaire] as $entite) {
+        $groupe = $etudiant->getGroupe()?->first() ?: null;
+        $echeances = [
+            (new Echeance())->setLibelle('Dépôt des traces du projet tutoré')->setAnnee($etudiant->getSemestre()?->getAnnee())->setDate(new \DateTimeImmutable('+10 days'))->setEnseignant($evaluee->getEnseignant()),
+            (new Echeance())->setLibelle('Rendu du dossier de TP')->setGroupe($groupe)->setDate(new \DateTimeImmutable('+3 days'))->setEnseignant($evaluee->getEnseignant()),
+            (new Echeance())->setLibelle('Jury de mi-parcours')->setAnnee($etudiant->getSemestre()?->getAnnee())->setDate(new \DateTimeImmutable('-5 days'))->setEnseignant($evaluee->getEnseignant()),
+        ];
+
+        foreach ([$site, $video, $brouillon, $evaluee, $enAttente, $portfolio, $web, $motion, $commentaire, $notifEvaluation, $notifCommentaire, ...$echeances] as $entite) {
             $manager->persist($entite);
         }
         $manager->flush();
