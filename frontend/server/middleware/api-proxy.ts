@@ -6,7 +6,8 @@ export default defineEventHandler((event) => {
   const cible = apiProxyTarget(event.path, useRuntimeConfig(event).apiProxy)
   if (!cible) return
 
-  // Corps relayé au fil de l'eau, jamais entièrement en mémoire ; au-delà de ce que l'API accepte, refus immédiat
+  // Corps relayé au fil de l'eau, jamais entièrement en mémoire. Taille annoncée au-delà de ce que l'API accepte :
+  // refus immédiat ; envoi sans taille annoncée (chunked) : la limite PHP de l'API (post_max_size) s'applique
   if (Number(getRequestHeader(event, 'content-length') ?? 0) > API_PROXY_MAX_BYTES) {
     throw createError({
       statusCode: 413,

@@ -15,7 +15,7 @@ cd frontend && NUXT_API_PROXY=http://localhost:8000 npm run dev
   restent sur l'origine du front : le cookie de session, les fichiers (`/api/fichiers/…`) et les erreurs passent sans
   CORS. Laisser `NUXT_PUBLIC_API_BASE` **vide**.
 - C'est **tout ou rien** sur `/api/**` : avec `NUXT_API_PROXY`, plus aucune route factice ne répond. Sans, rien ne change : les routes Nitro factices de `server/api/` répondent, comme avant. Les écrans qui lisent encore `app/demo/` (sans appel à l'API) restent en démo dans les deux cas.
-- Le relais ne sort jamais de `/api/` (chemin normalisé, `server/utils/api-proxy-url.ts`), transmet `Accept`, relaie le corps au fil de l'eau et refuse en 413 un envoi de plus de 11 Mo.
+- Le relais ne sort jamais de `/api/` (chemin normalisé, `server/utils/api-proxy-url.ts`), transmet `Accept`, relaie le corps au fil de l'eau et refuse en 413 un envoi dont la taille annoncée dépasse 11 Mo (sans taille annoncée, c'est la limite PHP de l'API qui s'applique). `NUXT_API_PROXY` est une origine seule, sans chemin.
 - Comptes de démo (fixtures), mot de passe `test` : `etudiant`, `etudiant2`, `enseignant`, `enseignant2` (autre
   département), `enseignant3` (même département), `admin`. Recharger les données :
   `docker compose exec php bin/console doctrine:fixtures:load -n`.
@@ -89,7 +89,9 @@ le PO).
 
 - API : `backend/compose.prod.yaml` (voir `backend/README.md`, § Production).
 - Front : `NUXT_API_PROXY` pointe vers l'API (`http://127.0.0.1:8000` si elle tourne sur le même hôte) ; l'API déclare
-  l'IP du serveur Nuxt dans `TRUSTED_PROXIES`, pour que la limite de connexion compte les visiteurs et non Nuxt.
+  l'IP **vue par l'API** pour le serveur Nuxt dans `TRUSTED_PROXIES`, pour que la limite de connexion compte les
+  visiteurs et non Nuxt. Si Nuxt tourne sur l'hôte et joint l'API par `127.0.0.1`, Docker fait arriver la connexion
+  depuis la passerelle du réseau de `compose.prod.yaml`, fixée à `172.28.0.1` : c'est cette adresse qu'il faut déclarer.
   `CORS_ALLOW_ORIGIN` reste l'origine du front.
 - **Limite connue** : le relais transmet l'IP et le protocole de la connexion qu'il reçoit. Si Nuxt est lui-même derrière
   un reverse proxy HTTPS, l'API verrait l'IP de ce proxy pour tous les visiteurs (limite de connexion commune) :

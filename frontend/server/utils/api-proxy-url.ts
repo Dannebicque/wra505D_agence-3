@@ -5,7 +5,9 @@ export const API_PROXY_MAX_BYTES = 11 * 1024 * 1024
 
 /**
  * Adresse de l'API pour un chemin demandé au front, ou `null` s'il ne doit pas être relayé.
- * Le chemin est normalisé d'abord : `/api/../index.php` ou `/api/%2e%2e/` ne sortent pas de `/api/`.
+ * Le chemin est normalisé d'abord : `/api/../index.php` ou `/api/%2e%2e/` ne sortent pas de `/api/`. Un chemin encore
+ * encodé après normalisation (`%2f`, `%5c`, `%2e`) est refusé, et `cible` doit être une origine seule
+ * (`http://localhost:8000`, sans chemin).
  */
 export function apiProxyTarget(path: string, cible: string): string | null {
   if (!cible) return null
@@ -15,7 +17,8 @@ export function apiProxyTarget(path: string, cible: string): string | null {
   } catch {
     return null
   }
-  const origine = new URL(cible).origin
-  if (url.origin !== origine || !url.pathname.startsWith('/api/')) return null
+  const base = new URL(cible)
+  if (base.pathname !== '/' || url.origin !== base.origin) return null
+  if (!url.pathname.startsWith('/api/') || /%(2f|5c|2e)/i.test(url.pathname)) return null
   return url.href
 }

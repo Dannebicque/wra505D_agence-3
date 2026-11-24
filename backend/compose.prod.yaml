@@ -43,3 +43,11 @@ services:
 volumes:
   database_data:
   fichiers:
+
+networks:
+  default:
+    # Sous-réseau fixe : un front sur l'hôte arrive par la passerelle 172.28.0.1, à déclarer dans TRUSTED_PROXIES
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+          gateway: 172.28.0.1

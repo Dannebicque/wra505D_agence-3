@@ -25,6 +25,13 @@ describe('adresse du relais /api/**', () => {
     expect(apiProxyTarget('/api/%2e%2e/api/docs', API)).toBe('http://localhost:8000/api/docs')
   })
 
+  it('refuse les chemins encore encodés et une cible avec un chemin', () => {
+    expect(apiProxyTarget('/api/..%2f_profiler', API)).toBeNull()
+    expect(apiProxyTarget('/api/a%5Cb', API)).toBeNull()
+    expect(apiProxyTarget('/api/\\..\\_profiler', API)).toBe('http://localhost:8000/api/_profiler')
+    expect(apiProxyTarget('/api/traces', 'http://localhost:8000/sous/')).toBeNull()
+  })
+
   it('ne change jamais d’hôte', () => {
     expect(apiProxyTarget('//evil.example/api/x', API)).toBeNull()
     expect(apiProxyTarget('http://evil.example/api/x', API)).toBeNull()
