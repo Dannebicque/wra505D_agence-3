@@ -267,3 +267,13 @@ Design : `docs/superpowers/specs/2026-11-23-passe-ui-ux-design.md`.
 - **Décision** (équipe, Enzo) : ouvrir un portfolio montre ses pages-projets, sous son intitulé (titre de l'écran) ; ses informations (intitulé, introduction, bannière, visibilité) se modifient dans un panneau latéral, « Modifier les informations ». Le bouton « Modifier » d'une carte de « Mes portfolios » ouvre l'écran avec ce panneau ouvert (`?modifier=informations`, retiré de l'adresse à la fermeture). L'action principale reste « Publier ».
 - **Alternatives écartées** : une page `/modifier` à part (la maquette garde les informations dans l'état de l'écran, dont la visibilité utilisée par la publication : elles seraient perdues en changeant de page) ; garder le formulaire au-dessus des pages (ce qu'on vient faire le plus souvent, ranger ses projets, était sous le formulaire).
 
+## 2026-11-24 — Sprint 5 back : échéances, PDF, corbeille
+
+- **Décisions** (PO, Mathéo) :
+  - **Échéances** (point ouvert n° 1) : saisies par un enseignant pour une année ou un groupe de son département (ressource `Echeance`) ; l'étudiant voit celles à venir qui le concernent.
+  - **PDF** (CV, bilans) : fabriqué par le navigateur à partir d'une page imprimable du front ; le back fournit les données et le CSV des bilans.
+  - **Corbeille** (point ouvert n° 17) : 30 jours, puis effacement définitif par une tâche planifiée (`app:corbeille:vider`), fichiers inutilisés compris.
+- **Alternatives écartées** : échéances reportées (tuiles restées en démo) ; PDF par le serveur (dompdf : nouvelle dépendance, rendu CSS limité, mise en page à refaire côté back) ; corbeille sans limite (la base et les fichiers grossissent sans fin).
+- **Raison** : comme les maquettes ; aucune dépendance nouvelle ; le texte du PDF reste sélectionnable et accessible.
+- **Recherche globale** : extension `unaccent` de PostgreSQL et même filtre de périmètre que les collections (`ProprietaireExtension`), pour ne jamais trouver ce que l'utilisateur ne peut pas lire.
+- **CV repris de l'ancienne version** : un seul CV par étudiant (index unique). Quand un étudiant en avait plusieurs, le dernier modifié reste rattaché ; les autres sont détachés (`etudiant_id` à NULL), conservés en base mais plus accessibles par l'API.

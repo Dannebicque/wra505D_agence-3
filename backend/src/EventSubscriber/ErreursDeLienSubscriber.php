@@ -4,6 +4,8 @@ namespace App\EventSubscriber;
 
 use ApiPlatform\Validator\Exception\ValidationException;
 use App\Entity\Commentaire;
+use App\Entity\Cv;
+use App\Entity\Echeance;
 use App\Entity\Page;
 use App\Entity\Portfolio;
 use App\Entity\Validation;
@@ -36,6 +38,15 @@ final class ErreursDeLienSubscriber implements EventSubscriberInterface
             ['/^trace$/', 'trace', 'Trace introuvable.'],
             ['/^portfolio$/', 'portfolio', 'Portfolio introuvable.'],
         ],
+        // Setters renommés par SerializedName : l'erreur de type sort sous le nom PHP, réécrit en nom du front
+        Cv::class => [
+            ['/^(experiences|formations|langues|competences)Cv$/', '$1', 'Liste invalide.'],
+        ],
+        Echeance::class => [
+            ['/^dateJour$/', 'date', 'Saisissez une date valide.'],
+            ['/^annee$/', 'annee', 'Année introuvable.'],
+            ['/^groupe$/', 'groupe', 'Groupe introuvable.'],
+        ],
         Validation::class => [
             ['/^trace$/', 'trace', 'Trace introuvable.'],
             ['/^niveau$/', 'niveau', 'Niveau de compétence introuvable.'],
@@ -67,7 +78,8 @@ final class ErreursDeLienSubscriber implements EventSubscriberInterface
                 $violations->add($violation);
                 continue;
             }
-            [, $champ, $message] = $regle;
+            [$motif, $champ, $message] = $regle;
+            $champ = (string) preg_replace($motif, $champ, $violation->getPropertyPath());
             if (!isset($dejaVues[$champ])) {
                 $dejaVues[$champ] = true;
                 $violations->add(new ConstraintViolation($message, $message, [], $violation->getRoot(), $champ, $violation->getInvalidValue(), null, $violation->getCode()));

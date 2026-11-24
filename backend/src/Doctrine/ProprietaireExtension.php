@@ -8,6 +8,8 @@ use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
 use App\Entity\Bibliotheque;
 use App\Entity\Commentaire;
+use App\Entity\Cv;
+use App\Entity\Echeance;
 use App\Entity\Etudiant;
 use App\Entity\Notification;
 use App\Entity\Page;
@@ -27,7 +29,7 @@ use Symfony\Bundle\SecurityBundle\Security;
  */
 final class ProprietaireExtension implements QueryCollectionExtensionInterface, QueryItemExtensionInterface
 {
-    private const RESSOURCES = [Trace::class, Bibliotheque::class, Validation::class, Portfolio::class, Page::class, Commentaire::class, Notification::class, Etudiant::class];
+    private const RESSOURCES = [Trace::class, Bibliotheque::class, Validation::class, Portfolio::class, Page::class, Commentaire::class, Notification::class, Etudiant::class, Echeance::class, Cv::class];
 
     public function __construct(private readonly Security $security)
     {
@@ -65,12 +67,18 @@ final class ProprietaireExtension implements QueryCollectionExtensionInterface, 
 
     private function pourEtudiant(QueryBuilder $qb, QueryNameGeneratorInterface $noms, string $classe, string $racine, Users $user): void
     {
+        // Échéances à venir de son année ou de l'un de ses groupes (pas rattachées à l'étudiant lui-même)
+        if (Echeance::class === $classe) {
+            $qb->andWhere($this->echeancePourEtudiant($qb, $noms, $racine, $user));
+
+            return;
+        }
         $moi = $noms->generateParameterName('etudiant');
         $qb->setParameter($moi, $user->getEtudiant());
 
         match ($classe) {
             Etudiant::class => $qb->andWhere(sprintf('%s = :%s', $racine, $moi)),
-            Bibliotheque::class => $qb->andWhere(sprintf('%s.etudiant = :%s', $racine, $moi)),
+            Bibliotheque::class, Cv::class => $qb->andWhere(sprintf('%s.etudiant = :%s', $racine, $moi)),
             // Notification d'un commentaire repassé en note privée : masquée avec lui (lien mort et fuite sinon)
             Notification::class => $qb->andWhere(sprintf('%s.etudiant = :%s AND (%3$s.id IS NULL OR %3$s.visibilite = true)', $racine, $moi, $this->joindre($qb, $noms, $racine, 'commentaire', true))),
             Portfolio::class => $qb->andWhere(sprintf('%s.etudiant = :%s AND %1$s.date_suppression IS NULL', $racine, $moi)),
@@ -82,6 +90,19 @@ final class ProprietaireExtension implements QueryCollectionExtensionInterface, 
             // Commentaire visible, sur l'une de ses traces ou l'un de ses portfolios hors corbeille
             Commentaire::class => $qb->andWhere($this->commentairePourEtudiant($qb, $noms, $racine, $moi)),
         };
+    }
+
+    private function echeancePourEtudiant(QueryBuilder $qb, QueryNameGeneratorInterface $noms, string $racine, Users $user): string
+    {
+        $aujourdhui = $noms->generateParameterName('aujourdhui');
+        $annee = $noms->generateParameterName('annee');
+        $groupes = $noms->generateParameterName('groupes');
+        $qb->setParameter($aujourdhui, new \DateTimeImmutable('today', new \DateTimeZone('Europe/Paris')), 'date_immutable')
+            ->setParameter($annee, $user->getEtudiant()->getSemestre()?->getAnnee())
+            // Liste jamais vide (IN () est invalide) : 0 ne désigne aucun groupe
+            ->setParameter($groupes, [0, ...array_map(static fn ($g) => $g->getId(), $user->getEtudiant()->getGroupe()?->toArray() ?? [])]);
+
+        return sprintf('%s.date >= :%s AND (%1$s.annee = :%s OR IDENTITY(%1$s.groupe) IN (:%s))', $racine, $aujourdhui, $annee, $groupes);
     }
 
     private function traceDeLEtudiant(QueryBuilder $qb, QueryNameGeneratorInterface $noms, string $trace, string $moi): string
@@ -119,8 +140,15 @@ final class ProprietaireExtension implements QueryCollectionExtensionInterface, 
                 $this->traceVisible($qb, $noms, $this->joindre($qb, $noms, $racine, 'trace', true), $departements, true),
                 $this->portfolioVisible($qb, $noms, $this->joindre($qb, $noms, $racine, 'portfolio', true), $departements, true),
             )),
-            // Les notifications sont celles des étudiants (E-EV-04 à 07)
-            Notification::class => $qb->andWhere('1 = 0'),
+            // Notifications et CV : ceux des étudiants seulement
+            Notification::class, Cv::class => $qb->andWhere('1 = 0'),
+            // Échéances (passées comprises) d'une année ou d'un groupe de ses départements
+            Echeance::class => $qb->andWhere(sprintf(
+                '(%s) OR (%s)',
+                $this->diplomeDuDepartement($qb, $noms, $this->joindre($qb, $noms, $this->joindre($qb, $noms, $racine, 'annee', true), 'diplome', true), $departements),
+                // Groupe → type de groupe → semestre(s) → année → diplôme (comme Groupe::getSemestre())
+                $this->diplomeDuDepartement($qb, $noms, $this->joindre($qb, $noms, $this->joindre($qb, $noms, $this->joindre($qb, $noms, $this->joindre($qb, $noms, $this->joindre($qb, $noms, $racine, 'groupe', true), 'type_groupe', true), 'semestre', true), 'annee', true), 'diplome', true), $departements),
+            )),
         };
     }
 
@@ -148,6 +176,11 @@ final class ProprietaireExtension implements QueryCollectionExtensionInterface, 
             $diplome = $this->joindre($qb, $noms, $diplome, $relation, $gauche);
         }
 
+        return sprintf('%s.departement IN (:%s)', $diplome, $departements);
+    }
+
+    private function diplomeDuDepartement(QueryBuilder $qb, QueryNameGeneratorInterface $noms, string $diplome, string $departements): string
+    {
         return sprintf('%s.departement IN (:%s)', $diplome, $departements);
     }
 

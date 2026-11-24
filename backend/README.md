@@ -127,6 +127,25 @@ Règles à connaître côté front :
 - **Filtres** : une valeur inconnue ou mal formée donne une liste vide. Les autres filtres enseignant (groupe, année, étudiants ayant des travaux en attente) se calculent dans le navigateur à partir de ces collections.
 - `/api/etudiants` est désormais limité au département de l'enseignant ; la fiche d'un autre étudiant répond 404 (au lieu de 403).
 
+#### Corbeille, échéances, CV, bilans, recherche (Sprint 5)
+
+| Ressource | Opérations | Accès |
+|---|---|---|
+| `/api/corbeille` | `GET` : traces, pages et portfolios supprimés (`type`, `ressource`, `titre`, `dateSuppression`, `dateEffacement`) | étudiant, les siens |
+| `/api/{traces,pages,portfolios}/{id}/restaurer` | `POST` avec un corps JSON (`{}`) : 204 ; 409 si impossible | étudiant, les siens |
+| `/api/echeances` | `GET` (de la plus proche à la plus lointaine), `POST {libelle, date, annee ou groupe}`, `PATCH`, `DELETE` | enseignant (son département ; auteur seul pour modifier) ; étudiant : celles à venir de son année et de ses groupes |
+| `/api/cvs` | `GET`, `POST`, `PATCH` : `titre`, `email`, `telephone`, `ville`, `accroches {stage, alternance}`, `experiences[]`, `formations[]`, `langues[]`, `competences[]` | étudiant, un CV, le sien |
+| `/api/bilans/etudiants/{id}`, `/api/bilans/annees/{id}`, `/api/bilans/groupes/{id}` | `GET` en JSON, ou `?format=csv` | individuel : l'étudiant lui-même ou un enseignant du département ; collectif : enseignant du département |
+| `/api/recherche?q=…&type=…` | `GET` : traces, pages, compétences (`type`, `ressource`, `titre`, `extrait`) | ce que l'utilisateur lit déjà |
+
+Règles à connaître côté front :
+
+- **Corbeille** (point ouvert n° 17 tranché par le PO) : 30 jours, puis effacement définitif par `bin/console app:corbeille:vider`, **à planifier chaque jour** (cron), qui efface aussi les fichiers qu'aucune trace ni bannière n'utilise plus. Une trace restaurée retrouve sa place dans ses pages ; une page n'est restaurable qu'avec son portfolio en place (409 « Restaurez d’abord le portfolio de cette page. ») ; un portfolio ne l'est pas si un autre de la même année est actif (409).
+- **Échéances** (point ouvert n° 1 tranché par le PO) : saisies par un enseignant pour une année **ou** un groupe de son département, à une date qui n'est pas passée ; `date` au format AAAA-MM-JJ.
+- **CV** : format de `CV_DEMO` (`frontend/app/demo/etudiant.ts`), `prenom` et `nom` viennent de la fiche étudiant. Chaque élément de liste reçoit un `id` de position ; niveaux de langue du CECRL (`A1 : débutant` … `Langue maternelle`). Erreurs rangées par champ (`experiences[0].poste`). Le PDF est fait par le navigateur (impression), comme celui des bilans (décision du PO).
+- **Bilans** : comptes `acquis`, `enCours`, `nonAcquis`, `enAttente` sur les traces finalisées hors corbeille, par compétence et par niveau du référentiel du département. CSV pour Excel (BOM UTF-8, point-virgule).
+- **Recherche** : sans accents ni casse, 2 à 100 caractères (422 sinon), 10 résultats au plus par type.
+
 Le front autorisé à appeler l'API est fixé par `CORS_ALLOW_ORIGIN` (`.env`, par défaut `http://localhost:3000`).
 
 ### En production
@@ -135,6 +154,8 @@ Image et compose dédiés (cible `prod` du `Dockerfile`, code et dépendances da
 
     cp .env.prod.example .env.prod   # puis remplir les secrets (openssl rand -hex 32)
     docker compose -f compose.prod.yaml --env-file .env.prod up -d --build
+
+Planifier chaque jour l'effacement de la corbeille, par exemple dans la crontab de l'hôte : `0 3 * * * docker compose -f compose.prod.yaml exec -T php bin/console app:corbeille:vider`.
 
 Le démarrage refuse un `APP_SECRET` absent, par défaut ou de moins de 32 caractères. `.env.prod` n'entre jamais dans l'image (`.dockerignore`). L'API n'est publiée que sur `127.0.0.1` (le front ou le reverse proxy la joint depuis l'hôte) et la base pas du tout ; les fichiers des traces sont dans le volume `fichiers`, à sauvegarder avec la base. Une seule instance de l'API : les migrations sont appliquées à chaque démarrage, sans verrou. Les sessions sont des fichiers du conteneur : un redéploiement déconnecte les utilisateurs. Le front relaie `/api/**` vers l'API ([`docs/BASCULE-API.md`](../docs/BASCULE-API.md)).
 

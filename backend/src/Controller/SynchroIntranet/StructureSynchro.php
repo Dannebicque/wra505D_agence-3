@@ -73,6 +73,9 @@ class StructureSynchro extends AbstractController
                     foreach ($etudiant->getPortfolios() as $portfolio) {
                         $entityManager->remove($portfolio);
                     }
+                    foreach ($etudiant->getCvs() as $cv) {
+                        $entityManager->remove($cv);
+                    }
                     foreach ($etudiant->getBibliotheques() as $bibliotheque) {
                         foreach ($bibliotheque->getTraces() as $trace) {
                             $entityManager->remove($trace);
