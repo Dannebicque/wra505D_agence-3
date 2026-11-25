@@ -7,10 +7,12 @@ import {
   acquisitionRate,
   computeCounters,
   computeProgression,
+  draftCompetenceIds,
   draftTraces,
   greetingFact,
   progressionParts,
   progressionSummary,
+  studentNextActions,
 } from '../../app/utils/tableau-de-bord'
 
 function trace(id: number, statut: TraceStatut, dateSuppression: string | null = null): Trace {
@@ -259,5 +261,110 @@ describe('acquisitionRate', () => {
   it('ne dit ni « 0 % » avec un acquis, ni « 100 % » s’il en manque un', () => {
     expect(acquisitionRate(1, 201)).toBe(1)
     expect(acquisitionRate(199, 200)).toBe(99)
+  })
+})
+
+describe('studentNextActions', () => {
+  const progression = computeProgression(REFERENTIEL, TRACES, VALIDATIONS)
+  const formatDay = (iso: string) => `le ${iso}`
+  const draft = (id: number, dateModification: string | null): Trace => ({
+    ...trace(id, 'brouillon'),
+    titre: `Brouillon ${id}`,
+    dateModification,
+  })
+
+  it('met les retours non lus d’abord, puis les brouillons du plus récent au plus ancien', () => {
+    const actions = studentNextActions({
+      drafts: [draft(7, '2026-10-01'), draft(8, '2026-10-20')],
+      unreadRetours: 2,
+      progression,
+      formatDay,
+    })
+    expect(actions.map((a) => a.title).slice(0, 3)).toEqual([
+      '2 nouveaux retours de vos enseignants',
+      'Terminer « Brouillon 8 »',
+      'Terminer « Brouillon 7 »',
+    ])
+    expect(actions[1]).toMatchObject({
+      action: 'Reprendre',
+      to: '/etudiant/traces/8',
+      detail: 'Brouillon modifié le 2026-10-20',
+    })
+    expect(actions[0]).toMatchObject({
+      action: 'Lire',
+      label: 'Lire les 2 nouveaux retours',
+      to: '/etudiant/retours',
+    })
+    expect(actions[1]!.label).toBe('Reprendre le brouillon « Brouillon 8 »')
+  })
+
+  it('propose de déposer une trace pour la première compétence qui n’en a aucune', () => {
+    // Une compétence sans trace, placée après une compétence fournie : c'est elle qui est proposée
+    const [first, second] = progression
+    const withEmpty = [
+      first!,
+      { ...second!, acquired: 0, inProgress: 0, notAcquired: 0, pending: 0, total: 0 },
+    ]
+    const actions = studentNextActions({
+      drafts: [],
+      unreadRetours: 0,
+      progression: withEmpty,
+      formatDay,
+    })
+    expect(actions).toEqual([
+      expect.objectContaining({
+        title: `Aucune trace pour ${second!.competence.nomCourt}`,
+        action: 'Déposer',
+        to: '/etudiant/traces/nouvelle',
+      }),
+    ])
+  })
+
+  it('ne dit pas « aucune trace » pour une compétence déjà visée par un brouillon', () => {
+    const [first, second] = progression
+    const empty = { ...second!, acquired: 0, inProgress: 0, notAcquired: 0, pending: 0, total: 0 }
+    const actions = studentNextActions({
+      drafts: [],
+      unreadRetours: 0,
+      progression: [first!, empty],
+      draftCompetences: new Set([second!.competence['@id']]),
+      formatDay,
+    })
+    expect(actions).toEqual([])
+  })
+
+  it('accorde « retour » au singulier et s’arrête au nombre demandé', () => {
+    const drafts = [1, 2, 3, 4, 5].map((id) => draft(id, null))
+    const actions = studentNextActions({ drafts, unreadRetours: 1, progression, formatDay, max: 3 })
+    expect(actions).toHaveLength(3)
+    expect(actions[0]!.title).toBe('1 nouveau retour de vos enseignants')
+    expect(actions[1]!.detail).toBe('Brouillon')
+  })
+
+  it('ne propose rien quand tout est à jour', () => {
+    const complete = progression.map((p) => ({ ...p, total: Math.max(1, p.total) }))
+    expect(
+      studentNextActions({ drafts: [], unreadRetours: 0, progression: complete, formatDay }),
+    ).toEqual([])
+  })
+})
+
+describe('draftCompetenceIds', () => {
+  it('donne les compétences visées par un brouillon hors corbeille', () => {
+    const traces = [
+      trace(1, 'brouillon'),
+      trace(2, 'brouillon', '2026-10-02'),
+      trace(3, 'finalisee'),
+    ]
+    const validations = [
+      validation(1, N_DEVELOPPER, 0),
+      validation(2, N_COMPRENDRE, 0),
+      validation(3, N_COMPRENDRE, 3),
+    ]
+    const ids = draftCompetenceIds(REFERENTIEL, traces, validations)
+    const developper = REFERENTIEL.competences.find((c) =>
+      c.niveaux.some((n) => n['@id'] === N_DEVELOPPER),
+    )!
+    expect([...ids]).toEqual([developper['@id']])
   })
 })

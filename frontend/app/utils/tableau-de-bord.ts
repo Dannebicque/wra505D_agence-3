@@ -2,6 +2,7 @@
 import type { Validation, ValidationEtat } from '../../shared/types/evaluation'
 import type { Competence, Referentiel } from '../../shared/types/referentiel'
 import type { Trace } from '../../shared/types/trace'
+import { idFromIri } from '../../shared/utils/iri'
 
 export interface Counters {
   /** Traces hors corbeille, brouillons compris. */
@@ -85,6 +86,26 @@ export function computeProgression(
   })
 }
 
+/**
+ * Compétences visées par au moins un brouillon (hors corbeille) : elles ont déjà une trace en
+ * chemin, même si aucune validation n'est encore comptée.
+ */
+export function draftCompetenceIds(
+  referentiel: Referentiel,
+  traces: readonly Trace[],
+  validations: readonly Validation[],
+): Set<string> {
+  const drafts = new Set(draftTraces(traces).map((t) => t['@id']))
+  const niveaux = new Set(
+    validations.filter((v) => drafts.has(v.trace)).map((v) => v.niveau as string),
+  )
+  return new Set(
+    referentiel.competences
+      .filter((c) => c.niveaux.some((n) => niveaux.has(n['@id'])))
+      .map((c) => c['@id']),
+  )
+}
+
 export function draftTraces(traces: readonly Trace[]): Trace[] {
   return traces.filter((t) => isActive(t) && t.statut === 'brouillon')
 }
@@ -147,4 +168,78 @@ export function acquisitionRate(acquired: number, total: number): number | null 
   if (acquired > 0 && rate === 0) return 1
   if (acquired < total && rate === 100) return 99
   return rate
+}
+
+/** Une ligne du bloc « À faire maintenant » : ce qu'il y a à faire, et le bouton qui le fait. */
+export interface NextAction {
+  id: string
+  title: string
+  detail: string
+  /** Libellé visible du bouton : un verbe. */
+  action: string
+  /** Nom accessible du bouton : commence par le verbe visible (WCAG 2.5.3) et dit sur quoi il agit. */
+  label: string
+  to: string
+  icon: string
+}
+
+/**
+ * Prochaines actions de l'étudiant, de la plus pressante à la moins pressante : les retours non lus
+ * des enseignants (ils attendent une réaction), les brouillons du plus récent au plus ancien (à
+ * terminer pour être évalués), puis la première compétence sans aucune trace.
+ */
+export function studentNextActions(input: {
+  drafts: readonly Trace[]
+  unreadRetours: number
+  progression: readonly CompetenceProgression[]
+  /** Compétences déjà visées par un brouillon (`draftCompetenceIds`) : pas de « Aucune trace ». */
+  draftCompetences?: ReadonlySet<string>
+  /** Date ou horodatage ISO → « le 30 octobre » (le format reste à la page). */
+  formatDay: (iso: string) => string
+  max?: number
+}): NextAction[] {
+  const actions: NextAction[] = []
+  if (input.unreadRetours > 0) {
+    const plural = input.unreadRetours > 1
+    actions.push({
+      id: 'retours',
+      title: `${input.unreadRetours} nouveau${plural ? 'x' : ''} retour${plural ? 's' : ''} de vos enseignants`,
+      detail: 'Évaluations et commentaires sur vos traces',
+      action: 'Lire',
+      label: `Lire ${plural ? `les ${input.unreadRetours} nouveaux retours` : 'le nouveau retour'}`,
+      to: '/etudiant/retours',
+      icon: 'i-lucide-message-square-text',
+    })
+  }
+  const drafts = [...input.drafts].sort((a, b) =>
+    (b.dateModification ?? '').localeCompare(a.dateModification ?? ''),
+  )
+  for (const draft of drafts) {
+    actions.push({
+      id: draft['@id'],
+      title: `Terminer « ${draft.titre} »`,
+      detail: draft.dateModification
+        ? `Brouillon modifié ${input.formatDay(draft.dateModification)}`
+        : 'Brouillon',
+      action: 'Reprendre',
+      label: `Reprendre le brouillon « ${draft.titre} »`,
+      to: `/etudiant/traces/${idFromIri(draft['@id'])}`,
+      icon: 'i-lucide-file-pen-line',
+    })
+  }
+  const withoutTrace = input.progression.find(
+    (p) => p.total === 0 && !input.draftCompetences?.has(p.competence['@id']),
+  )
+  if (withoutTrace) {
+    actions.push({
+      id: withoutTrace.competence['@id'],
+      title: `Aucune trace pour ${withoutTrace.competence.nomCourt}`,
+      detail: 'Déposez une trace qui montre cette compétence',
+      action: 'Déposer',
+      label: `Déposer une trace pour ${withoutTrace.competence.nomCourt}`,
+      to: '/etudiant/traces/nouvelle',
+      icon: 'i-lucide-file-plus-2',
+    })
+  }
+  return actions.slice(0, input.max ?? 4)
 }

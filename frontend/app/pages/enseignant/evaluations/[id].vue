@@ -80,54 +80,50 @@ async function saveAndNext() {
 
 <template>
   <div>
-    <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
-
-    <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
-      <div class="min-w-0">
-        <!-- Élément partagé avec le titre de la carte d'où l'on vient (transition de vue) -->
-        <h1
-          class="font-titre text-2xl text-highlighted sm:text-3xl"
-          :style="{ viewTransitionName: `trace-${trace.id}` }"
+    <!-- Titre : Élément partagé avec le titre de la carte d'où l'on vient (transition de vue) -->
+    <UiEnTetePage :titre="trace.titre" :transition-name="`trace-${trace.id}`">
+      <template #avant>
+        <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
+      </template>
+      <template #chapeau>
+        <NuxtLink
+          :to="`/enseignant/etudiants/${trace.etudiantId}`"
+          class="font-medium text-highlighted underline underline-offset-4"
         >
-          {{ trace.titre }}
-        </h1>
-        <p class="mt-2 text-muted">
-          <NuxtLink
-            :to="`/enseignant/etudiants/${trace.etudiantId}`"
-            class="font-medium text-highlighted underline underline-offset-4"
-          >
-            {{ etudiantName(trace.etudiantId) }}
-          </NuxtLink>
-          <template v-if="etudiant"> · {{ etudiant.groupe }}</template>
-          · {{ TRACE_TYPE_LIBELLES[trace.type] }} · déposée le {{ formatDate(trace.date) }}
-        </p>
-      </div>
-
-      <nav aria-label="Parcourir les traces" class="flex items-center gap-2">
-        <UButton
-          :to="previous ? linkTo(previous) : undefined"
-          :disabled="!previous"
-          color="neutral"
-          variant="outline"
-          icon="i-lucide-chevron-left"
-          aria-label="Trace précédente"
-        />
-        <p class="min-w-16 text-center text-sm text-muted tabular-nums">
-          {{ position + 1 }} sur {{ queue.length }}
-          <span class="sr-only">{{
-            inFiltered ? 'dans la liste filtrée' : 'parmi les traces déposées'
-          }}</span>
-        </p>
-        <UButton
-          :to="next ? linkTo(next) : undefined"
-          :disabled="!next"
-          color="neutral"
-          variant="outline"
-          icon="i-lucide-chevron-right"
-          aria-label="Trace suivante"
-        />
-      </nav>
-    </div>
+          {{ etudiantName(trace.etudiantId) }}
+        </NuxtLink>
+        <template v-if="etudiant"> · {{ etudiant.groupe }}</template>
+        · {{ TRACE_TYPE_LIBELLES[trace.type] }} · déposée le {{ formatDate(trace.date) }}
+      </template>
+      <!-- Parcourir la file : outils de navigation (secondaires), l'action principale est en bas
+           du formulaire d'évaluation -->
+      <template #actions>
+        <nav aria-label="Parcourir les traces" class="flex items-center justify-between gap-2">
+          <UButton
+            :to="previous ? linkTo(previous) : undefined"
+            :disabled="!previous"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-chevron-left"
+            aria-label="Trace précédente"
+          />
+          <p class="min-w-16 text-center text-sm text-muted tabular-nums">
+            {{ position + 1 }} sur {{ queue.length }}
+            <span class="sr-only">{{
+              inFiltered ? 'dans la liste filtrée' : 'parmi les traces déposées'
+            }}</span>
+          </p>
+          <UButton
+            :to="next ? linkTo(next) : undefined"
+            :disabled="!next"
+            color="neutral"
+            variant="outline"
+            icon="i-lucide-chevron-right"
+            aria-label="Trace suivante"
+          />
+        </nav>
+      </template>
+    </UiEnTetePage>
 
     <div class="mt-8 grid gap-3 lg:grid-cols-[3fr_2fr] lg:items-start lg:gap-4">
       <!-- Contenu de la trace (P-EV-01) -->
@@ -146,7 +142,11 @@ async function saveAndNext() {
         <!-- La date de dépôt est déjà sous le titre de la page : pas de doublon ici -->
         <section aria-labelledby="description" class="rounded-panneau bg-muted p-4 sm:p-6">
           <h2 id="description" class="text-sm font-semibold text-highlighted">Description</h2>
-          <p class="mt-4 max-w-mesure">{{ trace.description }}</p>
+          <UiTexteMarkdown
+            :source="trace.description"
+            :heading-level="3"
+            class="mt-4 max-w-mesure"
+          />
           <dl class="mt-4 text-sm">
             <dt class="text-muted">Contexte</dt>
             <dd class="max-w-mesure text-highlighted">{{ detail.contexte }}</dd>
@@ -217,33 +217,31 @@ async function saveAndNext() {
             <UTextarea v-model="commentaire" :rows="5" autoresize class="w-full" />
           </UFormField>
 
-          <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <UButton type="submit" color="neutral" variant="outline" class="justify-center">
-              Enregistrer
-            </UButton>
-            <UButton
-              v-if="next"
-              type="button"
-              trailing-icon="i-lucide-arrow-right"
-              class="justify-center"
-              @click="saveAndNext"
-            >
-              Enregistrer et passer à la trace suivante
-            </UButton>
-            <UButton
-              v-else
-              :to="listLink"
-              color="neutral"
-              variant="ghost"
-              icon="i-lucide-arrow-left"
-              class="justify-center"
-            >
-              Revenir à la liste
-            </UButton>
-          </div>
           <p v-if="!next" class="text-sm text-muted">
             C’est la dernière trace de la liste{{ inFiltered ? ' filtrée' : '' }}.
           </p>
+          <!--
+            Actions en bas du formulaire, la principale en dernier : « Enregistrer et passer à la
+            trace suivante » quand il en reste une, sinon « Enregistrer » (le retour à la liste
+            devient alors l'action tertiaire)
+          -->
+          <!-- Colonne étroite : les boutons prennent toute la largeur, la principale en bas -->
+          <div class="flex flex-col gap-2 border-t border-default pt-6 *:justify-center">
+            <template v-if="next">
+              <UButton type="submit" color="neutral" variant="outline" icon="i-lucide-save">
+                Enregistrer
+              </UButton>
+              <UButton type="button" trailing-icon="i-lucide-arrow-right" @click="saveAndNext">
+                Enregistrer et passer à la trace suivante
+              </UButton>
+            </template>
+            <template v-else>
+              <UButton :to="listLink" color="neutral" variant="ghost" icon="i-lucide-arrow-left">
+                Revenir à la liste
+              </UButton>
+              <UButton type="submit" icon="i-lucide-save">Enregistrer</UButton>
+            </template>
+          </div>
 
           <p role="status" class="text-sm text-muted">
             <UIcon

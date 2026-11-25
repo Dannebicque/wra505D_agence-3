@@ -46,13 +46,33 @@ function markAllRead() {
   annonce.value = 'Tous les retours sont marqués comme lus.'
 }
 
+/** Revient à tous les retours ; le bouton cliqué disparaît, le focus va au filtre « Tous ». */
+async function showAll() {
+  filtre.value = 'tous'
+  await nextTick()
+  document.querySelector<HTMLElement>('[data-filtre="tous"]')?.focus()
+}
+
 function markRead(retour: DemoRetour) {
   retour.lu = true
 }
 
+const chapeau = computed(() => {
+  const unread =
+    nonLus.value === 0
+      ? 'Aucun retour non lu.'
+      : `${nonLus.value} ${nonLus.value > 1 ? 'retours non lus' : 'retour non lu'}.`
+  return `${unread} Évaluations et commentaires de vos enseignants sur vos traces.`
+})
+
+// État vide : ce qui manque, puis l'étape suivante (déposer une trace, ou revenir à tous les retours)
+const emptyTitle = computed(() => {
+  if (retours.value.length === 0) return 'Aucun retour pour l’instant'
+  return filtre.value === 'evaluation' ? 'Aucune évaluation' : 'Aucun commentaire'
+})
 const emptyMessage = computed(() => {
   if (retours.value.length === 0) {
-    return 'Vous n’avez encore reçu aucun retour. Les évaluations et commentaires de vos enseignants apparaîtront ici.'
+    return 'Vous n’avez encore reçu aucun retour. Les évaluations et commentaires de vos enseignants apparaîtront ici, dès qu’ils auront lu vos traces finalisées.'
   }
   return filtre.value === 'evaluation'
     ? 'Aucune évaluation pour l’instant.'
@@ -62,28 +82,21 @@ const emptyMessage = computed(() => {
 
 <template>
   <div>
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mes retours</h1>
-        <p class="mt-2 max-w-mesure text-muted">
-          <template v-if="nonLus === 0">Aucun retour non lu.</template>
-          <template v-else-if="nonLus === 1">1 retour non lu.</template>
-          <template v-else>{{ nonLus }} retours non lus.</template>
-          Évaluations et commentaires de vos enseignants sur vos traces.
-        </p>
-      </div>
-      <!-- aria-disabled plutôt que disabled : le bouton garde le focus après le clic -->
-      <UButton
-        color="neutral"
-        variant="outline"
-        icon="i-lucide-check-check"
-        :aria-disabled="nonLus === 0"
-        :class="{ 'cursor-not-allowed opacity-75': nonLus === 0 }"
-        @click="markAllRead"
-      >
-        Tout marquer comme lu
-      </UButton>
-    </div>
+    <UiEnTetePage titre="Mes retours" :chapeau="chapeau">
+      <template #actions>
+        <!-- aria-disabled plutôt que disabled : le bouton garde le focus après le clic -->
+        <UButton
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-check-check"
+          :aria-disabled="nonLus === 0"
+          :class="{ 'cursor-not-allowed opacity-75': nonLus === 0 }"
+          @click="markAllRead"
+        >
+          Tout marquer comme lu
+        </UButton>
+      </template>
+    </UiEnTetePage>
     <p role="status" class="sr-only">{{ annonce }}</p>
 
     <div role="group" aria-label="Filtrer les retours" class="mt-8 flex flex-wrap gap-2">
@@ -93,6 +106,7 @@ const emptyMessage = computed(() => {
         color="neutral"
         :variant="filtre === f.value ? 'solid' : 'outline'"
         :aria-pressed="filtre === f.value"
+        :data-filtre="f.value"
         size="sm"
         @click="filtre = f.value"
       >
@@ -103,22 +117,37 @@ const emptyMessage = computed(() => {
       </UButton>
     </div>
 
-    <ul
-      v-if="affiches.length"
-      class="mt-4 divide-y divide-default overflow-hidden rounded-panneau bg-muted"
-      aria-label="Retours"
+    <UiAsyncState
+      status="success"
+      :empty="affiches.length === 0"
+      :empty-title="emptyTitle"
+      :empty-message="emptyMessage"
+      class="mt-4"
     >
-      <li v-for="retour in affiches" :key="retour.id">
-        <RetourItem :retour="retour" @open="markRead(retour)" />
-      </li>
-    </ul>
-    <!-- État vide : un peu au-dessus du centre optique (moins d'air en haut qu'en bas) -->
-    <div
-      v-else
-      class="mt-4 flex flex-col items-center gap-3 rounded-panneau bg-muted px-6 pt-8 pb-12"
-    >
-      <UIcon name="i-lucide-inbox" class="size-8 text-muted" aria-hidden="true" />
-      <p class="max-w-md text-center text-muted">{{ emptyMessage }}</p>
-    </div>
+      <template #empty-action>
+        <UButton v-if="retours.length > 0" color="neutral" variant="outline" @click="showAll">
+          Voir tous les retours
+        </UButton>
+        <UButton
+          v-else
+          to="/etudiant/traces"
+          color="neutral"
+          variant="outline"
+          icon="i-lucide-files"
+        >
+          Voir mes traces
+        </UButton>
+      </template>
+
+      <!-- Liste de type boîte de réception : une feuille bordée, une ligne par retour -->
+      <ul
+        class="divide-y divide-default overflow-hidden rounded-panneau border border-default"
+        aria-label="Retours"
+      >
+        <li v-for="retour in affiches" :key="retour.id">
+          <RetourItem :retour="retour" @open="markRead(retour)" />
+        </li>
+      </ul>
+    </UiAsyncState>
   </div>
 </template>

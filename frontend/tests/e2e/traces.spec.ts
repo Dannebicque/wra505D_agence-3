@@ -28,7 +28,7 @@ test.describe('déposer une trace', () => {
 
     // Même navigateur, donc même cookie de démo : le tableau de bord compte la nouvelle trace
     await gotoHydrated(page, '/etudiant')
-    await expect(page.getByRole('region', { name: 'En chiffres' })).toContainText(
+    await expect(page.getByRole('region', { name: 'Où vous en êtes' })).toContainText(
       /Traces déposées\s*9/,
     )
   })

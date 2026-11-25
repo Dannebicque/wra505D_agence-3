@@ -31,6 +31,11 @@ export function useTableauDeBordEtudiant() {
       : [],
   )
   const drafts = computed(() => (data.value ? draftTraces(data.value.traces) : []))
+  const draftCompetences = computed(() =>
+    data.value?.referentiel
+      ? draftCompetenceIds(data.value.referentiel, data.value.traces, data.value.validations)
+      : new Set<string>(),
+  )
 
-  return { data, status, error, refresh, counters, progression, drafts }
+  return { data, status, error, refresh, counters, progression, drafts, draftCompetences }
 }

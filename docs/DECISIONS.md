@@ -199,6 +199,48 @@ Format : date, décision, alternatives écartées, raison.
 - **Conséquence pour l'équipe** : chaque branche créée avant ce déplacement doit être mise à jour (Git suit les fichiers renommés) ; les commandes se lancent depuis `frontend/`, et `npm ci` y est à refaire une fois.
 - **Raison** : séparer clairement le front du back sur GitHub, à la demande de l'équipe.
 
+## 2026-11-23 — Passe UI/UX : landing, hiérarchie des actions et profondeur (#32)
+
+Design : `docs/superpowers/specs/2026-11-23-passe-ui-ux-design.md`.
+
+- **Décision** :
+  - **Hiérarchie des actions**, fixée dans `app.config.ts` :
+    - principale : bouton plein prune, une seule par écran, placée en dernier ;
+    - secondaire : `neutral` `outline` ;
+    - tertiaire : `neutral` `ghost` ;
+    - destructive : `error`, pleine seulement dans la confirmation.
+    - Tous les boutons sont en demi-gras et s'enfoncent d'un pixel à l'appui. Les boutons pleins ont un reflet et une ombre courte (`shadow-touche`).
+  - **En-tête de page commun** (`UiEnTetePage`) : fil d'Ariane, titre, chapeau factuel, puis les actions dans un ordre fixe (secondaires, puis principale). Sur téléphone, les actions s'empilent et la principale est en bas. Le composant porte aussi le nom de transition du titre et le remet en focus (`focusTitle`).
+  - **Relief** : rien n'a d'ombre au repos, sauf ce qu'on presse et ce qui flotte (`shadow-flottant`). Un écran peut avoir au plus un aplat prune (`champ-fort`, prune 900), où les jetons `--ui-*` sont redéfinis. Contrastes mesurés sur prune 900 : texte 15,7:1, texte discret 10,4:1, contour 5,4:1, bouton or 8,3:1 (texte prune 950 sur or : 9,6:1).
+  - **Tableaux de bord** : ils commencent par « À faire maintenant » (étudiant) ou « À évaluer maintenant » (enseignant), en aplat prune. Chaque ligne a un verbe et son bouton ; la plus pressante porte le bouton or.
+    - Côté étudiant, l'ordre est : retours non lus, brouillons du plus récent au plus ancien, première compétence sans trace (`studentNextActions`).
+    - L'indicateur devient un compte (« 3 sur 6 évaluations rendues sont acquises, soit 50 % »).
+    - Le bloc « En chiffres » est retiré : ses valeurs sont dans la barre de synthèse ou dans les blocs.
+  - **États vides** : `UiAsyncState` reçoit `empty-title` et un slot `empty-action`, qui propose l'étape suivante.
+  - **Accueil `/`** : une mise en page dédiée (`layouts/accueil.vue`). La page comprend :
+    - un grand titre ;
+    - un aperçu de l'interface en HTML avec une bascule étudiant / enseignant ;
+    - le parcours d'une trace en bordereau ;
+    - « Pour qui » en aplat prune ;
+    - les trois accès de démo.
+    - Aucun chiffre ni témoignage n'est inventé.
+- **Alternatives écartées** :
+  - des aplats de couleur pleine page sur l'accueil (le prune serait devenu majoritaire) ;
+  - un stagger au défilement (il retarde la lecture, déjà écarté en #24) ;
+  - deux boutons pleins prune sur un tableau de bord (l'action du bloc prune est en or, l'en-tête garde la seule principale prune).
+- **À confirmer par le PO** :
+  - l'action « Évaluer ses traces », ajoutée à la fiche d'un étudiant ;
+  - « Télécharger en PDF » (CV) et « Exporter en PDF » (bilans), mis en action principale alors qu'ils restent sans effet en maquette ;
+  - des écrans sans action principale : portfolio publié, liste des étudiants, corbeille, retours.
+- **Raison** : l'interface était jugée plate et ses actions sans ordre. Chaque écran dit maintenant ce qu'on y fait, et l'action principale est toujours au même endroit.
+
+## 2026-11-24 — Surfaces mieux séparées, ombre des cartes cliquables (#32)
+
+- **Constat** : panneau gris sur feuille blanche à 1,07:1 (sombre 1,10), bordure des cartes à 1,25 (1,22), piste des barres sur le panneau à 1,18 (1,12), cadre à 1,13 (1,07) : les blocs se confondaient.
+- **Décision** : changer les clartés des jetons (`app/assets/css/main.css`) plutôt qu'ajouter des ombres partout. Paliers, clair / sombre : panneau 1,13 / 1,16, bordure 1,41 / 1,44, cadre 1,18 / 1,09 ; la piste sur le panneau reste à 1,17 en clair (le panneau a foncé avec elle) et passe à 1,15 en sombre ; `--ui-bg-accented` redéfini sous `bg-elevated` pour que le survol des boutons neutres « soft » fonce ; `--ui-border-accented` foncé pour que le survol d'une carte se voie encore. Les cartes cliquables d'une liste (traces, portfolios, traces à évaluer, bilans individuels, accès de démonstration) prennent `shadow-carte`, renforcée au survol et au focus (`shadow-carte-survol`), en noir avec un liseré clair en sombre, où une ombre prune ne se voyait pas.
+- **Écartés** : des ombres sur tous les panneaux (tout aurait l'air de flotter, et l'ombre ne dirait plus « cliquable ») ; un gris encore plus foncé (l'écran s'alourdit sans mieux séparer).
+- **Contraintes vérifiées** : texte discret sur `bg-elevated` 4,56:1 (clair), contour des champs sur le panneau 4,23 / 3,17:1, segments des barres de progression 3,17:1 au moins. Le contour des champs tombe à 2,76:1 sur `bg-elevated` en sombre : aucune commande n'y est posée (garde-fou écrit dans `main.css`).
+
 ## 2026-11-24 — Bascule vers ApiPlatform par un relais même origine (Sprint 4)
 
 - **Décision** (PO, Mathéo) : le front relaie `/api/**` vers l'API (`frontend/server/middleware/api-proxy.ts`, variable `NUXT_API_PROXY`), au lieu d'appeler une autre origine. C'est tout ou rien sur `/api/**` ; sans la variable, les routes Nitro factices répondent. Les écrans encore sur `app/demo/` basculent un par un. Guide : `docs/BASCULE-API.md`.
@@ -210,6 +252,20 @@ Format : date, décision, alternatives écartées, raison.
 - **Décision** : une seule `backend/Dockerfile` à deux cibles (`dev`, `prod`) et `backend/compose.prod.yaml` : code et dépendances sans dev dans l'image, php.ini de production, opcache sans relecture des fichiers, migrations au démarrage, secrets par variables (`.env.prod`, jamais versionné), refus de démarrer avec l'`APP_SECRET` par défaut.
 - **Alternatives écartées** : un second Dockerfile (extensions et réglages PHP dupliqués) ; le mode worker de FrankenPHP (plus rapide, mais l'état partagé entre requêtes demande une revue du code repris de l'ancienne version).
 - **Raison** : la roadmap prévoit l'API sous Docker pour le Sprint 4 ; la même base d'image en dev et en prod évite les écarts d'extensions.
+
+## 2026-11-24 — Description d'une trace en Markdown, mini-éditeur (#32)
+
+- **Décision** (équipe, Enzo ; stockage à confirmer par le PO, point ouvert n° 18 de `FONCTIONNALITES.md`) : la description s'écrit en Markdown dans un vrai champ de texte, avec une barre de mise en forme (gras, italique, liste à puces, liste numérotée, lien ; Ctrl + B et Ctrl + I) et un aperçu (`UiEditeurMarkdown`). La barre écrit la syntaxe par `insertText`, ce qui garde l'annulation du navigateur. Rendu par `renderMarkdown` (`app/utils/markdown.ts`, composant `UiTexteMarkdown`) : HTML de l'étudiant échappé, liens en http(s) ou mailto seulement (`rel="nofollow ugc noopener"`), titres rendus en paragraphe, images réduites à leur texte ; blocs de code (un paragraphe collé avec un retrait de 4 espaces), tableaux, citations, filets, texte barré et cases à cocher affichés comme du texte. Adresse incomplète (`https://` seul) : pas de lien. Affiché sur l'écran d'évaluation, le portfolio vu par l'enseignant et le portfolio public.
+- **Dépendance** : `marked` 17 déclarée en dépendance directe. Elle était déjà installée par Nuxt UI (`@tiptap/markdown`) : même version, aucun code téléchargé en plus ; environ 13 Ko compressés, chargés avec les écrans qui affichent une description. Le verrou ne change que d'une ligne (un `npm install` retirait des paquets optionnels sans rapport, nécessaires à `npm ci` sur Linux).
+- **Alternatives écartées** : un éditeur visuel (TinyMCE comme l'ancienne version, ou l'éditeur Tiptap de Nuxt UI) : plus lourd, HTML à assainir côté back, champ `contenteditable` plus difficile à rendre accessible (libellé, erreurs, limite de caractères) ; `micromark` (sûr par défaut, mais une dépendance nouvelle) ; `markdown-it` (plus lourd) ; garder un champ sans mise en forme (recul par rapport à l'ancienne version).
+- **Sécurité** : `v-html` seulement dans `UiTexteMarkdown`, sur la sortie de `renderMarkdown`, couverte par des tests unitaires (balises `script` et `img`, attributs d'événement, liens `javascript:` et `data:`, guillemets dans une adresse).
+- **Relecture croisée** : le sélecteur segmenté ne distinguait l'option choisie que par un fond à 1,3:1, invisible en couleurs forcées ; la pastille a désormais un contour prune (7,5:1) et le libellé choisi passe en gras. La barre latérale est écrite à la main : `UNavigationMenu` faisait de l'intitulé d'un groupe un élément de la liste qu'il titre, au lieu de son nom (`aria-labelledby`).
+- _Révisé le 2026-11-24 (demande de l'équipe, Enzo)_ : une description déjà écrite s'ouvre sur son **aperçu** (on la lit avant de la modifier ; « Modifier » ou un clic dans l'aperçu passe à l'écriture), une description vide en écriture. Le **bouton de lien** est retiré de la barre (un lien écrit en Markdown s'affiche toujours). **Titres** ajoutés : `#` (titre) et `##` (sous-titre ; au-delà, rendus comme `##`), placés sous le titre de l'endroit où la description s'affiche (`headingLevel` de `UiTexteMarkdown` : h3 sur l'écran d'évaluation, h4 dans un portfolio, h2 dans l'aperçu du formulaire), pour garder la hiérarchie de chaque page. En aperçu, le champ reste dans la page, masqué à l'écran seulement : libellé, consigne, compteur et erreurs restent annoncés, et le focus (clic sur le libellé, Tab, erreur) le rouvre en écriture. Un titre vide n'est pas rendu ; une ligne soulignée (`===`, `---`) reste un paragraphe.
+
+## 2026-11-24 — Écran d'un portfolio : les pages-projets d'abord (#32)
+
+- **Décision** (équipe, Enzo) : ouvrir un portfolio montre ses pages-projets, sous son intitulé (titre de l'écran) ; ses informations (intitulé, introduction, bannière, visibilité) se modifient dans un panneau latéral, « Modifier les informations ». Le bouton « Modifier » d'une carte de « Mes portfolios » ouvre l'écran avec ce panneau ouvert (`?modifier=informations`, retiré de l'adresse à la fermeture). L'action principale reste « Publier ».
+- **Alternatives écartées** : une page `/modifier` à part (la maquette garde les informations dans l'état de l'écran, dont la visibilité utilisée par la publication : elles seraient perdues en changeant de page) ; garder le formulaire au-dessus des pages (ce qu'on vient faire le plus souvent, ranger ses projets, était sous le formulaire).
 
 ## 2026-11-24 — Sprint 5 back : échéances, PDF, corbeille
 

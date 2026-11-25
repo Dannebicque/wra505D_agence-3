@@ -40,6 +40,20 @@ const resultLabel = computed(() =>
     : `${filtered.value.length} ${filtered.value.length > 1 ? 'traces' : 'trace'}`,
 )
 
+// Chapeau : le fait du jour (« 8 traces, dont 2 brouillons à terminer »), une fois la liste chargée
+const chapeau = computed(() => {
+  const total = items.value.length
+  if (status.value !== 'success' || total === 0) {
+    return 'Vos productions, à relier aux compétences puis à ranger dans vos portfolios.'
+  }
+  const drafts = items.value.filter(({ trace }) => trace.statut === 'brouillon').length
+  const count = `${total} ${total > 1 ? 'traces' : 'trace'}`
+  if (drafts === 0) return `${count}, ${total > 1 ? 'toutes finalisées' : 'finalisée'}.`
+  return `${count}, dont ${drafts} ${drafts > 1 ? 'brouillons' : 'brouillon'} à terminer.`
+})
+/** Liste vide : l'état vide porte l'action principale, l'en-tête n'en répète pas une seconde. */
+const isEmpty = computed(() => status.value === 'success' && items.value.length === 0)
+
 const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
   day: 'numeric',
   month: 'long',
@@ -50,20 +64,28 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
 
 <template>
   <div>
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mes traces</h1>
-      <UButton to="/etudiant/traces/nouvelle" icon="i-lucide-plus">Nouvelle trace</UButton>
-    </div>
+    <UiEnTetePage titre="Mes traces" :chapeau="chapeau">
+      <template v-if="!isEmpty" #actions>
+        <UButton to="/etudiant/traces/nouvelle" icon="i-lucide-plus">Nouvelle trace</UButton>
+      </template>
+    </UiEnTetePage>
 
     <UiAsyncState
       :status="status"
       :error="error"
       :empty="items.length === 0"
-      empty-message="Vous n’avez encore déposé aucune trace. Commencez par « Nouvelle trace »."
+      empty-title="Aucune trace pour l’instant"
+      empty-message="Vous n’avez encore déposé aucune trace. Une trace est une production (lien, vidéo, image ou PDF) qui montre ce que vous savez faire."
       skeleton="liste"
       class="mt-8"
       @retry="refresh()"
     >
+      <template #empty-action>
+        <UButton to="/etudiant/traces/nouvelle" icon="i-lucide-plus">
+          Déposer ma première trace
+        </UButton>
+      </template>
+
       <section aria-labelledby="filtres" class="rounded-panneau bg-muted p-4 sm:p-6">
         <h2 id="filtres" class="sr-only">Filtres</h2>
         <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-[2fr_1fr_1fr_auto]">
@@ -109,12 +131,21 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
 
         <!-- Cartes entièrement cliquables : le lien du titre couvre la carte (::after) -->
         <ul v-if="filtered.length" class="mt-4 space-y-3" aria-label="Traces">
+          <!--
+            Repères de la carte : le type de la trace (icône, le libellé est écrit dessous), le
+            statut, et le chevron qui dit « ouvrir » ; il glisse d'un pas au survol et au focus
+          -->
           <li
             v-for="{ trace, competences: traceCompetences } in filtered"
             :key="trace['@id']"
-            class="group relative flex flex-wrap items-center justify-between gap-x-4 gap-y-2 rounded-feuille border border-default p-4 transition-colors hover:border-accented hover:bg-muted has-focus-visible:border-accented has-focus-visible:bg-muted motion-reduce:transition-none"
+            class="group relative flex items-center gap-4 rounded-feuille border border-default p-4 shadow-carte transition-[background-color,border-color,box-shadow] hover:border-accented hover:bg-muted hover:shadow-carte-survol has-focus-visible:border-accented has-focus-visible:bg-muted has-focus-visible:shadow-carte-survol motion-reduce:transition-none"
           >
-            <div class="min-w-0">
+            <UIcon
+              :name="TRACE_TYPE_ICONS[trace.type]"
+              class="size-6 shrink-0 self-start text-muted max-sm:hidden"
+              aria-hidden="true"
+            />
+            <div class="min-w-0 flex-1">
               <NuxtLink
                 :to="{ path: `/etudiant/traces/${idFromIri(trace['@id'])}`, query: activeQuery }"
                 class="font-medium break-words text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille group-hover:underline group-has-focus-visible:underline"
@@ -125,18 +156,32 @@ const dayMonthYear = new Intl.DateTimeFormat('fr-FR', {
                 {{ TRACE_TYPE_LIBELLES[trace.type] }} ·
                 {{ dayMonthYear.format(new Date(trace.dateModification ?? trace.dateCreation)) }}
               </p>
-              <p v-if="traceCompetences.length" class="mt-1 text-sm text-muted">
+              <p v-if="traceCompetences.length" class="mt-2 flex flex-wrap gap-1">
                 <span class="sr-only">Compétences : </span>
-                {{ traceCompetences.map((c) => c.nomCourt).join(' · ') }}
+                <UBadge
+                  v-for="c in traceCompetences"
+                  :key="c['@id']"
+                  color="neutral"
+                  variant="soft"
+                  class="rounded-full"
+                  :label="c.nomCourt"
+                />
               </p>
             </div>
-            <UBadge
-              :color="trace.statut === 'brouillon' ? 'warning' : 'success'"
-              variant="subtle"
-              class="rounded-full"
-            >
-              {{ trace.statut === 'brouillon' ? 'Brouillon' : 'Finalisée' }}
-            </UBadge>
+            <div class="flex shrink-0 items-center gap-2">
+              <UBadge
+                :color="trace.statut === 'brouillon' ? 'warning' : 'success'"
+                variant="subtle"
+                class="rounded-full"
+              >
+                {{ trace.statut === 'brouillon' ? 'Brouillon' : 'Finalisée' }}
+              </UBadge>
+              <UIcon
+                name="i-lucide-chevron-right"
+                class="size-5 text-muted motion-safe:transition-transform motion-safe:group-hover:translate-x-1 motion-safe:group-has-focus-visible:translate-x-1"
+                aria-hidden="true"
+              />
+            </div>
           </li>
         </ul>
       </section>

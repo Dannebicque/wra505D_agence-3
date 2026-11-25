@@ -9,6 +9,13 @@ const props = defineProps<{
   /** Nom de l'image de bannière déjà en place. */
   banniere?: string | null
   submitLabel: string
+  /** Icône du bouton d'envoi (à gauche du libellé). */
+  submitIcon?: string
+  /**
+   * Bouton d'envoi en action secondaire : quand l'écran a déjà son action principale ailleurs
+   * (« Publier » sur l'écran d'un portfolio). Une seule action principale par écran.
+   */
+  secondarySubmit?: boolean
 }>()
 
 const emit = defineEmits<{ submit: [values: DemoPortfolioForm] }>()
@@ -130,9 +137,22 @@ const VISIBILITE_ITEMS = [
       />
     </div>
 
-    <div class="flex flex-wrap justify-end gap-3">
+    <!--
+      Actions en bas du formulaire : « Annuler » (slot) puis l'envoi, à droite ; sur téléphone,
+      l'une sous l'autre, l'envoi en bas
+    -->
+    <div
+      class="flex flex-col gap-2 border-t border-default pt-6 max-sm:*:justify-center sm:flex-row sm:flex-wrap sm:justify-end"
+    >
       <slot name="actions" />
-      <UButton type="submit">{{ submitLabel }}</UButton>
+      <UButton
+        type="submit"
+        :icon="submitIcon"
+        :color="secondarySubmit ? 'neutral' : 'primary'"
+        :variant="secondarySubmit ? 'outline' : 'solid'"
+      >
+        {{ submitLabel }}
+      </UButton>
     </div>
   </UForm>
 </template>

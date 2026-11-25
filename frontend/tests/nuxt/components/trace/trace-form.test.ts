@@ -207,8 +207,8 @@ describe('formulaire de trace', () => {
     })
     expect(form.text()).toContain('affiche.jpg')
 
-    // Les boutons radio de Nuxt UI (Reka) sont des `button role="radio"`
-    await form.get('[role="radio"][value="pdf"]').trigger('click')
+    // Sélecteur segmenté : de vrais boutons radio natifs
+    await form.get('input[type="radio"][value="pdf"]').setValue()
 
     await vi.waitFor(() =>
       expect(form.emitted('change')?.at(-1)?.[0]).toMatchObject({ type: 'pdf', contenu: [] }),
@@ -241,5 +241,53 @@ describe('formulaire de trace', () => {
       .vm.$emit('update:modelValue', '/api/fichiers/0b7c1f0e-3a1d-4c55-9a52-2f0e8a9d1c11')
 
     await vi.waitFor(() => expect(form.text()).not.toContain('Fichier manquant.'))
+  })
+
+  it('ferme l’aperçu de la description quand le serveur la refuse, pour y mettre le focus', async () => {
+    const form = await mountSuspended(TraceForm, { attachTo: document.body })
+    await form.get('button[data-action="basculer-apercu"]').trigger('click')
+    expect(form.find('[role="region"]').exists()).toBe(true)
+
+    ;(form.vm as unknown as { setServerErrors: (v: unknown[]) => unknown }).setServerErrors([
+      {
+        propertyPath: 'description',
+        message: 'La description ne doit pas dépasser 5 000 caractères.',
+      },
+    ])
+
+    await vi.waitFor(() => expect(form.find('[role="region"]').exists()).toBe(false))
+    await vi.waitFor(() => expect(document.activeElement).toBe(form.get('textarea').element))
+    form.unmount()
+  })
+
+  it('signale une description trop longue chargée d’emblée et ferme l’aperçu', async () => {
+    const form = await mountSuspended(TraceForm, {
+      props: {
+        initial: {
+          titre: 'Description reprise',
+          description: 'x'.repeat(5001),
+          contexte: null,
+          legende: null,
+          type: 'lien',
+          contenu: ['https://exemple.fr'],
+          statut: 'brouillon',
+          conceptionIa: 'aucun',
+          realisationIa: 'aucun',
+          dateRealisation: null,
+        },
+      },
+      attachTo: document.body,
+    })
+    // Description déjà écrite : l'éditeur s'ouvre sur son aperçu
+    expect(form.find('[role="region"]').exists()).toBe(true)
+
+    await submitWith(form, 'finaliser')
+
+    await vi.waitFor(() =>
+      expect(form.text()).toContain('La description ne doit pas dépasser 5 000 caractères.'),
+    )
+    expect(form.find('[role="region"]').exists()).toBe(false)
+    expect(form.emitted('submit')).toBeUndefined()
+    form.unmount()
   })
 })

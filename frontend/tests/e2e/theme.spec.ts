@@ -49,7 +49,8 @@ test.describe('thème du style éditorial', () => {
     })
 
     test('est prune (violet de l’IUT) et en forme de pilule', async ({ page }) => {
-      const action = page.getByRole('link', { name: 'Espace étudiant' })
+      // Action principale du premier écran (le « Se connecter » de la barre est hors de main)
+      const action = page.getByRole('main').getByRole('link', { name: 'Se connecter' })
 
       await expect(action).toHaveCSS('background-color', PRUNE_700)
       const radius = await action.evaluate((el) =>
@@ -61,7 +62,8 @@ test.describe('thème du style éditorial', () => {
     // Au survol, le texte blanc doit rester lisible (contraste AA) : prune 800.
     // Un écran tactile n'a pas de survol (Tailwind le réserve à `@media (hover: hover)`) : le fond ne change pas.
     test('fonce au survol au lieu de s’éclaircir', async ({ page, isMobile }) => {
-      const action = page.getByRole('link', { name: 'Espace étudiant' })
+      // Action principale du premier écran (le « Se connecter » de la barre est hors de main)
+      const action = page.getByRole('main').getByRole('link', { name: 'Se connecter' })
 
       await action.hover()
       await expect(action).toHaveCSS('background-color', isMobile ? PRUNE_700 : PRUNE_800)

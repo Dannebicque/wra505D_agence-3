@@ -3,6 +3,7 @@
 import { COMPETENCES, ETUDIANTS, competenceById, formatDate } from '~/demo/base'
 import {
   GROUPES,
+  TRACES_SOUMISES,
   TRACE_FILTER_OPTIONS,
   etudiantName,
   filterSubmittedTraces,
@@ -47,6 +48,13 @@ function resetFilters() {
   Object.assign(criteria, DEFAULT_CRITERIA)
 }
 
+// Chapeau : le fait du jour, toutes traces confondues (les filtres n'y changent rien)
+const pendingCount = TRACES_SOUMISES.filter(isTracePending).length
+const chapeau =
+  pendingCount === 0
+    ? 'Aucune trace n’attend votre évaluation. Les plus anciennes s’affichent d’abord.'
+    : `${pendingCount} ${pendingCount > 1 ? 'traces attendent' : 'trace attend'} votre évaluation, les plus anciennes d’abord. « Évaluer à la suite » ouvre la première de la liste, puis passe aux suivantes.`
+
 const resultLabel = computed(() =>
   traces.value.length === 0
     ? 'Aucune trace ne correspond à ces critères.'
@@ -56,20 +64,16 @@ const resultLabel = computed(() =>
 
 <template>
   <div>
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Traces à évaluer</h1>
-      <UButton
-        v-if="traces[0]"
-        :to="{ path: `/enseignant/evaluations/${traces[0].id}`, query }"
-        icon="i-lucide-list-checks"
-      >
-        Évaluer à la suite
-      </UButton>
-    </div>
-    <p class="mt-2 max-w-mesure text-muted">
-      Les plus anciennes d’abord. « Évaluer à la suite » ouvre la première trace de la liste, puis
-      passe aux suivantes.
-    </p>
+    <UiEnTetePage titre="Traces à évaluer" :chapeau="chapeau">
+      <template v-if="traces[0]" #actions>
+        <UButton
+          :to="{ path: `/enseignant/evaluations/${traces[0].id}`, query }"
+          icon="i-lucide-list-checks"
+        >
+          Évaluer à la suite
+        </UButton>
+      </template>
+    </UiEnTetePage>
 
     <section aria-labelledby="filtres" class="mt-8 rounded-panneau bg-muted p-4 sm:p-6">
       <h2 id="filtres" class="sr-only">Filtres</h2>
@@ -123,16 +127,13 @@ const resultLabel = computed(() =>
       <!-- Nombre de résultats annoncé à chaque changement de filtre -->
       <p role="status" class="text-sm text-muted">{{ resultLabel }}</p>
 
-      <ul
-        v-if="traces.length"
-        class="mt-3 divide-y divide-default rounded-panneau bg-muted"
-        aria-label="Traces"
-      >
-        <!-- Toute la ligne mène à l'évaluation (lien étendu du bouton) : survol et focus soulignent le titre -->
+      <!-- Cartes de liste : toute la carte mène à l'évaluation (lien étendu du bouton), survol et
+           focus changent son ton et soulignent le titre -->
+      <ul v-if="traces.length" class="mt-4 space-y-3" aria-label="Traces">
         <li
           v-for="trace in traces"
           :key="trace.id"
-          class="group relative grid gap-x-6 gap-y-2 p-4 md:grid-cols-[1fr_auto] md:items-center"
+          class="group relative grid gap-x-6 gap-y-3 rounded-feuille border border-default p-4 shadow-carte transition-[background-color,border-color,box-shadow] hover:border-accented hover:bg-muted hover:shadow-carte-survol has-focus-visible:border-accented has-focus-visible:bg-muted has-focus-visible:shadow-carte-survol motion-reduce:transition-none md:grid-cols-[1fr_auto] md:items-center"
         >
           <div class="min-w-0">
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -159,12 +160,12 @@ const resultLabel = computed(() =>
               }}
             </p>
           </div>
+          <!-- Action de ligne : tertiaire, la flèche dit « aller vers » -->
           <UButton
             :to="{ path: `/enseignant/evaluations/${trace.id}`, query }"
             color="neutral"
-            variant="outline"
-            size="sm"
-            class="justify-self-start after:absolute after:inset-0"
+            variant="ghost"
+            class="justify-self-start after:absolute after:inset-0 after:rounded-feuille motion-safe:active:translate-none"
             trailing-icon="i-lucide-arrow-right"
           >
             {{ isTracePending(trace) ? 'Évaluer' : 'Modifier l’évaluation'

@@ -7,32 +7,31 @@ const homePath = computed(() => (espace.value ? `/${espace.value}` : '/'))
 // (la fermeture automatique de Nuxt UI ne réagit qu'à un changement d'URL)
 const isMenuOpen = ref(false)
 
-// Trait de la page courante, au moins 3:1 sur la pilule et le cadre (WCAG 1.4.11) : prune en clair
-// (7,9:1 ; l'or n'y faisait que 1,5:1), or de l'IUT en sombre (7,6:1)
-const ACTIVE_LINK_CLASS =
-  'font-semibold after:absolute after:inset-y-2 after:start-0 after:w-1 after:rounded-full after:bg-primary dark:after:bg-or-400'
-
 // La barre latérale est en rem (unit="rem") : elle garde ses 224 px (14 rem) quelle que soit la fenêtre
-const items = computed(() =>
-  (espace.value ? NAVIGATION[espace.value] : []).map((item) => {
-    // Accueil de l'espace : actif sur sa seule page ; autres entrées : aussi sur leurs sous-pages
-    // (les routes sont plates, le routeur ne le ferait pas seul)
-    const active =
-      item.to === homePath.value
-        ? route.path === item.to
-        : route.path === item.to || route.path.startsWith(`${item.to}/`)
-    return {
-      ...item,
-      active,
-      // La page courante se repère par le trait, la pilule et la graisse, pas par la seule couleur
-      // (WCAG 1.4.1)
-      class: active ? ACTIVE_LINK_CLASS : undefined,
-      onSelect: () => {
-        isMenuOpen.value = false
-      },
-    }
-  }),
-)
+
+/**
+ * Accueil de l'espace : actif sur sa seule page ; autres entrées : aussi sur leurs sous-pages (les
+ * routes sont plates, le routeur ne le ferait pas seul).
+ */
+function isActive(to: string) {
+  return to === homePath.value
+    ? route.path === to
+    : route.path === to || route.path.startsWith(`${to}/`)
+}
+
+/*
+ * Pages regroupées par usage (« Mon travail », « Mon suivi »…). Chaque liste est nommée par son
+ * intitulé (`LayoutNavGroup`) ; le groupe du bas (la corbeille) prend l'espace restant au-dessus de
+ * lui. Écrit à la main plutôt qu'avec UNavigationMenu, qui faisait de l'intitulé un élément de la
+ * liste qu'il titre (« 4 éléments » pour 3 liens) au lieu de son nom.
+ */
+const groups = computed(() => navigationGroups(espace.value ? NAVIGATION[espace.value] : []))
+
+/** Page affichée : « page » ; sous-page d'une entrée (une trace dans « Mes traces ») : « true ». */
+function ariaCurrent(to: string) {
+  if (route.path === to) return 'page'
+  return isActive(to) ? 'true' : undefined
+}
 </script>
 
 <template>
@@ -54,16 +53,45 @@ const items = computed(() =>
         <LayoutAppLogo :to="homePath" />
       </template>
 
-      <!-- Élément actif : pilule grise, libellé en encre et trait (prune en clair, or en sombre) ;
-           la couleur d'action ne colore pas les libellés, gardée aux données et à l'action
-           principale de chaque page -->
-      <UNavigationMenu
-        :items="items"
-        color="neutral"
-        :ui="{ link: 'font-normal' }"
-        orientation="vertical"
-        aria-label="Navigation de l’espace"
-      />
+      <!--
+        Élément actif : pilule grise, libellé en encre et graisse, trait (prune en clair, or en
+        sombre) ; la page courante ne se repère pas à la seule couleur (WCAG 1.4.1). Le trait fait
+        au moins 3:1 sur la pilule et le cadre (1.4.11) : prune 7,5:1 en clair (l'or n'y faisait
+        que 1,5:1), or 7,0:1 en sombre. La couleur d'action ne colore pas les libellés.
+      -->
+      <nav aria-label="Navigation de l’espace" class="flex flex-1 flex-col gap-4">
+        <LayoutNavGroup
+          v-for="(group, index) in groups"
+          :key="group.label ?? `group-${index}`"
+          :label="group.label"
+          :class="{ 'mt-auto': group.pinnedBottom }"
+        >
+          <li v-for="item in group.items" :key="item.to">
+            <NuxtLink
+              :to="item.to"
+              :aria-current="ariaCurrent(item.to)"
+              class="group relative flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors motion-reduce:transition-none"
+              :class="
+                isActive(item.to)
+                  ? 'bg-elevated font-semibold text-highlighted after:absolute after:inset-y-2 after:start-0 after:w-1 after:rounded-full after:bg-primary dark:after:bg-or-400'
+                  : 'text-muted hover:bg-elevated/50 hover:text-highlighted'
+              "
+              @click="isMenuOpen = false"
+            >
+              <UIcon
+                v-if="item.icon"
+                :name="item.icon"
+                class="size-5 shrink-0"
+                :class="
+                  isActive(item.to) ? 'text-highlighted' : 'text-dimmed group-hover:text-default'
+                "
+                aria-hidden="true"
+              />
+              <span class="truncate">{{ item.label }}</span>
+            </NuxtLink>
+          </li>
+        </LayoutNavGroup>
+      </nav>
 
       <template #footer>
         <LayoutAccountMenu />

@@ -25,23 +25,32 @@ function onSubmit() {
 
 <template>
   <div class="max-w-2xl">
-    <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
-    <h1 class="mt-4 font-titre text-2xl text-highlighted sm:text-3xl">Nouveau portfolio</h1>
+    <UiEnTetePage
+      titre="Nouveau portfolio"
+      :chapeau="
+        currentYearPortfolio
+          ? 'Un seul portfolio par année universitaire.'
+          : `Ce portfolio sera rattaché à l’année ${ANNEE_COURANTE}. Vous y ajouterez ensuite vos projets, puis vous le publierez quand il sera prêt.`
+      "
+    >
+      <template #avant>
+        <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
+      </template>
+    </UiEnTetePage>
 
-    <template v-if="currentYearPortfolio">
-      <p
-        class="mt-8 flex items-start gap-2 rounded-panneau bg-muted px-4 py-3 text-sm text-default"
-      >
-        <UIcon name="i-lucide-info" class="mt-1 size-4 shrink-0 text-muted" aria-hidden="true" />
-        <span>
-          Vous avez déjà un portfolio pour l’année {{ ANNEE_COURANTE }} :
-          <NuxtLink
-            :to="`/etudiant/portfolios/${currentYearPortfolio.id}`"
-            class="font-medium text-primary underline underline-offset-4"
-          >
-            {{ currentYearPortfolio.intitule }}</NuxtLink
-          >. Vous pourrez en créer un nouveau à la prochaine rentrée.
-        </span>
+    <!-- E-PF-10 : création refusée ; ce qui bloque, puis l'étape suivante -->
+    <div v-if="currentYearPortfolio" class="mt-8 rounded-panneau bg-muted p-6 sm:p-8">
+      <p class="leading-titre font-semibold text-highlighted">
+        Votre portfolio {{ ANNEE_COURANTE }} existe déjà
+      </p>
+      <p class="mt-1 max-w-mesure text-muted">
+        Poursuivez
+        <NuxtLink
+          :to="`/etudiant/portfolios/${currentYearPortfolio.id}`"
+          class="font-medium text-primary underline underline-offset-4"
+        >
+          {{ currentYearPortfolio.intitule }}</NuxtLink
+        >. Vous pourrez en créer un nouveau à la prochaine rentrée.
       </p>
       <UButton
         to="/etudiant/portfolios"
@@ -52,17 +61,17 @@ function onSubmit() {
       >
         Retour à mes portfolios
       </UButton>
-    </template>
+    </div>
 
     <template v-else>
-      <p class="mt-2 max-w-mesure text-muted">
-        Ce portfolio sera rattaché à l’année {{ ANNEE_COURANTE }}. Vous y ajouterez ensuite vos
-        projets, puis vous le publierez quand il sera prêt.
-      </p>
-
-      <PortfolioForm class="mt-8" submit-label="Créer le portfolio" @submit="onSubmit">
+      <PortfolioForm
+        class="mt-8"
+        submit-label="Créer le portfolio"
+        submit-icon="i-lucide-plus"
+        @submit="onSubmit"
+      >
         <template #actions>
-          <UButton to="/etudiant/portfolios" color="neutral" variant="outline">Annuler</UButton>
+          <UButton to="/etudiant/portfolios" color="neutral" variant="ghost">Annuler</UButton>
         </template>
       </PortfolioForm>
 

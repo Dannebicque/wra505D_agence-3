@@ -109,6 +109,8 @@ function onSubmit() {
 }
 
 const form = useTemplateRef('form')
+/** Bloc des boutons d'envoi, dans le `<form>` de UForm : de là, `requestSubmit()` (voir submitAs). */
+const actions = useTemplateRef<HTMLElement>('actions')
 
 /**
  * Divulgation progressive : champs secondaires (contexte, date, usage de l'IA) dans une section
@@ -125,11 +127,16 @@ const detailsOpen = ref(
 )
 /** Bouton de la section : nommé par son titre, décrit par sa sous-ligne. */
 const detailsId = useId()
-/** Une erreur dans la section l'ouvre : elle se voit, et le focus peut atteindre le champ. */
+const descriptionEditor = useTemplateRef<{ showEditor: () => void }>('descriptionEditor')
+/**
+ * Une erreur dans la section l'ouvre : elle se voit, et le focus peut atteindre le champ. De même,
+ * une erreur sur la description ferme l'aperçu, qui masque le champ.
+ */
 function revealDetailsFor(names: (string | undefined)[]) {
   if (names.some((name) => name !== undefined && DETAIL_FIELDS.test(name))) {
     detailsOpen.value = true
   }
+  if (names.includes('description')) descriptionEditor.value?.showEditor()
 }
 
 /**
@@ -167,10 +174,16 @@ function onError(event: FormErrorEvent) {
   focusFirstError(event)
 }
 
-/** Les deux actions envoient le formulaire elles-mêmes : Entrée dans un champ ne change jamais le statut. */
+/**
+ * Les deux actions envoient le formulaire elles-mêmes : Entrée dans un champ ne change jamais le
+ * statut. Par `requestSubmit()` sur le `<form>`, qui respecte `novalidate`, et non par
+ * `UForm.submit()`, qui passe d'abord par la validation du navigateur : un champ au-delà de sa
+ * limite (`maxlength`, description reprise de l'ancienne version) arrêtait l'envoi sans message de
+ * l'application, et sans rien du tout si l'aperçu masquait le champ.
+ */
 function submitAs(value: TraceStatut) {
   statut.value = value
-  form.value?.submit()
+  actions.value?.closest('form')?.requestSubmit()
 }
 
 /**
@@ -190,12 +203,11 @@ function setServerErrors(violations: Violation[]): Violation[] {
 }
 defineExpose({ setServerErrors })
 
-const TYPE_ITEMS = [
-  { label: 'Lien', value: 'lien' },
-  { label: 'Vidéo', value: 'video' },
-  { label: 'Image', value: 'image' },
-  { label: 'PDF', value: 'pdf' },
-]
+const TYPE_ITEMS = (['lien', 'video', 'image', 'pdf'] as const).map((value) => ({
+  label: TRACE_TYPE_LIBELLES[value],
+  value,
+  icon: TRACE_TYPE_ICONS[value],
+}))
 const CONCEPTION_ITEMS = Object.entries(CONCEPTION_IA_LIBELLES).map(([value, label]) => ({
   label,
   value,
@@ -232,14 +244,9 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
     </UFormField>
 
     <!-- Le groupe est nommé par sa légende (un libellé de UFormField ne vise aucun champ ici) ;
-         UFormField garde l'erreur du champ, liée au groupe (aria-describedby) -->
+         UFormField garde l'erreur du champ, liée à chaque bouton (aria-describedby) -->
     <UFormField name="type">
-      <URadioGroup
-        v-model="state.type"
-        legend="Type de trace"
-        :items="TYPE_ITEMS"
-        orientation="horizontal"
-      />
+      <UiChoixSegmente v-model="state.type" legend="Type de trace" :items="TYPE_ITEMS" />
     </UFormField>
 
     <TraceFileField
@@ -275,18 +282,22 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
       />
     </UFormField>
 
-    <UFormField label="Description" name="description">
-      <UTextarea
+    <UFormField
+      label="Description"
+      name="description"
+      description="Titres, gras, italique et listes : utilisez la barre ou la syntaxe Markdown."
+      :hint="`${state.description.length} / ${TRACE_LIMITS.description}`"
+    >
+      <UiEditeurMarkdown
+        ref="descriptionEditor"
         v-model="state.description"
-        :rows="4"
         :maxlength="TRACE_LIMITS.description"
-        autoresize
-        class="w-full"
       />
     </UFormField>
 
     <!-- Champs secondaires : repliés par défaut, mais toujours dans la page (`hidden="until-found"`),
-         donc validés, trouvés par la recherche du navigateur et jamais perdus -->
+         donc validés, trouvés par la recherche du navigateur et jamais perdus. Le bouton épouse la
+         boîte : même arrondi moins la bordure, coins du bas carrés une fois ouvert (le contenu suit) -->
     <UCollapsible
       v-model:open="detailsOpen"
       :unmount-on-hide="false"
@@ -297,7 +308,7 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
         variant="ghost"
         block
         trailing-icon="i-lucide-chevron-down"
-        class="group justify-between rounded-feuille p-4 text-left"
+        class="group justify-between rounded-[calc(var(--radius-feuille)-1px)] p-4 text-left data-[state=open]:rounded-b-none"
         :ui="{
           trailingIcon:
             'transition-transform group-data-[state=open]:rotate-180 motion-reduce:transition-none',
@@ -349,26 +360,35 @@ const REALISATION_ITEMS = Object.entries(REALISATION_IA_LIBELLES).map(([value, l
       </template>
     </UCollapsible>
 
-    <div class="flex flex-wrap justify-end gap-3">
+    <!--
+      Actions en bas du formulaire : la secondaire puis la principale (à droite ; sur téléphone,
+      l'une sous l'autre, la principale en bas). Pendant l'envoi, le libellé dit ce qui se passe.
+    -->
+    <div
+      ref="actions"
+      class="flex flex-col gap-2 border-t border-default pt-6 max-sm:*:justify-center sm:flex-row sm:flex-wrap sm:justify-end"
+    >
       <UButton
         type="button"
         data-action="brouillon"
         color="neutral"
         variant="outline"
+        icon="i-lucide-save"
         :loading="submitting && statut === 'brouillon'"
         :disabled="submitting"
         @click="submitAs('brouillon')"
       >
-        Enregistrer le brouillon
+        {{ submitting && statut === 'brouillon' ? 'Enregistrement…' : 'Enregistrer le brouillon' }}
       </UButton>
       <UButton
         type="button"
         data-action="finaliser"
+        icon="i-lucide-send"
         :loading="submitting && statut === 'finalisee'"
         :disabled="submitting"
         @click="submitAs('finalisee')"
       >
-        Finaliser la trace
+        {{ submitting && statut === 'finalisee' ? 'Finalisation…' : 'Finaliser la trace' }}
       </UButton>
     </div>
   </UForm>

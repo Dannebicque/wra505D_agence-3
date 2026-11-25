@@ -22,7 +22,8 @@ const criteres = computed(() => [
 </script>
 
 <template>
-  <article :aria-labelledby="headingId" class="rounded-panneau bg-muted p-4 sm:p-6">
+  <!-- Feuille bordée : le panneau gris est réservé à la progression globale, au-dessus -->
+  <article :aria-labelledby="headingId" class="rounded-panneau border border-default p-4 sm:p-6">
     <div class="flex flex-wrap items-start justify-between gap-3">
       <div class="min-w-0">
         <h2 :id="headingId" class="font-titre text-xl text-highlighted">
@@ -70,16 +71,17 @@ const criteres = computed(() => [
     </UAccordion>
 
     <h3 class="mt-6 text-sm font-semibold text-highlighted">Traces associées</h3>
-    <ul v-if="suivi.traces.length" class="mt-2 divide-y divide-default">
+    <!-- Chaque ligne mène à sa trace (lien étendu du titre) : survol et focus changent son ton -->
+    <ul v-if="suivi.traces.length" class="-mx-2 mt-2 space-y-1">
       <li
         v-for="{ trace, etat } in suivi.traces"
         :key="trace.id"
-        class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-3"
+        class="group relative flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-feuille p-2 hover:bg-muted has-focus-visible:bg-muted motion-safe:transition-colors"
       >
         <div class="min-w-0">
           <NuxtLink
             :to="`/etudiant/traces/${trace.id}`"
-            class="font-medium text-highlighted underline-offset-4 hover:underline"
+            class="font-medium text-highlighted underline-offset-4 after:absolute after:inset-0 after:rounded-feuille group-hover:underline group-has-focus-visible:underline"
           >
             {{ trace.titre }}
           </NuxtLink>
@@ -96,14 +98,18 @@ const criteres = computed(() => [
         <EvaluationEtatBadge v-else :etat="etat" />
       </li>
     </ul>
-    <p v-else class="mt-2 text-sm text-muted">
-      Aucune trace ne vise encore cette compétence.
-      <NuxtLink
+    <!-- Aucune trace : ce qui manque, et l'étape suivante -->
+    <div v-else class="mt-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+      <p class="text-sm text-muted">Aucune trace ne vise encore cette compétence.</p>
+      <UButton
         to="/etudiant/traces/nouvelle"
-        class="font-medium text-primary underline underline-offset-4"
+        icon="i-lucide-plus"
+        color="neutral"
+        variant="outline"
+        size="sm"
       >
-        Déposer une trace
-      </NuxtLink>
-    </p>
+        Déposer une trace<span class="sr-only"> pour {{ suivi.competence.nomCourt }}</span>
+      </UButton>
+    </div>
   </article>
 </template>

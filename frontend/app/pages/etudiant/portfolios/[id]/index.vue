@@ -27,22 +27,49 @@ if (!found) {
 const portfolio = found
 
 // --- Informations (intitulé, introduction, bannière, visibilité) ---
+// Ouvrir un portfolio montre d'abord ses pages-projets ; les informations se modifient dans un
+// panneau latéral (« Modifier les informations »), ouvert d'emblée par `?modifier=informations`
+// (bouton « Modifier » de la carte, dans « Mes portfolios »).
 const intitule = ref(portfolio.intitule)
+const router = useRouter()
+const isEditOpen = ref(route.query.modifier === 'informations')
+watch(isEditOpen, (open) => {
+  // Panneau refermé : l'adresse ne le rouvre plus au rechargement
+  if (!open && route.query.modifier) {
+    const { modifier: _modifier, ...query } = route.query
+    void router.replace({ query })
+  }
+})
 
 // Le titre de l'onglet et le fil d'Ariane suivent l'intitulé enregistré
-useSeoMeta({ title: () => `Modifier « ${intitule.value} »` })
+useSeoMeta({ title: () => intitule.value })
 const breadcrumb = computed(() => [
   { label: 'Mes portfolios', to: '/etudiant/portfolios' },
   { label: intitule.value },
 ])
 
 const visibilite = ref(portfolio.visibilite)
+// Toutes les informations restent dans l'état de l'écran : le panneau démonte son formulaire à la
+// fermeture et le reprend de ces valeurs à la réouverture
+const description = ref(portfolio.description)
+const visibleRecruteurs = ref(false)
 const formMessage = ref('')
 function onSubmit(values: DemoPortfolioForm) {
   intitule.value = values.intitule
   visibilite.value = values.visibilite
+  description.value = values.description
+  visibleRecruteurs.value = values.visibleRecruteurs
+  isEditOpen.value = false
   formMessage.value =
-    'Maquette : modifications appliquées à cette page seulement, rien n’est enregistré.'
+    'Informations enregistrées. Maquette : appliquées à cette page seulement, rien n’est enregistré.'
+}
+
+// Panneau collé aux bords de l'écran : rien sous l'encoche ni sous les barres système
+const SLIDEOVER_UI = {
+  content: 'zone-sure sm:max-w-xl',
+  close:
+    'top-[calc(--spacing(4)+env(safe-area-inset-top))] end-[calc(--spacing(4)+env(safe-area-inset-right))]',
+  description: 'max-w-mesure',
 }
 
 // --- Publication (E-PF-05) et lien public (E-PF-06) ---
@@ -69,7 +96,7 @@ const statusSummary = computed(
 function togglePublication() {
   if (isPublishBlocked.value) {
     publicationMessage.value =
-      'Publication impossible : choisissez d’abord « Public » dans les informations, puis enregistrez.'
+      'Publication impossible : choisissez d’abord « Public » dans « Modifier les informations », puis enregistrez.'
     return
   }
   // Le lien public ne « cesse de fonctionner » que s'il fonctionnait avant
@@ -207,23 +234,20 @@ const traceCount = (page: PageItem) =>
 
 <template>
   <div>
-    <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
-
-    <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
-      <div class="min-w-0">
-        <!-- Le titre de la carte de « Mes portfolios » s'y transforme (même nom de transition) -->
-        <h1
-          class="font-titre text-2xl text-highlighted sm:text-3xl"
-          :style="{ viewTransitionName: `portfolio-${portfolio.id}-titre` }"
-        >
-          Modifier le portfolio
-        </h1>
-        <p class="mt-2 max-w-mesure text-muted">
-          {{ intitule }} · année {{ portfolio.annee }} · modifié le
-          {{ formatDate(portfolio.dateModification) }}
-        </p>
+    <!--
+      Action principale de l'écran : « Publier », dans le panneau de publication (qui dit ce
+      qu'elle fait). Modifier les informations et prévisualiser sont des actions secondaires.
+    -->
+    <!-- Titre : l'intitulé ; le titre de la carte de « Mes portfolios » s'y transforme (même nom de transition) -->
+    <UiEnTetePage :titre="intitule" :transition-name="`portfolio-${portfolio.id}-titre`">
+      <template #avant>
+        <UBreadcrumb :items="breadcrumb" aria-label="Fil d’Ariane" />
+      </template>
+      <template #chapeau>
+        Année {{ portfolio.annee }} · modifié le
+        {{ formatDate(portfolio.dateModification) }}
         <!-- Mobile et tablette : le panneau de publication suit le contenu, son état est rappelé ici -->
-        <p class="mt-2 text-sm text-default lg:hidden">
+        <span class="mt-2 block text-sm text-default lg:hidden">
           Portfolio {{ statusSummary }} ·
           <a
             href="#publication-panneau"
@@ -231,38 +255,54 @@ const traceCount = (page: PageItem) =>
           >
             Gérer la publication
           </a>
-        </p>
-      </div>
-      <UButton
-        :to="`/etudiant/portfolios/${portfolio.id}/apercu`"
-        icon="i-lucide-eye"
-        color="neutral"
-        variant="outline"
-      >
-        Prévisualiser
-      </UButton>
-    </div>
+        </span>
+      </template>
+      <template #actions>
+        <USlideover
+          v-model:open="isEditOpen"
+          title="Modifier les informations"
+          description="Intitulé, introduction, bannière et visibilité du portfolio."
+          :ui="SLIDEOVER_UI"
+        >
+          <UButton icon="i-lucide-pencil" color="neutral" variant="outline">
+            Modifier les informations
+          </UButton>
+          <template #body>
+            <PortfolioForm
+              :initial="{
+                intitule,
+                description,
+                visibilite,
+                visibleRecruteurs,
+              }"
+              submit-label="Enregistrer les informations"
+              submit-icon="i-lucide-save"
+              @submit="onSubmit"
+            >
+              <template #actions>
+                <UButton color="neutral" variant="ghost" @click="isEditOpen = false">
+                  Annuler
+                </UButton>
+              </template>
+            </PortfolioForm>
+          </template>
+        </USlideover>
+        <UButton
+          :to="`/etudiant/portfolios/${portfolio.id}/apercu`"
+          icon="i-lucide-eye"
+          color="neutral"
+          variant="outline"
+        >
+          Prévisualiser
+        </UButton>
+      </template>
+    </UiEnTetePage>
+    <p role="status" class="mt-3 text-sm text-muted" :class="{ 'sr-only': !formMessage }">
+      {{ formMessage }}
+    </p>
 
     <div class="mt-8 grid gap-6 lg:grid-cols-[1fr_18rem] lg:gap-8">
       <div class="min-w-0 space-y-12">
-        <section aria-labelledby="informations">
-          <h2 id="informations" class="text-lg font-semibold text-highlighted">Informations</h2>
-          <PortfolioForm
-            class="mt-4"
-            :initial="{
-              intitule: portfolio.intitule,
-              description: portfolio.description,
-              visibilite: portfolio.visibilite,
-              visibleRecruteurs: false,
-            }"
-            submit-label="Enregistrer les informations"
-            @submit="onSubmit"
-          />
-          <p role="status" class="mt-3 text-sm text-muted" :class="{ 'sr-only': !formMessage }">
-            {{ formMessage }}
-          </p>
-        </section>
-
         <section aria-labelledby="pages-projets">
           <div class="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -318,7 +358,7 @@ const traceCount = (page: PageItem) =>
                 Annuler
               </UButton>
               <UButton type="submit" icon="i-lucide-plus" :loading="isCreating">
-                Ajouter la page
+                {{ isCreating ? 'Ajout…' : 'Ajouter la page' }}
               </UButton>
             </div>
           </form>
@@ -339,7 +379,8 @@ const traceCount = (page: PageItem) =>
             :status="pagesStatus"
             :error="pagesLoadError"
             :empty="pages.length === 0"
-            empty-message="Aucune page pour l’instant. Ajoutez une page pour chacun de vos projets."
+            empty-title="Aucune page pour l’instant"
+            empty-message="Une page par projet : ajoutez-en une avec « Ajouter une page », puis rangez-y les traces du projet."
             skeleton="liste"
             class="mt-4"
             @retry="refreshPages()"
@@ -407,11 +448,11 @@ const traceCount = (page: PageItem) =>
         <p :id="publicationHintId" class="text-sm text-muted">
           <template v-if="isPublishBlocked">
             Portfolio privé : il ne peut pas être publié et n’a pas de lien public. Choisissez «
-            Public » dans les informations, puis enregistrez, pour le publier.
+            Public » dans « Modifier les informations », puis enregistrez, pour le publier.
           </template>
           <template v-else-if="isPrivate">
-            Portfolio privé : même publié, il n’a pas de lien public. Choisissez « Public » dans les
-            informations, puis enregistrez, pour le partager.
+            Portfolio privé : même publié, il n’a pas de lien public. Choisissez « Public » dans «
+            Modifier les informations », puis enregistrez, pour le partager.
           </template>
           <template v-else-if="publie">
             Toute personne disposant du lien peut consulter votre portfolio.

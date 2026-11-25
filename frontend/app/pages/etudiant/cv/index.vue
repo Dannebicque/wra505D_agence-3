@@ -94,16 +94,28 @@ function removeCompetence(competence: string) {
 
 <template>
   <div>
-    <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mon CV</h1>
-    <p class="mt-2 max-w-mesure text-muted">
-      Complétez votre CV et adaptez-le à chaque candidature. L’aperçu se met à jour au fil de la
-      saisie.
-    </p>
+    <UiEnTetePage titre="Mon CV">
+      <template #chapeau>
+        Complétez votre CV et adaptez-le à chaque candidature : l’aperçu se met à jour au fil de la
+        saisie.
+        <span id="cv-pdf-bientot">Le téléchargement en PDF arrive bientôt.</span>
+      </template>
+      <template #actions>
+        <!-- aria-disabled plutôt que disabled : le bouton reste focalisable, et la phrase du
+             chapeau qui annonce le PDF est lue avec lui -->
+        <UButton
+          icon="i-lucide-download"
+          aria-disabled="true"
+          aria-describedby="cv-pdf-bientot"
+          class="cursor-not-allowed opacity-75"
+        >
+          Télécharger en PDF
+        </UButton>
+      </template>
+    </UiEnTetePage>
     <p role="status" class="sr-only">{{ announcement }}</p>
 
-    <div
-      class="mt-8 flex flex-col gap-4 rounded-panneau bg-muted p-4 sm:p-6 lg:flex-row lg:items-center lg:justify-between"
-    >
+    <div class="mt-8 rounded-panneau bg-muted p-4 sm:p-6">
       <URadioGroup
         v-model="variante"
         legend="Version du CV"
@@ -113,19 +125,6 @@ function removeCompetence(competence: string) {
           fieldset: 'gap-y-3 sm:flex-row sm:gap-x-6',
         }"
       />
-      <div class="flex flex-col items-start gap-1 lg:items-end">
-        <!-- aria-disabled plutôt que disabled : le bouton reste focalisable, et « Bientôt
-             disponible » est lu avec lui -->
-        <UButton
-          icon="i-lucide-download"
-          aria-disabled="true"
-          aria-describedby="cv-pdf-bientot"
-          class="cursor-not-allowed opacity-75"
-        >
-          Télécharger en PDF
-        </UButton>
-        <p id="cv-pdf-bientot" class="text-xs text-muted">Bientôt disponible</p>
-      </div>
     </div>
 
     <div role="group" aria-label="Afficher" class="mt-6 flex gap-2 lg:hidden">

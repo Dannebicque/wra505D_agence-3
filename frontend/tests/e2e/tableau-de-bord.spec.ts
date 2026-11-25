@@ -8,55 +8,58 @@ test.describe('tableau de bord étudiant', () => {
     await gotoHydrated(page, '/etudiant')
   })
 
-  test('accueille l’étudiante avec le fait du jour', async ({ page }) => {
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-      'Bonjour Léa. Deux traces attendent leur évaluation.',
-    )
+  test('accueille l’étudiante avec le fait du jour et ses deux actions', async ({ page }) => {
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Bonjour Léa')
+    await expect(page.getByText(/Deux traces attendent leur évaluation\./)).toBeVisible()
+    // Secondaire puis principale, dans cet ordre
+    const actions = page.getByRole('link', { name: /^(Mes portfolios|Nouvelle trace)$/ })
+    await expect(actions).toHaveText(['Mes portfolios', 'Nouvelle trace'])
   })
 
-  test('met en avant le taux d’acquisition', async ({ page }) => {
+  test('commence par ce qu’il y a à faire, le plus pressant d’abord', async ({ page }) => {
+    const todo = page.getByRole('region', { name: 'À faire maintenant' }).getByRole('listitem')
+    // 2 retours non lus (démo), 2 brouillons du plus récent au plus ancien ; Entreprendre n'a pas
+    // de trace finalisée, mais un brouillon la vise déjà : rien à déposer
+    await expect(todo).toHaveCount(3)
+    await expect(todo.nth(0)).toContainText('2 nouveaux retours de vos enseignants')
+    await expect(todo.nth(1)).toContainText(
+      'Terminer « Business model d’une appli de covoiturage »',
+    )
+    await expect(
+      todo.nth(1).getByRole('link', { name: /^Reprendre le brouillon « Business model/ }),
+    ).toHaveAttribute('href', /\/etudiant\/traces\/\d+$/)
+  })
+
+  test('une ligne prise au clavier se lit comme au survol', async ({ page }) => {
+    const row = page
+      .getByRole('region', { name: 'À faire maintenant' })
+      .getByRole('listitem')
+      .nth(1)
+    await row.getByRole('link').focus()
+    const title = row.getByText(/^Terminer « Business model/)
+    await expect
+      .poll(() => title.evaluate((el) => getComputedStyle(el).textDecorationLine))
+      .toBe('underline')
+  })
+
+  test('donne le compte des évaluations acquises', async ({ page }) => {
     // 8 évaluations demandées, dont 2 en attente : 3 acquises sur 6 rendues, 50 %
-    await expect(page.getByRole('region', { name: 'Vos compétences' })).toContainText(
-      /50\s*%\s*de vos évaluations rendues sont acquises\s*\(3 sur 6\)/,
+    const summary = page.getByRole('region', { name: 'Où vous en êtes' })
+    await expect(summary).toContainText(
+      /3\s*sur 6\s*évaluations rendues sont acquises, soit 50\s*%/,
     )
-  })
-
-  test('affiche les chiffres secondaires', async ({ page }) => {
-    const counters = page.getByRole('region', { name: 'En chiffres' })
-    await expect(counters).toContainText(/Traces déposées\s*8/)
-    await expect(counters).toContainText(/En cours d’acquisition\s*2/)
-    await expect(counters).toContainText(/En attente d’évaluation\s*2/)
+    await expect(summary).toContainText(/Traces déposées\s*8/)
+    await expect(summary).toContainText(/Traces en attente d’évaluation\s*2/)
   })
 
   test('affiche la progression de chaque compétence', async ({ page }) => {
     const rows = page
-      .getByRole('region', { name: 'Vos compétences' })
+      .getByRole('region', { name: 'Progression par compétence' })
       .getByRole('list', { name: 'Progression par compétence' })
       .getByRole('listitem')
     await expect(rows).toHaveCount(5)
     await expect(rows.filter({ hasText: 'Développer' })).toContainText('1 acquis · 1 non acquis')
     await expect(rows.filter({ hasText: 'Entreprendre' })).toContainText('aucune trace associée')
-  })
-
-  test('liste les brouillons à terminer', async ({ page }) => {
-    const drafts = page.getByRole('region', { name: 'À terminer' })
-    await expect(drafts.getByRole('listitem')).toHaveCount(2)
-    await expect(drafts).toContainText('Business model d’une appli de covoiturage')
-  })
-
-  test('un brouillon pris au clavier se voit sur toute sa carte', async ({ page }) => {
-    const card = page
-      .getByRole('region', { name: 'À terminer' })
-      .getByRole('listitem')
-      .filter({ hasText: 'Business model d’une appli de covoiturage' })
-    const before = await card.evaluate((el) => getComputedStyle(el).backgroundColor)
-    const link = card.getByRole('link')
-    await link.focus()
-    await expect
-      .poll(() => card.evaluate((el) => getComputedStyle(el).backgroundColor))
-      .not.toBe(before)
-    // Comme au survol, le titre se souligne
-    expect(await link.evaluate((el) => getComputedStyle(el).textDecorationLine)).toBe('underline')
   })
 
   test('tient en 320 px sans défilement horizontal', async ({ page }) => {

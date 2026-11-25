@@ -35,11 +35,19 @@ const totalEvaluations = totaux.acquired + totaux.inProgress + totaux.notAcquire
 
 <template>
   <div>
-    <h1 class="font-titre text-2xl text-highlighted sm:text-3xl">Mes compétences</h1>
-    <p v-if="etudiant" class="mt-2 max-w-mesure text-muted">
-      Référentiel du {{ etudiant.annee }}, parcours {{ etudiant.parcours }}.
-      <template v-if="niveau"> Niveau travaillé cette année : {{ niveau }}. </template>
-    </p>
+    <UiEnTetePage titre="Mes compétences">
+      <template v-if="etudiant" #chapeau>
+        Référentiel du {{ etudiant.annee }}, parcours {{ etudiant.parcours }}.
+        <template v-if="niveau"> Niveau travaillé cette année : {{ niveau }}.</template>
+        Chaque trace déposée et évaluée fait avancer une compétence.
+      </template>
+      <template #actions>
+        <UButton to="/etudiant/traces" color="neutral" variant="outline" icon="i-lucide-files">
+          Mes traces
+        </UButton>
+        <UButton to="/etudiant/traces/nouvelle" icon="i-lucide-plus">Nouvelle trace</UButton>
+      </template>
+    </UiEnTetePage>
 
     <section aria-labelledby="progression-globale" class="mt-8 rounded-panneau bg-muted p-4 sm:p-6">
       <div class="flex flex-wrap items-center justify-between gap-3">
@@ -85,7 +93,7 @@ const totalEvaluations = totaux.acquired + totaux.inProgress + totaux.notAcquire
       </dl>
     </section>
 
-    <ul class="mt-4 space-y-4" aria-label="Compétences du référentiel">
+    <ul class="mt-6 space-y-6" aria-label="Compétences du référentiel">
       <li v-for="suivi in suivis" :key="suivi.competence.id">
         <CompetenceSuiviCard :suivi="suivi" :max="maxTotal" />
       </li>
