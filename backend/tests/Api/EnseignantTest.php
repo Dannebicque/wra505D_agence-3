@@ -74,6 +74,14 @@ class EnseignantTest extends ApiTestCase
             self::assertSame(0, $this->lire('/api/portfolios?etudiant=' . urlencode($inconnu))['totalItems'], $inconnu);
         }
 
+        self::assertSame(0, $this->lire('/api/traces?etudiant[]=' . urlencode($etudiant2))['totalItems'], 'Paramètre en tableau');
+
+        // Le filtre est gardé d'une page à l'autre
+        $this->connection->executeStatement("INSERT INTO trace (titre, type_trace, statut, conception_ia, realisation_ia, bibliotheque_id, date_creation) SELECT 'T' || n, 'lien', 'finalisee', 'aucun', 'aucun', t.bibliotheque_id, NOW() FROM trace t, generate_series(1, 30) n WHERE t.id = ?", [basename($autre)]);
+        $liste = $this->lire('/api/traces?etudiant=' . urlencode($etudiant2));
+        self::assertSame(31, $liste['totalItems']);
+        self::assertSame([$etudiant2], array_unique(array_column($this->lire($liste['view']['next'])['member'], 'etudiant')));
+
         // Le filtre n'élargit jamais le périmètre : autre département, autre étudiant
         $this->connecter('enseignant2');
         self::assertSame(0, $this->lire('/api/traces?etudiant=' . urlencode($etudiant2))['totalItems']);
