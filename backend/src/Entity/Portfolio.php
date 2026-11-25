@@ -13,6 +13,8 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\QueryParameter;
+use App\Filter\IriExacteFilter;
 use App\Repository\PortfolioRepository;
 use App\State\PortfolioProcessor;
 use App\State\PortfolioPublicProvider;
@@ -31,7 +33,8 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
  */
 #[ApiResource(
     operations: [
-        new GetCollection(),
+        // ?etudiant=/api/etudiants/1 : portfolios d'un étudiant (fiche de l'espace enseignant, #41)
+        new GetCollection(parameters: ['etudiant' => new QueryParameter(filter: new IriExacteFilter('etudiant', 'etudiants'))]),
         new Get(),
         new Post(processor: PortfolioProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
         new Patch(processor: PortfolioProcessor::class, denormalizationContext: ['groups' => ['portfolio:write', 'portfolio:ordre']], security: "is_granted('ROLE_ETUDIANT')"),

@@ -68,11 +68,11 @@ leurs portfolios **publics** ; le reste lui répond 404. Écritures de l'étudia
 | Besoin | Route |
 |---|---|
 | Liste des étudiants, fiche | `GET /api/etudiants`, `GET /api/etudiants/{id}` (filtres groupe, année, recherche : dans le navigateur) |
-| Traces d'un étudiant, détail, fichier | `GET /api/traces`, `GET /api/traces/{id}`, `GET /api/fichiers/{id}` |
+| Traces d'un étudiant, détail, fichier | `GET /api/traces?etudiant=/api/etudiants/{id}` (chaque trace porte `etudiant`), `GET /api/traces/{id}`, `GET /api/fichiers/{id}` |
 | Évaluations en attente (P-OR-01) | `GET /api/validations?etat=0` ; d'une trace : `?trace=/api/traces/{id}` |
 | Évaluer un niveau (P-EV-03, P-EV-07) | `PATCH /api/validations/{id}` `{"etat": 1, 2 ou 3}` (merge-patch) ; l'étudiant est notifié |
 | Commenter (P-EV-04, P-CO-01) | `POST /api/commentaires` `{trace ou portfolio, contenu, visibleEtudiant}` ; `PATCH`/`DELETE` par son auteur |
-| Portfolios d'un étudiant | `GET /api/portfolios`, `GET /api/pages?portfolio=/api/portfolios/{id}` |
+| Portfolios d'un étudiant | `GET /api/portfolios?etudiant=/api/etudiants/{id}`, `GET /api/pages?portfolio=/api/portfolios/{id}` |
 
 Écart avec les maquettes : un portfolio **privé** n'est pas visible par l'enseignant (point ouvert n° 15 tranché par
 le PO).

@@ -56,6 +56,33 @@ class EnseignantTest extends ApiTestCase
         self::assertSame([$site], $this->lire($page)['traces'], 'L’étudiant garde la sienne');
     }
 
+    /** Auteur d'une trace et filtre ?etudiant= (issue #41). */
+    public function testFiltreLesTracesEtPortfoliosDUnEtudiant(): void
+    {
+        $this->connecter('etudiant2');
+        $autre = $this->envoyer('POST', '/api/traces', ['titre' => 'Chez un autre', 'type' => 'lien', 'contenu' => ['https://exemple.fr'], 'statut' => 'finalisee'])['@id'];
+        $portfolio = $this->envoyer('POST', '/api/portfolios', ['intitule' => 'Portfolio 2', 'visibilite' => 'publique'])['@id'];
+        [$etudiant, $etudiant2] = array_map(fn (string $u) => $this->iri("SELECT '/api/etudiants/' || id FROM etudiant WHERE username = '$u'"), ['etudiant', 'etudiant2']);
+
+        $this->connecter('enseignant');
+        self::assertEqualsCanonicalizing([$etudiant, $etudiant2], array_unique(array_column($this->lire('/api/traces')['member'], 'etudiant')));
+        self::assertSame([$autre], array_column($this->lire('/api/traces?etudiant=' . urlencode($etudiant2))['member'], '@id'));
+        self::assertSame([$etudiant], array_values(array_unique(array_column($this->lire('/api/traces?etudiant=' . urlencode($etudiant))['member'], 'etudiant'))));
+        self::assertSame([$portfolio], array_column($this->lire('/api/portfolios?etudiant=' . urlencode($etudiant2))['member'], '@id'));
+        foreach (['abc', '/api/etudiants/999999', '/api/etudiants/2147483648', $autre] as $inconnu) {
+            self::assertSame(0, $this->lire('/api/traces?etudiant=' . urlencode($inconnu))['totalItems'], $inconnu);
+            self::assertSame(0, $this->lire('/api/portfolios?etudiant=' . urlencode($inconnu))['totalItems'], $inconnu);
+        }
+
+        // Le filtre n'élargit jamais le périmètre : autre département, autre étudiant
+        $this->connecter('enseignant2');
+        self::assertSame(0, $this->lire('/api/traces?etudiant=' . urlencode($etudiant2))['totalItems']);
+        self::assertSame(0, $this->lire('/api/portfolios?etudiant=' . urlencode($etudiant2))['totalItems']);
+        $this->connecter('etudiant');
+        self::assertSame(0, $this->lire('/api/traces?etudiant=' . urlencode($etudiant2))['totalItems']);
+        self::assertSame(0, $this->lire('/api/portfolios?etudiant=' . urlencode($etudiant2))['totalItems']);
+    }
+
     public function testNeVoitPasUnPortfolioPrive(): void
     {
         $this->connection->executeStatement('UPDATE portfolio SET visibilite = false');
