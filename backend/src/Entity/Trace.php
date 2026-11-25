@@ -13,8 +13,10 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\QueryParameter;
 use App\Enum\ConceptionIaEnum;
 use App\Enum\RealisationIaEnum;
+use App\Filter\IriExacteFilter;
 use App\Repository\TraceRepository;
 use App\State\TraceProcessor;
 use App\Validator\TraceValide;
@@ -31,7 +33,8 @@ use Symfony\Component\Serializer\Attribute\SerializedName;
  */
 #[ApiResource(
     operations: [
-        new GetCollection(),
+        // ?etudiant=/api/etudiants/1 : traces d'un étudiant (fiche de l'espace enseignant, #41)
+        new GetCollection(parameters: ['etudiant' => new QueryParameter(filter: new IriExacteFilter('bibliotheque.etudiant', 'etudiants'))]),
         new Get(),
         new Post(processor: TraceProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
         new Patch(processor: TraceProcessor::class, security: "is_granted('ROLE_ETUDIANT')"),
@@ -173,6 +176,13 @@ class Trace
     public function getBibliotheque(): ?Bibliotheque
     {
         return $this->bibliotheque;
+    }
+
+    /** Auteur de la trace, sans passer par sa bibliothèque (file d'évaluations, #41). */
+    #[Groups(['trace:read'])]
+    public function getEtudiant(): ?Etudiant
+    {
+        return $this->bibliotheque?->getEtudiant();
     }
 
     public function setBibliotheque(?Bibliotheque $bibliotheque): self

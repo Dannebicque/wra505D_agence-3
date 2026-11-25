@@ -17,7 +17,10 @@ use Symfony\Component\DependencyInjection\Attribute\Exclude;
 #[Exclude] // instancié dans les attributs des ressources, pas un service
 final class IriExacteFilter implements FilterInterface
 {
-    /** @param string|null $ressource segment de l'IRI (« portfolios ») ; null pour un champ entier */
+    /**
+     * @param string      $champ     champ filtré, au besoin à travers une relation (« bibliotheque.etudiant »)
+     * @param string|null $ressource segment de l'IRI (« portfolios ») ; null pour un champ entier
+     */
     public function __construct(private readonly string $champ, private readonly ?string $ressource, private readonly int $max = 2147483647)
     {
     }
@@ -36,7 +39,15 @@ final class IriExacteFilter implements FilterInterface
             return;
         }
         $parametre = $queryNameGenerator->generateParameterName($this->champ);
-        $colonne = sprintf(null === $this->ressource ? '%s.%s' : 'IDENTITY(%s.%s)', $queryBuilder->getRootAliases()[0], $this->champ);
+        $alias = $queryBuilder->getRootAliases()[0];
+        $relations = explode('.', $this->champ);
+        $champ = array_pop($relations);
+        foreach ($relations as $relation) {
+            $jointure = $queryNameGenerator->generateJoinAlias($relation);
+            $queryBuilder->join("$alias.$relation", $jointure);
+            $alias = $jointure;
+        }
+        $colonne = sprintf(null === $this->ressource ? '%s.%s' : 'IDENTITY(%s.%s)', $alias, $champ);
         $queryBuilder->andWhere(sprintf('%s = :%s', $colonne, $parametre))->setParameter($parametre, $id);
     }
 

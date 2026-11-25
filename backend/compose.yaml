@@ -3,6 +3,9 @@ services:
     build:
       context: .
       target: dev
+    environment:
+      # Sous Windows (volume monté lent), le cache:clear de Composer dépasse sa limite de 300 s et arrête le conteneur
+      COMPOSER_PROCESS_TIMEOUT: "0"
     ports:
       - "127.0.0.1:8000:80"
     volumes:

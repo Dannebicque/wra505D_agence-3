@@ -120,6 +120,7 @@ Comptes de démo en plus : `enseignant2` (département CJ, ne voit aucun étudia
 
 Règles à connaître côté front :
 
+- **Auteur d'une trace** : `etudiant` (IRI) dans chaque trace ; `?etudiant=/api/etudiants/{id}` filtre `/api/traces` et `/api/portfolios` (fiche d'un étudiant).
 - **Évaluer** : seul `etat` change ; l'enseignant et `dateModification` sont fixés par le serveur. Chaque niveau s'évalue à part (point ouvert n° 16 : évaluation partielle permise). 422 « Choisissez un niveau d’acquisition… » hors de 1 à 3. `etat` est obligatoire ; l'étudiant reçoit une notification `evaluation` quand l'état change (pas pour une réévaluation au même niveau).
 - **Commentaire** : une trace finalisée **ou** un portfolio public, jamais les deux (422 « Commentez une trace ou un portfolio. ») ; 2 000 caractères au plus. Non visible, c'est une note entre enseignants ; l'étudiant est notifié la première fois qu'il lui devient visible.
 - **Page lue par un enseignant** : `traces` ne liste que les traces finalisées.

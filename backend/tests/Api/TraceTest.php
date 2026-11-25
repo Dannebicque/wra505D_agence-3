@@ -24,16 +24,18 @@ class TraceTest extends ApiTestCase
             'conceptionIa' => 'aucun',
             // Champs fixés par le serveur : ignorés
             'bibliotheque' => '/api/bibliotheques/999',
+            'etudiant' => '/api/etudiants/999',
             'dateCreation' => '2000-01-01T00:00:00+00:00',
             'dateSuppression' => '2000-01-01T00:00:00+00:00',
         ]);
 
         $cles = array_keys($trace);
         sort($cles);
-        self::assertSame(['@context', '@id', '@type', 'bibliotheque', 'conceptionIa', 'contenu', 'contexte', 'dateCreation', 'dateModification', 'dateRealisation', 'dateSuppression', 'description', 'legende', 'realisationIa', 'statut', 'titre', 'type'], $cles);
+        self::assertSame(['@context', '@id', '@type', 'bibliotheque', 'conceptionIa', 'contenu', 'contexte', 'dateCreation', 'dateModification', 'dateRealisation', 'dateSuppression', 'description', 'etudiant', 'legende', 'realisationIa', 'statut', 'titre', 'type'], $cles);
         self::assertSame('Trace', $trace['@type']);
         self::assertStringStartsWith('/api/traces/', $trace['@id']);
         self::assertSame($this->bibliotheque('etudiant'), $trace['bibliotheque']);
+        self::assertSame($this->iri("SELECT '/api/etudiants/' || id FROM etudiant WHERE username = 'etudiant'"), $trace['etudiant']);
         self::assertSame('Un site vitrine', $trace['description']);
         self::assertNull($trace['contexte']);
         self::assertNull($trace['legende']);
