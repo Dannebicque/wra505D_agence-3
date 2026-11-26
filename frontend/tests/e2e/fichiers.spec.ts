@@ -9,7 +9,12 @@ const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3
 async function startImageTrace(page: Page, titre: string) {
   await gotoHydrated(page, '/etudiant/traces/nouvelle')
   await page.getByRole('textbox', { name: /Titre/ }).fill(titre)
-  await page.getByRole('radio', { name: 'Image' }).check()
+  // Bouton radio masqué visuellement : on clique son libellé, comme l'étudiant
+  await page
+    .locator('label')
+    .filter({ hasText: /^Image$/ })
+    .click()
+  await expect(page.getByRole('radio', { name: 'Image' })).toBeChecked()
 }
 
 async function chooseFile(page: Page, name: string, mimeType: string, buffer: Buffer) {

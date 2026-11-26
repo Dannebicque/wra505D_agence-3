@@ -66,7 +66,7 @@ test('E-PF-10 : la création est bloquée quand le portfolio de l’année exist
 })
 
 test('un portfolio privé ne peut pas être visible par les recruteurs', async ({ page }) => {
-  await gotoHydrated(page, '/etudiant/portfolios/2')
+  await gotoHydrated(page, '/etudiant/portfolios/2?modifier=informations')
   const recruteurs = page.getByRole('switch', { name: 'Visible par les recruteurs' })
   await expect(recruteurs).toBeDisabled()
   await expect(recruteurs).toHaveAttribute('aria-checked', 'false')
