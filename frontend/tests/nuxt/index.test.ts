@@ -1,6 +1,35 @@
-import { mountSuspended } from '@nuxt/test-utils/runtime'
-import { describe, expect, it } from 'vitest'
+import { mountSuspended, registerEndpoint } from '@nuxt/test-utils/runtime'
+import { createError } from 'h3'
+import { describe, expect, it, vi } from 'vitest'
+import type { User } from '#shared/types/utilisateur'
 import IndexPage from '~/pages/index.vue'
+
+const ENSEIGNANTE: User = {
+  '@id': '/api/users/2',
+  '@type': 'User',
+  username: 'enseignant',
+  email: null,
+  roles: ['ROLE_ENSEIGNANT'],
+  etudiant: null,
+  enseignant: '/api/enseignants/1',
+}
+
+// Connexions reçues par le faux serveur
+let connexions = 0
+let isConnecte = false
+registerEndpoint('/api/login', {
+  method: 'POST',
+  handler: () => {
+    connexions++
+    isConnecte = true
+    return null
+  },
+})
+registerEndpoint('/api/me', () => {
+  if (!isConnecte) throw createError({ statusCode: 401 })
+  return ENSEIGNANTE
+})
+registerEndpoint('/api/enseignants/1', () => ({ prenom: 'Sophie', nom: 'Durand' }))
 
 describe('page d’accueil', () => {
   it('affiche un seul titre principal, sur deux lignes', async () => {
@@ -24,12 +53,20 @@ describe('page d’accueil', () => {
     }
   })
 
-  it('mène aux trois espaces de démonstration', async () => {
+  it('connecte au compte de démonstration de l’espace choisi, puis y mène', async () => {
     const page = await mountSuspended(IndexPage)
 
     const demo = page.get('#demo')
-    const hrefs = demo.findAll('a').map((lien) => lien.attributes('href'))
-    expect(hrefs).toEqual(['/etudiant', '/enseignant', '/admin'])
+    const boutons = demo.findAll('button')
+    expect(boutons.map((bouton) => bouton.attributes('aria-label'))).toEqual([
+      expect.stringContaining('Espace étudiant'),
+      expect.stringContaining('Espace enseignant'),
+      expect.stringContaining('Administration'),
+    ])
+
+    await boutons[1]!.trigger('click')
+    await vi.waitFor(() => expect(useRouter().currentRoute.value.path).toBe('/enseignant'))
+    expect(connexions).toBe(1)
   })
 })
 

@@ -2,6 +2,10 @@ import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { describe, expect, it } from 'vitest'
 import { h } from 'vue'
 import EspaceLayout from '~/layouts/espace.vue'
+import { simulerConnexion } from '../utils/auth'
+
+// Pages d’espace : le garde de route lit l’utilisateur connecté
+simulerConnexion()
 
 const slots = { default: () => h('p', 'Contenu de la page') }
 

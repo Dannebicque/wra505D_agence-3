@@ -6,6 +6,10 @@ import type { Page } from '#shared/types/portfolio'
 import PagePortfolio from '~/pages/etudiant/portfolios/[id]/index.vue'
 import PageProjet from '~/pages/etudiant/portfolios/[id]/pages/[pageId].vue'
 import { ApiError } from '~/services/errors'
+import { simulerConnexion } from '../utils/auth'
+
+// Pages d’espace : le garde de route lit l’utilisateur connecté
+simulerConnexion()
 
 // Écrans branchés des pages-projets : réactions aux échecs de l'API (le store est simulé en échec)
 

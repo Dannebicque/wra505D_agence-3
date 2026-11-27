@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { apiFetch, apiFetchAll, setApiBase } from '../../../app/services/api'
+import {
+  apiFetch,
+  apiFetchAll,
+  setApiBase,
+  setUnauthorizedHandler,
+} from '../../../app/services/api'
 import { ApiError } from '../../../app/services/errors'
 
 // Projet `unit` : aucun contexte Nuxt, comme après un `await` pendant le rendu serveur.
@@ -8,6 +13,7 @@ import { ApiError } from '../../../app/services/errors'
 afterEach(() => {
   vi.unstubAllGlobals()
   setApiBase('')
+  setUnauthorizedHandler(null)
 })
 
 describe('apiFetch', () => {
@@ -75,5 +81,39 @@ describe('apiFetch', () => {
       '/api/traces',
       '/api/traces?page=2',
     ])
+  })
+})
+
+describe('session expirée', () => {
+  const unauthorized = () => vi.fn().mockRejectedValue({ statusCode: 401, data: {} })
+
+  it('prévient le gestionnaire d’un 401, puis relance l’erreur', async () => {
+    vi.stubGlobal('$fetch', unauthorized())
+    const handler = vi.fn()
+    setUnauthorizedHandler(handler)
+
+    await expect(apiFetch('/api/traces?page=2')).rejects.toMatchObject({ status: 401 })
+    expect(handler).toHaveBeenCalledOnce()
+  })
+
+  it.each(['/api/me', '/api/login'])(
+    'laisse le 401 de %s à l’appelant (réponse attendue de la connexion)',
+    async (path) => {
+      vi.stubGlobal('$fetch', unauthorized())
+      const handler = vi.fn()
+      setUnauthorizedHandler(handler)
+
+      await expect(apiFetch(path)).rejects.toBeInstanceOf(ApiError)
+      expect(handler).not.toHaveBeenCalled()
+    },
+  )
+
+  it('ne prévient personne pour les autres erreurs', async () => {
+    vi.stubGlobal('$fetch', vi.fn().mockRejectedValue({ statusCode: 403, data: {} }))
+    const handler = vi.fn()
+    setUnauthorizedHandler(handler)
+
+    await expect(apiFetch('/api/traces')).rejects.toMatchObject({ status: 403 })
+    expect(handler).not.toHaveBeenCalled()
   })
 })

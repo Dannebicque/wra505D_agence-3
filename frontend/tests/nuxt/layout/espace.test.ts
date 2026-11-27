@@ -3,6 +3,10 @@ import { describe, expect, it } from 'vitest'
 import { defineComponent, h } from 'vue'
 import LayoutNavGroup from '~/components/layout/NavGroup.vue'
 import EspaceLayout from '~/layouts/espace.vue'
+import { simulerConnexion } from '../utils/auth'
+
+// Pages d’espace : le garde de route lit l’utilisateur connecté
+simulerConnexion()
 
 describe('mise en page des espaces', () => {
   it('affiche la navigation de l’espace visité avec la page courante signalée', async () => {

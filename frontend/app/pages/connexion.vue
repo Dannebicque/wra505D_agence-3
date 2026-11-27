@@ -1,7 +1,7 @@
 <!--
-  Connexion (C-13), maquette : le formulaire vérifie la saisie mais ne connecte pas encore.
-  La vraie authentification passera par le compte de l'IUT ; en attendant, l'accès de
-  démonstration mène directement aux trois espaces.
+  Connexion (C-13) : identifiant et mot de passe envoyés à l'API (`POST /api/login`), puis retour à
+  la page demandée ou à l'accueil de l'espace. Un utilisateur déjà connecté n'arrive pas ici : le
+  garde de route (`middleware/auth.global.ts`) le renvoie vers son espace.
 -->
 <script setup lang="ts">
 import type { FormError } from '@nuxt/ui'
@@ -13,7 +13,9 @@ useSeoMeta({
 
 const state = reactive({ identifiant: '', motDePasse: '' })
 const isPasswordVisible = ref(false)
-const hasSubmitted = ref(false)
+const { connect, connectDemo, isPending, error } = useConnexion()
+/** Compte de démonstration en cours de connexion (indicateur sur sa seule ligne). */
+const pendingDemo = ref<string | null>(null)
 
 function validate(): FormError[] {
   const errors: FormError[] = []
@@ -32,31 +34,15 @@ const { onError } = useFocusFirstError()
 const INPUT_UI = { base: 'pointer-coarse:min-h-11' }
 const PASSWORD_UI = { base: 'pointer-coarse:min-h-11 pointer-coarse:pe-12', trailing: 'pe-1' }
 
-// Maquette : aucun appel, on signale seulement que la connexion n'est pas encore branchée
-function onSubmit() {
-  hasSubmitted.value = true
+async function onSubmit() {
+  await connect({ username: state.identifiant.trim(), password: state.motDePasse })
 }
 
-const DEMO_ACCESS = [
-  {
-    label: 'Espace étudiant',
-    description: 'Léa Martin, BUT MMI 2',
-    to: '/etudiant',
-    icon: 'i-lucide-graduation-cap',
-  },
-  {
-    label: 'Espace enseignant',
-    description: 'Claire Dupont',
-    to: '/enseignant',
-    icon: 'i-lucide-presentation',
-  },
-  {
-    label: 'Administration',
-    description: 'Gestion de la structure',
-    to: '/admin',
-    icon: 'i-lucide-shield',
-  },
-]
+async function onDemo(username: string) {
+  pendingDemo.value = username
+  await connectDemo(username)
+  pendingDemo.value = null
+}
 </script>
 
 <template>
@@ -120,19 +106,21 @@ const DEMO_ACCESS = [
       </UFormField>
 
       <div>
-        <UButton type="submit" size="lg" block>Se connecter</UButton>
+        <UButton type="submit" size="lg" block :loading="isPending && !pendingDemo">
+          Se connecter
+        </UButton>
         <!--
           Zone annoncée présente dès le départ : son contenu est lu quand il apparaît. Sous le
           bouton, elle ne le déplace pas sous le doigt ou le pointeur en apparaissant.
         -->
-        <div role="status">
+        <div role="alert">
           <UAlert
-            v-if="hasSubmitted"
-            color="neutral"
+            v-if="error"
+            color="error"
             variant="subtle"
-            icon="i-lucide-info"
-            title="La connexion n’est pas encore disponible"
-            description="Le lien avec les comptes de l’IUT arrive bientôt. Utilisez l’accès de démonstration ci-dessous."
+            icon="i-lucide-circle-alert"
+            title="Connexion impossible"
+            :description="error"
             class="mt-4"
           />
         </div>
@@ -146,21 +134,31 @@ const DEMO_ACCESS = [
     <section aria-labelledby="acces-demo" class="mt-12 border-t border-default pt-8">
       <h2 id="acces-demo" class="font-semibold text-highlighted">Accès de démonstration</h2>
       <p class="mt-1 text-sm text-muted">
-        En attendant la connexion, entrez directement dans l’un des trois espaces.
+        Entrez dans l’un des trois espaces avec un compte fictif, sans saisir de mot de passe.
       </p>
       <ul class="mt-4 flex flex-col gap-3">
-        <li v-for="access in DEMO_ACCESS" :key="access.to">
-          <NuxtLink
-            :to="access.to"
-            class="flex items-center gap-3 rounded-feuille border border-default p-4 shadow-carte transition-[background-color,border-color,box-shadow] hover:border-accented hover:bg-muted hover:shadow-carte-survol focus-visible:shadow-carte-survol motion-reduce:transition-none"
+        <li v-for="compte in COMPTES_DEMO" :key="compte.username">
+          <button
+            type="button"
+            :disabled="isPending"
+            :aria-busy="pendingDemo === compte.username"
+            class="flex w-full items-center gap-3 rounded-feuille border border-default p-4 text-start shadow-carte transition-[background-color,border-color,box-shadow] hover:border-accented hover:bg-muted hover:shadow-carte-survol focus-visible:shadow-carte-survol disabled:cursor-not-allowed disabled:opacity-75 motion-reduce:transition-none"
+            @click="onDemo(compte.username)"
           >
-            <UIcon :name="access.icon" class="size-5 shrink-0 text-primary" />
+            <UIcon :name="compte.icon" class="size-5 shrink-0 text-primary" />
             <span class="flex min-w-0 flex-1 flex-col">
-              <span class="font-medium text-highlighted">{{ access.label }}</span>
-              <span class="text-sm text-muted">{{ access.description }}</span>
+              <span class="font-medium text-highlighted">{{ compte.espace }}</span>
+              <span class="text-sm text-muted">{{ compte.description }}</span>
             </span>
-            <UIcon name="i-lucide-arrow-right" class="size-4 shrink-0 text-muted" />
-          </NuxtLink>
+            <UIcon
+              :name="
+                pendingDemo === compte.username ? 'i-lucide-loader-circle' : 'i-lucide-arrow-right'
+              "
+              class="size-4 shrink-0 text-muted"
+              :class="{ 'motion-safe:animate-spin': pendingDemo === compte.username }"
+              aria-hidden="true"
+            />
+          </button>
         </li>
       </ul>
     </section>

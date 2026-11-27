@@ -2,6 +2,10 @@ import { mountSuspended } from '@nuxt/test-utils/runtime'
 import { flushPromises } from '@vue/test-utils'
 import { afterEach, describe, expect, it } from 'vitest'
 import AideContextuelle from '~/components/commun/AideContextuelle.vue'
+import { simulerConnexion } from '../../utils/auth'
+
+// Pages d’espace : le garde de route lit l’utilisateur connecté
+simulerConnexion()
 
 // Le panneau est téléporté dans <body>
 const panel = () => document.body.querySelector<HTMLElement>('[role="dialog"]')

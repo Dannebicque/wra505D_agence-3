@@ -16,6 +16,20 @@ export function setApiBase(base: string): void {
 }
 
 /**
+ * Réaction à une session expirée (401 sur un appel autre que la connexion), posée par
+ * `plugins/session-expiree.client.ts`. Navigateur seulement : côté serveur, ce module est partagé
+ * entre toutes les requêtes, une fonction liée à une application n'y a pas sa place.
+ */
+let onUnauthorized: (() => void) | null = null
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  onUnauthorized = handler
+}
+
+/** Appels dont le 401 est une réponse attendue, traitée par l'appelant (store `auth`). */
+const AUTH_PATHS = new Set(['/api/login', '/api/me'])
+
+/**
  * Seul point d'appel à l'API. Les chemins sont toujours complets (`/api/...`),
  * ce qui permet d'appeler directement un IRI. Toute erreur est relancée en `ApiError`,
  * avec un message en français.
@@ -30,7 +44,9 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     // `string` en second paramètre : chemin quelconque, réponse typée par `T` (et non par les routes Nitro)
     return await $fetch<T, string>(path, { ...options, headers, baseURL: apiBase })
   } catch (error) {
-    throw toApiError(error)
+    const apiError = toApiError(error)
+    if (apiError.status === 401 && !AUTH_PATHS.has(path.split('?')[0] ?? '')) onUnauthorized?.()
+    throw apiError
   }
 }
 
