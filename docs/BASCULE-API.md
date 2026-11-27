@@ -27,7 +27,7 @@ Vérifié le 2026-11-24 avec le proxy : liste et détail des traces, page-projet
 fichier, création d'une trace, erreur 422 champ par champ, connexion et déconnexion. Pas encore vérifié dans un
 navigateur (seulement par HTTP à travers le front).
 
-## 2. Connexion (Solène, C-13)
+## 2. Connexion (C-13)
 
 | Requête | Réponse |
 |---|---|
@@ -35,12 +35,16 @@ navigateur (seulement par HTTP à travers le front).
 | `GET /api/me` | l'utilisateur (`User` de `shared/types/utilisateur.ts` : `roles`, `etudiant` ou `enseignant` en IRI) ; 401 si non connecté |
 | `POST /api/logout` | 204, la session est fermée |
 
-À faire côté front :
-- `app/pages/connexion.vue` : envoyer le formulaire à `POST /api/login`, puis lire `/api/me` et rediriger selon le rôle.
-- Un store `auth` (utilisateur courant, `GET /api/me` au démarrage, y compris pendant le SSR avec
-  `useApiRequestOptions()`), et un middleware de route par rôle (`/etudiant`, `/enseignant`, `/admin`).
-- Toute réponse 401 renvoie vers `/connexion`. Le serveur décide toujours : le middleware n'est qu'un confort.
-- Retirer `server/middleware/demo-session.ts` et le cookie `uf_demo` une fois tous les écrans basculés.
+Fait côté front (#37) :
+- `app/pages/connexion.vue` et les accès de démonstration (`useConnexion`) : `POST /api/login`, puis `/api/me`, puis
+  la page demandée (`?redirect=`, seulement dans un espace permis) ou l'accueil de l'espace du rôle.
+- Store `auth` (`app/stores/auth.ts`) : utilisateur courant et nom affiché, lus une fois par le garde global
+  `app/middleware/auth.global.ts`, y compris pendant le SSR (`useApiRequestOptions()`).
+- Garde par rôle de `/etudiant`, `/enseignant`, `/admin` ; tout 401 pendant le travail recharge sur `/connexion`
+  (`app/plugins/session-expiree.client.ts`). Le serveur décide toujours : le garde n'est qu'un confort.
+- Sans `NUXT_API_PROXY`, la doublure Nitro répond au même contrat (`server/api/{login,me,logout}`, mêmes comptes).
+
+Reste : retirer `server/middleware/demo-session.ts` et le cookie `uf_demo` une fois tous les écrans basculés.
 
 ## 3. Écrans
 
@@ -49,7 +53,7 @@ navigateur (seulement par HTTP à travers le front).
 | `etudiant/traces` (liste), `traces/[id]`, `traces/nouvelle` | **branché** | rien |
 | `etudiant/portfolios/[id]/pages/[pageId]` | **branché** | rien |
 | `etudiant/portfolios/[id]` | pages branchées, informations du portfolio en démo | lire `GET /api/portfolios/{id}`, modifier par `PATCH` (Solène) |
-| `etudiant/index` (tableau de bord) | **404** : `DEMO_ETUDIANT_ID = 1` | prendre l'étudiant de `/api/me` (store auth) |
+| `etudiant/index` (tableau de bord) | **branché** (étudiant de `/api/me`) | échéances : voir plus bas |
 | `etudiant/portfolios`, `portfolios/nouveau`, `portfolios/[id]/apercu` | démo (`app/demo/`) | `GET/POST /api/portfolios` ; aperçu : `GET /api/portfolios/{id}/public` |
 | `portfolio/[slug]` (lien public) | démo | l'API sert `GET /api/portfolios/{id}/public` **sans connexion** : utiliser l'identifiant comme `slug` (pas de slug côté API) |
 | `etudiant/competences`, `etudiant/retours` | démo | `GET /api/validations`, `GET /api/commentaires`, `GET /api/notifications`, `PATCH /api/notifications/{id} {lu: true}` ; progression : `GET /api/bilans/etudiants/{id}` |
