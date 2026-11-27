@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from './fixtures'
+import { expect, loginAs, test, type Page } from './fixtures'
 import { gotoHydrated } from './utils'
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
@@ -145,7 +145,9 @@ test.describe('routes des fichiers', () => {
     })
     const fichier = (await upload.json()) as { '@id': string }
 
+    // Autre visiteur connecté (son propre cookie de démo : ses propres données factices)
     const stranger = await browser.newContext({ baseURL: new URL(page.url()).origin })
+    await loginAs(stranger.request, 'etudiant')
     const response = await stranger.request.post('/api/traces', {
       data: {
         titre: 'Vol',
