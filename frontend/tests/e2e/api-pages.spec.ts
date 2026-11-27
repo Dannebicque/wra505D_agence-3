@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 const PAGES_DU_PORTFOLIO = `/api/pages?portfolio=${encodeURIComponent('/api/portfolios/1')}`
 

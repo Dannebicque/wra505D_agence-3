@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, loginAs, test } from './fixtures'
 import { gotoHydrated } from './utils'
 
 const NAV_ESPACE = 'Navigation de l’espace'
@@ -8,6 +8,7 @@ test.describe('espaces', () => {
   test('sert la navigation de l’espace dans le HTML initial, et seulement dans un espace', async ({
     request,
   }) => {
+    await loginAs(request, 'enseignant')
     expect(await (await request.get('/enseignant')).text()).toContain(NAV_ESPACE)
     expect(await (await request.get('/')).text()).not.toContain(NAV_ESPACE)
   })
@@ -16,6 +17,7 @@ test.describe('espaces', () => {
     page,
     isMobile,
   }) => {
+    await loginAs(page, 'admin')
     await gotoHydrated(page, '/admin')
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Administration')
 
@@ -41,7 +43,8 @@ test.describe('espaces', () => {
     await page.setViewportSize({ width: 1440, height: 900 })
     await gotoHydrated(page, '/')
 
-    await page.getByRole('link', { name: 'Espace étudiant' }).click()
+    // Accès de démonstration : connecte au compte étudiant, puis ouvre son espace
+    await page.getByRole('button', { name: /^Espace étudiant, / }).click()
     await expect(page.getByRole('navigation', { name: NAV_ESPACE })).toBeVisible()
     await expect(page.locator('main')).toHaveCount(1)
 

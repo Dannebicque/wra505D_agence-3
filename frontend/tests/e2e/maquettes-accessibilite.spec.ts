@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test } from '@playwright/test'
+import { compteDe, expect, test } from './fixtures'
 import { gotoHydrated } from './utils'
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
@@ -29,17 +29,22 @@ const PAGES = [
 ]
 
 for (const path of PAGES) {
-  for (const colorScheme of ['light', 'dark'] as const) {
-    test(`${path} s’affiche sans violation WCAG A/AA (mode ${colorScheme})`, async ({ page }) => {
-      await page.emulateMedia({ colorScheme })
-      await gotoHydrated(page, path)
-      await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
+  test.describe(path, () => {
+    // Connecté au compte de l’espace visité ; en visiteur hors des espaces (connexion, lien public)
+    test.use({ compte: compteDe(path) })
 
-      const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+    for (const colorScheme of ['light', 'dark'] as const) {
+      test(`${path} s’affiche sans violation WCAG A/AA (mode ${colorScheme})`, async ({ page }) => {
+        await page.emulateMedia({ colorScheme })
+        await gotoHydrated(page, path)
+        await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
 
-      expect(results.violations).toEqual([])
-    })
-  }
+        const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+
+        expect(results.violations).toEqual([])
+      })
+    }
+  })
 }
 
 test('un portfolio inconnu renvoie une erreur 404', async ({ request }) => {

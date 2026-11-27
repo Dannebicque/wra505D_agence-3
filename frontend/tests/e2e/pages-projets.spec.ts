@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page } from './fixtures'
 import { gotoHydrated } from './utils'
 
 // Pages-projets d'un portfolio (E-PG-01, E-PG-04, E-TR-08) : ce qui est fait survit au rechargement.

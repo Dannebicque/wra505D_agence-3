@@ -1,11 +1,14 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test, type Page } from '@playwright/test'
+import { compteDe, expect, test, type Page } from './fixtures'
 import { gotoHydrated } from './utils'
 
 // Maquettes de l'espace enseignant (et pages étudiantes corrigées avec elles) : pages
 // introuvables, accessibilité des aperçus, filtres dans l'URL, file d'évaluation, focus.
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
+
+// Espace enseignant par défaut ; les pages étudiantes de ce fichier changent de compte
+test.use({ compte: 'enseignant' })
 
 async function expectNoAxeViolation(page: Page) {
   const results = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
@@ -33,33 +36,39 @@ const AXE_PAGES = [
 ]
 
 for (const path of AXE_PAGES) {
+  test.describe(path, () => {
+    test.use({ compte: compteDe(path) })
+    for (const colorScheme of ['light', 'dark'] as const) {
+      test(`${path} passe axe (mode ${colorScheme})`, async ({ page }) => {
+        await page.emulateMedia({ colorScheme })
+        await gotoHydrated(page, path)
+        await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
+        await expectNoAxeViolation(page)
+      })
+    }
+  })
+}
+
+test.describe('aperçu du CV', () => {
+  test.use({ compte: 'etudiant' })
   for (const colorScheme of ['light', 'dark'] as const) {
-    test(`${path} passe axe (mode ${colorScheme})`, async ({ page }) => {
+    test(`l’aperçu du CV s’affiche sur mobile et passe axe (mode ${colorScheme})`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 375, height: 812 })
       await page.emulateMedia({ colorScheme })
-      await gotoHydrated(page, path)
-      await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
+      await gotoHydrated(page, '/etudiant/cv')
+
+      const apercu = page.getByRole('button', { name: 'Aperçu' })
+      await apercu.click()
+      await expect(apercu).toHaveAttribute('aria-pressed', 'true')
+      await expect(page.getByRole('heading', { name: /^Aperçu,/ })).toBeVisible()
+      await expect(page.getByRole('textbox', { name: 'Prénom' })).toBeHidden()
+
       await expectNoAxeViolation(page)
     })
   }
-}
-
-for (const colorScheme of ['light', 'dark'] as const) {
-  test(`l’aperçu du CV s’affiche sur mobile et passe axe (mode ${colorScheme})`, async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 375, height: 812 })
-    await page.emulateMedia({ colorScheme })
-    await gotoHydrated(page, '/etudiant/cv')
-
-    const apercu = page.getByRole('button', { name: 'Aperçu' })
-    await apercu.click()
-    await expect(apercu).toHaveAttribute('aria-pressed', 'true')
-    await expect(page.getByRole('heading', { name: /^Aperçu,/ })).toBeVisible()
-    await expect(page.getByRole('textbox', { name: 'Prénom' })).toBeHidden()
-
-    await expectNoAxeViolation(page)
-  })
-}
+})
 
 test('le tableau de bord commence par les évaluations à faire', async ({ page }) => {
   await gotoHydrated(page, '/enseignant')

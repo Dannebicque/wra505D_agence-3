@@ -1,11 +1,14 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 import { gotoHydrated } from './utils'
 
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 const TITRE = 'Vos compétences, trace après trace.'
 
 test.describe('accueil', () => {
+  // L'accueil est la porte d'entrée d'un visiteur : aucun compte ouvert
+  test.use({ compte: null })
+
   test('affiche la page en français avec un seul titre principal et ses repères', async ({
     page,
   }) => {
@@ -24,33 +27,22 @@ test.describe('accueil', () => {
   })
 
   // Le titre se révèle en CSS : il est dans le HTML du serveur, lisible sans JavaScript
-  test('sert le titre et les accès de démonstration sans JavaScript', async ({ request }) => {
+  test('sert le titre sans JavaScript', async ({ request }) => {
     const html = await (await request.get('/')).text()
 
     expect(html).toContain('Vos compétences,')
-    expect(html).toContain('href="/etudiant"')
-    expect(html).toContain('href="/enseignant"')
-    expect(html).toContain('href="/admin"')
   })
 
-  test('mène aux trois espaces de démonstration par des lignes entièrement cliquables', async ({
+  test('connecte au compte de démonstration de l’espace choisi, d’un seul clic', async ({
     page,
   }) => {
     await gotoHydrated(page, '/')
     const demo = page.getByRole('region', { name: 'Essayer la démo' })
 
-    await expect(
-      demo.getByRole('link', { name: 'Espace étudiant, Léa Martin, BUT MMI 2' }),
-    ).toHaveAttribute('href', '/etudiant')
-    await expect(
-      demo.getByRole('link', { name: 'Espace enseignant, Claire Dupont' }),
-    ).toHaveAttribute('href', '/enseignant')
-    await expect(demo.getByRole('link', { name: /^Administration/ })).toHaveAttribute(
-      'href',
-      '/admin',
-    )
+    await expect(demo.getByRole('button', { name: /^Espace étudiant, / })).toBeVisible()
+    await expect(demo.getByRole('button', { name: /^Administration, / })).toBeVisible()
 
-    await demo.getByRole('link', { name: /^Espace enseignant/ }).click()
+    await demo.getByRole('button', { name: /^Espace enseignant, / }).click()
     await expect(page).toHaveURL(/\/enseignant$/)
   })
 

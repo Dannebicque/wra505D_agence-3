@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 import { gotoHydrated } from './utils'
 
 // Données factices de l'étudiante de démo (server/data) : 8 traces dont 2 brouillons,

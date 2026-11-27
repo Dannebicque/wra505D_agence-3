@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 import { gotoHydrated } from './utils'
 
 const GOOGLE_FONTS = /fonts\.(googleapis|gstatic)\.com/

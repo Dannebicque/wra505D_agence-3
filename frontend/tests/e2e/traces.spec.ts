@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright'
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 import { gotoHydrated } from './utils'
 
 // Chaque test a son propre navigateur, donc son propre cookie de démo : ses traces lui sont propres

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test } from './fixtures'
 
 // Contrat de l'API factice : même format qu'ApiPlatform (JSON-LD, collection Hydra).
 test.describe('API référentiels', () => {
