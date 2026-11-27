@@ -19,10 +19,13 @@ let loginStatus = 204
 let isConnecte = false
 // Connexions reçues par le faux serveur
 let envois = 0
+let isFocusLostDuringLogin = false
 registerEndpoint('/api/login', {
   method: 'POST',
   handler: () => {
     envois++
+    // Navigateur : le bouton désactivé pendant l'appel perd le focus (happy-dom ne le fait pas)
+    if (isFocusLostDuringLogin) (document.activeElement as HTMLElement | null)?.blur()
     if (loginStatus !== 204) throw createError({ statusCode: loginStatus })
     isConnecte = true
     return null
@@ -37,6 +40,7 @@ beforeEach(() => {
   loginStatus = 204
   isConnecte = false
   envois = 0
+  isFocusLostDuringLogin = false
   const auth = useAuthStore()
   auth.user = null
   auth.isLoaded = false
@@ -94,6 +98,7 @@ describe('page de connexion', () => {
 
   it('rend le focus à l’accès de démonstration quand la connexion échoue', async () => {
     loginStatus = 500
+    isFocusLostDuringLogin = true
     const page = await mountSuspended(PageConnexion, {
       route: '/connexion',
       attachTo: document.body,
@@ -101,6 +106,7 @@ describe('page de connexion', () => {
     const demo = page.findAll('button').find((b) => b.text().includes('Espace étudiant'))!
     ;(demo.element as HTMLButtonElement).focus()
     await demo.trigger('click')
+    await vi.waitFor(() => expect(envois).toBe(1))
 
     await vi.waitFor(() => expect(page.get('[role="alert"]').text()).toContain('serveur'))
     await vi.waitFor(() => expect(document.activeElement).toBe(demo.element))
