@@ -17,6 +17,11 @@ describe('adresse du relais /api/**', () => {
     expect(apiProxyTarget('/api/traces', '')).toBeNull()
   })
 
+  it('ne relaie pas les icônes servies par le front', () => {
+    expect(apiProxyTarget('/api/_nuxt_icon/lucide.json?icons=log-out', API)).toBeNull()
+    expect(apiProxyTarget('/api/_nuxt_icon_x', API)).toBe('http://localhost:8000/api/_nuxt_icon_x')
+  })
+
   it('ne sort pas de /api/, même par un chemin à normaliser', () => {
     expect(apiProxyTarget('/api', API)).toBeNull()
     expect(apiProxyTarget('/etudiant', API)).toBeNull()

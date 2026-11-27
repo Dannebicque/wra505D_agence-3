@@ -6,7 +6,8 @@ export type Role = 'ROLE_ETUDIANT' | 'ROLE_ENSEIGNANT' | 'ROLE_ADMIN'
 export interface User extends JsonLdResource {
   '@type': 'User'
   username: string
-  email: string
+  /** Absente pour certains comptes (l'administrateur des fixtures n'en a pas). */
+  email: string | null
   roles: Role[]
   etudiant: Iri | null
   enseignant: Iri | null
