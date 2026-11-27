@@ -34,8 +34,9 @@ test.describe('connexion', () => {
 
     // Sur téléphone, le compte est au bas du menu
     if (isMobile) await page.getByRole('button', { name: 'Ouvrir le menu' }).click()
-    await expect(page.getByText('Léa Martin', { exact: true })).toBeVisible()
-    await page.getByRole('button', { name: 'Se déconnecter' }).click()
+    const compte = isMobile ? page.getByRole('dialog') : page
+    await expect(compte.getByText('Léa Martin', { exact: true })).toBeVisible()
+    await compte.getByRole('button', { name: 'Se déconnecter' }).click()
     await expect(page).toHaveURL(/\/connexion$/)
 
     // La session est bien fermée : l'espace renvoie de nouveau à la connexion
